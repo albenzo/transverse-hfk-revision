@@ -7,16 +7,17 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #define True 1
 #define False 0
 
 /* A transverse knot is specified by its ArcIndex, and the vector of y-coordinates of the Xs and Os. */
 
 /*
-These are the examples cited in the paper. To run the program
-on any example, simply comment out the three lines below defining
-m(10_132) L_1, and uncomment the corresponding three lines defining
-the desired knot.
+  These are the examples cited in the paper. To run the program
+  on any example, simply comment out the three lines below defining
+  m(10_132) L_1, and uncomment the corresponding three lines defining
+  the desired knot.
 */
 
 /* Figure 2 */
@@ -128,7 +129,7 @@ void PrintState(State state);
 void PrintStateShort(State state);
 int GetNumber(State a, StateList b);
 void FreeStateList(StateList States);
-void Homology();
+void Homology(void);
 void SpecialHomology(int init, int final);
 void Contract(int a, int b);
 VertexList RemoveVertex(int a, VertexList v);
@@ -136,15 +137,24 @@ void FreeVertexList(VertexList vertices);
 void CreateD0Graph (State init);
 void CreateD1Graph (State init);
 void FreeShortEdges(ShortEdges e);
-void PrintEdges();
+void PrintEdges(void);
 void PrintStates(StateList states);
-void PrintMathEdges();
+void PrintMathEdges(void);
 void PrintVertices(VertexList vlist);
 StateList CreateStateNode(State state);
 StateList RemoveState (State a, StateList v);
 ShortEdges CreateEdge(int a, int b);
 
 void PrintMathEdgesA(ShortEdges edges);
+
+// Added function prototypes
+int Omain(void);
+int NullHomologousD0Q(State init);
+int NullHomologousD1Q(State init);
+int NESWpO(char *x);
+int NESWOp(char *x);
+int NESWpp(char *x);
+
 
 
 int EqState(State a, State b)
@@ -156,7 +166,7 @@ int EqState(State a, State b)
 int Omain()
 {
   char UR[ArcIndex];
-  int i,j,z;
+  int i;
 
   printf("\n \nCalculating graph for UR invariant\n");
   if(Xs[ArcIndex-1]==ArcIndex) {UR[0] = 1; }
@@ -170,12 +180,14 @@ int Omain()
   PrintState(UR);
   if (NullHomologousD0Q(UR)) { printf("UR is null-homologous\n"); }
   else { printf("UR is NOT null-homologous"); };
+  
+  return 0;
 }
 
-int main()
+int main(int argc, const char* argv[])
 {
   char UR[ArcIndex];
-  int i,j,z;
+  int i;
 
   printf("\n \nCalculating graph for LL invariant\n");
   PrintState(Xs);
@@ -212,7 +224,9 @@ int main()
   }
   PrintState(UR);
   if (NullHomologousD1Q(UR)) { printf("D1[UR] is null-homologous\n"); }
-  else { printf("D1[UR] is NOT null-homologous\n"); }; 
+  else { printf("D1[UR] is NOT null-homologous\n"); };
+
+  return 0;
 }
 
 
@@ -257,7 +271,6 @@ StateList NewRectanglesOutOf(StateList Prevs, State incoming)
   State TempState;
   int LL;
   int w,h,m,n,i;
-  int height;
   ans=NULL;
   i=0;
   while (i<ArcIndex) {
@@ -304,7 +317,6 @@ StateList RectanglesOutOf(State incoming)
   StateList Temp, ans;
   int LL;
   int w,h;
-  int height;
   ans=NULL;
   LL=0;
   while (LL<ArcIndex) {
@@ -334,7 +346,6 @@ StateList RectanglesInto(State incoming)
   StateList Temp, ans;
   int LL;
   int w,h;
-  int height;
   ans=NULL;
   LL=0;
   while (LL<ArcIndex) {
@@ -365,7 +376,6 @@ StateList NewRectanglesInto(StateList Prevs, State incoming)
   int LL, m,n;
   int w,h;
   int i;
-  int height;
   ans=NULL;
   i=0;
   while (i<ArcIndex) {
@@ -565,7 +575,6 @@ StateList CreateStateNode(State state)
 StateList AppendToStateList(State state, StateList rest)
 {
   StateList NewNode, TTTemp;
-  StateNode ANewNode;
   int i;
   NewNode= malloc(sizeof(StateNode));
   i=0;
@@ -589,10 +598,9 @@ StateList AppendToStateList(State state, StateList rest)
 
 ShortEdges AddModTwoLists(VertexList parents, VertexList kids) 
 {
-  VertexList tempkids, tempparents, thiskid, thisparent, tempvert;
+  VertexList thiskid, thisparent, tempvert;
   ShortEdges thisedge, tempedge, Prev;
   ShortEdges ans;
-  int t;
   if ((parents==NULL )||(kids==NULL)) { ans=EdgeList; }
   else 
     {
@@ -708,7 +716,6 @@ ShortEdges AppendOrdered(int a, int b, ShortEdges edges)
 ShortEdges AddModTwo(int a, int b, ShortEdges edges)
 { 
   ShortEdges Temp, Prev, curr, ans;
-  int t;
   Prev=edges;
   if ((edges==NULL) || 
       (edges->start>a) || 
@@ -719,7 +726,7 @@ ShortEdges AddModTwo(int a, int b, ShortEdges edges)
     ans->nextPtr=Prev;
   }
   else if (edges->start==a &&
-      edges->end == b) {
+           edges->end == b) {
     Temp=edges;
     ans=edges->nextPtr;
     free(Temp);
@@ -771,7 +778,6 @@ ShortEdges CreateEdge(int a, int b)
 VertexList PrependVertex(int a, VertexList vertices)
 {
   VertexList newPtr;
-  VertexList Ptr;
   newPtr=malloc(sizeof(Vertex));
   (newPtr->data)=a;
   (newPtr->nextVertex)=vertices;
@@ -781,11 +787,7 @@ VertexList PrependVertex(int a, VertexList vertices)
 
 void Homology ()
 {
-  int i,j;
-  int a, b;
-  ShortEdges Temp, Temp2;
-  i=0;
-  j=0;
+  ShortEdges Temp;
   Temp=EdgeList;
   while(Temp!=NULL) {
     if (Temp!=NULL) {
@@ -797,7 +799,7 @@ void Homology ()
 
 void SpecialHomology(int init, int final)
 {
-  int i,j,a,b,t;
+  int i,j,t;
   ShortEdges Temp;
   i=0;
   j=0;
@@ -823,8 +825,6 @@ void SpecialHomology(int init, int final)
     i++;
     j++;
     if (Temp!=NULL)  { 
-      a=Temp->start;
-      b=Temp->end;
       Contract(Temp->start,Temp->end); 
       Temp=EdgeList;
     };
@@ -836,7 +836,6 @@ void Contract(int a, int b)
 {
   ShortEdges Temp;
   ShortEdges Prev;
-  int z,t;
   VertexList parents, kids, tempkids, tempparents;
   VertexList LastParent, LastKid;
   Prev=EdgeList;
@@ -959,7 +958,8 @@ int OrderedQ(VertexList L)
     max=Temp->data;
     Temp=Temp->nextVertex;
   };
-  if (Temp==NULL) { return 1; }
+  return 1; // Temp will always be one if we hit this point.
+  //if (Temp==NULL) { return 1; }
 }
       
 StateList RemoveState (State a, StateList v)
@@ -985,7 +985,7 @@ StateList RemoveState (State a, StateList v)
       free(Temp); 
       return sList; }
     else return sList;
-  };
+  }
 }
 
 
@@ -1007,11 +1007,11 @@ VertexList RemoveVertex(int a, VertexList v)
       Temp=Temp->nextVertex;
       Prev=Prev->nextVertex;
     };
-  if (Temp != NULL) { 
-    Prev->nextVertex=Temp->nextVertex; 
-    free(Temp); 
-    return vList; }
-  else return vList;
+    if (Temp != NULL) { 
+      Prev->nextVertex=Temp->nextVertex; 
+      free(Temp); 
+      return vList; }
+    else return vList;
   };
 }
 
@@ -1023,14 +1023,13 @@ void PrintEdges()
   while(Temp!= NULL) {
     printf ("%d %d\n",Temp->start, Temp->end);
     Temp=(Temp->nextPtr);
-    /*    if (Temp!=NULL) printf(",");*/
   };
 }
 
 void PrintMathEdges()
 {
   ShortEdges Temp;
-  int t,z;
+  int t;
   Temp=EdgeList; 
   printf ("{"); 
   t=0;
@@ -1054,9 +1053,9 @@ void PrintMathEdgesA(ShortEdges edges)
   while(Temp!= NULL) {
     printf ("{%d,%d}",Temp->start, Temp->end);
     Temp=(Temp->nextPtr);
-      if (Temp!=NULL) printf(",");
+    if (Temp!=NULL) printf(",");
   };
-    printf("}");
+  printf("}");
 }
 
 
@@ -1116,7 +1115,7 @@ StateList FixedWtRectanglesOutOf(int wt, State incoming)
   StateList Temp, ans;
   int LL;
   int w,h;
-  int height, thisweight,i;
+  int thisweight,i;
   ans=NULL;
   LL=0;
   while (LL<ArcIndex) {
@@ -1157,24 +1156,17 @@ int NullHomologousD0Q(State init)
 {
   StateList NewIns, NewOuts, LastNewIn, LastNewOut, Temp;
   StateList PrevIns, PrevOuts;
-  StateList ReallyNewOuts=NULL, PrevReallyNewOuts=NULL, ReallyNewIns=NULL;
-  ShortEdges LastEdge, TempEdges;
-  ShortEdges NewEdges;
-  ShortEdges PresentEdgeList;
+  StateList ReallyNewOuts=NULL, ReallyNewIns=NULL;
   int innumber, ans, previnnumber;
-  int numFreshIns;
   int outnumber;
   int i;
-  int t, edgecount=0;
+  int edgecount=0;
   numIns=0;
   numOuts=0;
-  int a;
   int numNewIns=0;
   int numNewOuts=0;
   StateList PresentIn, PresentOut;
   EdgeList=PrependEdge(0,1,NULL);
-  LastEdge=EdgeList;
-  NewEdges=NULL;
   PrevOuts=NULL;
   PrevIns=NULL;
   NewIns=malloc(sizeof(StateNode));
@@ -1234,38 +1226,38 @@ int NullHomologousD0Q(State init)
     outnumber=0;
     PresentOut=NewOuts;
     while (PresentOut!=NULL) {
-	outnumber++;
-	ReallyNewIns=NewRectanglesOutOf(PrevIns,PresentOut->data);
-	while (ReallyNewIns!=NULL) {
-	  innumber=GetNumber(ReallyNewIns->data,NewIns);
-	  if (innumber==0) {
-	    if (numNewIns==0) {
-	      NewIns=ReallyNewIns;
-	      ReallyNewIns=ReallyNewIns->nextState;
-	      NewIns->nextState=NULL;
-	      LastNewIn=NewIns;
-	      numNewIns++;
-	      innumber=numNewIns;
-	    }
-	    else {
-	      LastNewIn->nextState=ReallyNewIns;
-	      ReallyNewIns=ReallyNewIns->nextState;
-	      LastNewIn=LastNewIn->nextState;
-	      LastNewIn->nextState=NULL;
-	      numNewIns++;
-	      innumber=numNewIns;
-	    };
-	  }
-	  else {
-	    Temp=ReallyNewIns;
-	    ReallyNewIns=ReallyNewIns->nextState;
-	    free(Temp);
-	  }
-	  EdgeList=AppendOrdered(outnumber+numOuts,innumber+numIns,
-					EdgeList);
-	  edgecount++;
-	};
-	PresentOut=PresentOut->nextState;
+      outnumber++;
+      ReallyNewIns=NewRectanglesOutOf(PrevIns,PresentOut->data);
+      while (ReallyNewIns!=NULL) {
+        innumber=GetNumber(ReallyNewIns->data,NewIns);
+        if (innumber==0) {
+          if (numNewIns==0) {
+            NewIns=ReallyNewIns;
+            ReallyNewIns=ReallyNewIns->nextState;
+            NewIns->nextState=NULL;
+            LastNewIn=NewIns;
+            numNewIns++;
+            innumber=numNewIns;
+          }
+          else {
+            LastNewIn->nextState=ReallyNewIns;
+            ReallyNewIns=ReallyNewIns->nextState;
+            LastNewIn=LastNewIn->nextState;
+            LastNewIn->nextState=NULL;
+            numNewIns++;
+            innumber=numNewIns;
+          };
+        }
+        else {
+          Temp=ReallyNewIns;
+          ReallyNewIns=ReallyNewIns->nextState;
+          free(Temp);
+        }
+        EdgeList=AppendOrdered(outnumber+numOuts,innumber+numIns,
+                               EdgeList);
+        edgecount++;
+      };
+      PresentOut=PresentOut->nextState;
     };
     FreeStateList(PrevOuts);
     PrevOuts=NewOuts;
@@ -1297,23 +1289,18 @@ int NullHomologousD1Q(State init)
 {
   StateList NewIns, NewOuts, LastNewIn, LastNewOut, Temp;
   StateList PrevIns, PrevOuts;
-  StateList ReallyNewOuts=NULL, PrevReallyNewOuts=NULL, ReallyNewIns=NULL;
-  ShortEdges LastEdge, TempEdges;
-  ShortEdges NewEdges;
-  ShortEdges PresentEdgeList;
+  StateList ReallyNewOuts=NULL, ReallyNewIns=NULL;
+  ShortEdges LastEdge;
   int innumber, ans, previnnumber;
-  int numFreshIns;
   int outnumber;
   int i;
-  int t, edgecount=0;
+  int edgecount=0;
   numIns=0;
   numOuts=0;
-  int a;
   int numNewIns=0;
   int numNewOuts=0;
   StateList PresentIn, PresentOut;
   LastEdge=EdgeList;
-  NewEdges=NULL;
   PrevOuts=NULL;
   PrevIns=NULL;
   NewIns=FixedWtRectanglesOutOf(1,init);
@@ -1383,38 +1370,38 @@ int NullHomologousD1Q(State init)
     outnumber=0;
     PresentOut=NewOuts;
     while (PresentOut!=NULL) {
-	outnumber++;
-	ReallyNewIns=NewRectanglesOutOf(PrevIns,PresentOut->data);
-	while (ReallyNewIns!=NULL) {
-	  innumber=GetNumber(ReallyNewIns->data,NewIns);
-	  if (innumber==0) {
-	    if (numNewIns==0) {
-	      NewIns=ReallyNewIns;
-	      ReallyNewIns=ReallyNewIns->nextState;
-	      NewIns->nextState=NULL;
-	      LastNewIn=NewIns;
-	      numNewIns++;
-	      innumber=numNewIns;
-	    }
-	    else {
-	      LastNewIn->nextState=ReallyNewIns;
-	      ReallyNewIns=ReallyNewIns->nextState;
-	      LastNewIn=LastNewIn->nextState;
-	      LastNewIn->nextState=NULL;
-	      numNewIns++;
-	      innumber=numNewIns;
-	    };
-	  }
-	  else {
-	    Temp=ReallyNewIns;
-	    ReallyNewIns=ReallyNewIns->nextState;
-	    free(Temp);
-	  }
-	  EdgeList=AppendOrdered(outnumber+numOuts,innumber+numIns,
-					EdgeList);
-	  edgecount++;
-	};
-	PresentOut=PresentOut->nextState;
+      outnumber++;
+      ReallyNewIns=NewRectanglesOutOf(PrevIns,PresentOut->data);
+      while (ReallyNewIns!=NULL) {
+        innumber=GetNumber(ReallyNewIns->data,NewIns);
+        if (innumber==0) {
+          if (numNewIns==0) {
+            NewIns=ReallyNewIns;
+            ReallyNewIns=ReallyNewIns->nextState;
+            NewIns->nextState=NULL;
+            LastNewIn=NewIns;
+            numNewIns++;
+            innumber=numNewIns;
+          }
+          else {
+            LastNewIn->nextState=ReallyNewIns;
+            ReallyNewIns=ReallyNewIns->nextState;
+            LastNewIn=LastNewIn->nextState;
+            LastNewIn->nextState=NULL;
+            numNewIns++;
+            innumber=numNewIns;
+          };
+        }
+        else {
+          Temp=ReallyNewIns;
+          ReallyNewIns=ReallyNewIns->nextState;
+          free(Temp);
+        }
+        EdgeList=AppendOrdered(outnumber+numOuts,innumber+numIns,
+                               EdgeList);
+        edgecount++;
+      };
+      PresentOut=PresentOut->nextState;
     };
     FreeStateList(PrevOuts);
     PrevOuts=NewOuts;
@@ -1444,21 +1431,18 @@ void CreateD1Graph (State init)
 {
   StateList NewIns, NewOuts, LastNewIn, LastNewOut, Temp;
   StateList PrevIns, PrevOuts;
-  StateList ReallyNewOuts=NULL, PrevReallyNewOuts=NULL, ReallyNewIns=NULL;
+  StateList ReallyNewOuts=NULL, ReallyNewIns=NULL;
   ShortEdges LastEdge;
-  ShortEdges NewEdges;
   ShortEdges PresentEdgeList;
   int innumber;
   int outnumber;
   int i;
-  int t, edgecount=0;
+  int edgecount=0;
   numIns=0;
   numOuts=0;
-  int a;
   int numNewIns=0;
   int numNewOuts=0;
   StateList PresentIn, PresentOut;
-  NewEdges=NULL;
   PrevOuts=NULL;
   PrevIns=NULL;
   NewIns=FixedWtRectanglesOutOf(1,init);
@@ -1525,38 +1509,38 @@ void CreateD1Graph (State init)
     outnumber=0;
     PresentOut=NewOuts;
     while (PresentOut!=NULL) {
-	outnumber++;
-	ReallyNewIns=NewRectanglesOutOf(PrevIns,PresentOut->data);
-	while (ReallyNewIns!=NULL) {
-	  innumber=GetNumber(ReallyNewIns->data,NewIns);
-	  if (innumber==0) {
-	    if (numNewIns==0) {
-	      NewIns=ReallyNewIns;
-	      ReallyNewIns=ReallyNewIns->nextState;
-	      NewIns->nextState=NULL;
-	      LastNewIn=NewIns;
-	      numNewIns++;
-	      innumber=numNewIns;
-	    }
-	    else {
-	      LastNewIn->nextState=ReallyNewIns;
-	      ReallyNewIns=ReallyNewIns->nextState;
-	      LastNewIn=LastNewIn->nextState;
-	      LastNewIn->nextState=NULL;
-	      numNewIns++;
-	      innumber=numNewIns;
-	    };
-	  }
-	  else {
-	    Temp=ReallyNewIns;
-	    ReallyNewIns=ReallyNewIns->nextState;
-	    free(Temp);
-	  }
-	  PresentEdgeList=AppendOrdered(outnumber+numOuts,innumber+numIns,
-					PresentEdgeList);
-	  edgecount++;
-	};
-	PresentOut=PresentOut->nextState;
+      outnumber++;
+      ReallyNewIns=NewRectanglesOutOf(PrevIns,PresentOut->data);
+      while (ReallyNewIns!=NULL) {
+        innumber=GetNumber(ReallyNewIns->data,NewIns);
+        if (innumber==0) {
+          if (numNewIns==0) {
+            NewIns=ReallyNewIns;
+            ReallyNewIns=ReallyNewIns->nextState;
+            NewIns->nextState=NULL;
+            LastNewIn=NewIns;
+            numNewIns++;
+            innumber=numNewIns;
+          }
+          else {
+            LastNewIn->nextState=ReallyNewIns;
+            ReallyNewIns=ReallyNewIns->nextState;
+            LastNewIn=LastNewIn->nextState;
+            LastNewIn->nextState=NULL;
+            numNewIns++;
+            innumber=numNewIns;
+          };
+        }
+        else {
+          Temp=ReallyNewIns;
+          ReallyNewIns=ReallyNewIns->nextState;
+          free(Temp);
+        }
+        PresentEdgeList=AppendOrdered(outnumber+numOuts,innumber+numIns,
+                                      PresentEdgeList);
+        edgecount++;
+      };
+      PresentOut=PresentOut->nextState;
     };
     if (PresentEdgeList!=NULL) {
       LastEdge->nextPtr=PresentEdgeList;
