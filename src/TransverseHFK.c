@@ -184,7 +184,7 @@ int Omain()
   return 0;
 }
 
-int main(int argc, const char* argv[])
+int main(int argc, const char** argv)
 {
   char UR[ArcIndex];
   int i;
