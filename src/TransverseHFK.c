@@ -8,8 +8,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define True 1
-#define False 0
+#include <stdbool.h>
+#include <argp.h>
 
 /* A transverse knot is specified by its ArcIndex, and the vector of
  * y-coordinates of the Xs and Os. */
@@ -23,9 +23,9 @@
 
 /* Figure 2 */
 /* m(10_132) L_1: LL not null-homologous, UR null-homologous */
-#define ArcIndex 10
-char Xs[ArcIndex] = {10, 3, 8, 4, 1, 7, 9, 5, 6, 2};
-char Os[ArcIndex] = {5, 9, 1, 2, 3, 10, 6, 8, 4, 7};
+//#define ArcIndex 10
+//char Xs[ArcIndex] = {10, 3, 8, 4, 1, 7, 9, 5, 6, 2};
+//char Os[ArcIndex] = {5, 9, 1, 2, 3, 10, 6, 8, 4, 7};
 /* 10_132 L_2: UR not null-homologous, LL null-homologous */
 /* #define ArcIndex 10 */
 /* char Xs[ArcIndex]={10,5,8,6,3,7,2,4,9,1};*/
@@ -33,9 +33,9 @@ char Os[ArcIndex] = {5, 9, 1, 2, 3, 10, 6, 8, 4, 7};
 
 /* Figure 3 */
 /* m(12n200) L_1': LL not null-homologous, UR null-homologous */
-/* #define ArcIndex 12 */
-/* char Xs[ArcIndex]={12,5,10,6,3,4,1,9,11,7,8,2};*/
-/* char Os[ArcIndex]={7,11,1,4,5,2,3,12,8,10,6,9};*/
+#define ArcIndex 12 
+char Xs[ArcIndex]={12,5,10,6,3,4,1,9,11,7,8,2};
+char Os[ArcIndex]={7,11,1,4,5,2,3,12,8,10,6,9};
 /* m(12n200) L_2': UR not null-homologous, LL null-homologous */
 /* #define ArcIndex 12 */
 /* char Xs[ArcIndex]={12,7,10,8,5,6,3,9,2,4,11,1}; */
@@ -82,10 +82,6 @@ struct vertex {
 
 typedef struct vertex Vertex;
 typedef Vertex *VertexList;
-FILE *output;
-
-int ThisStart;
-int ThisEnd;
 
 struct shortEdgeNode {
   int start;
@@ -96,8 +92,6 @@ struct shortEdgeNode {
 typedef struct shortEdgeNode ShortEdgeNode;
 typedef ShortEdgeNode *ShortEdges;
 ShortEdges EdgeList;
-int numIns;
-int numOuts;
 
 typedef struct stateNode StateNode;
 typedef StateNode *StateList;
@@ -146,7 +140,6 @@ ShortEdges CreateEdge(int a, int b);
 void PrintMathEdgesA(ShortEdges edges);
 
 // Added function prototypes
-int Omain(void);
 int NullHomologousD0Q(State init);
 int NullHomologousD1Q(State init);
 int NESWpO(char *x);
@@ -154,35 +147,6 @@ int NESWOp(char *x);
 int NESWpp(char *x);
 
 int EqState(State a, State b) { return (!strncmp(a, b, ArcIndex)); }
-
-int Omain() {
-  char UR[ArcIndex];
-  int i;
-
-  printf("\n \nCalculating graph for UR invariant\n");
-  if (Xs[ArcIndex - 1] == ArcIndex) {
-    UR[0] = 1;
-  } else {
-    UR[0] = (char)Xs[ArcIndex - 1] + 1;
-  };
-  i = 1;
-  while (i <= ArcIndex - 1) {
-    if (Xs[i - 1] == ArcIndex) {
-      UR[i] = 1;
-    } else {
-      UR[i] = Xs[i - 1] + 1;
-    }
-    i++;
-  }
-  PrintState(UR);
-  if (NullHomologousD0Q(UR)) {
-    printf("UR is null-homologous\n");
-  } else {
-    printf("UR is NOT null-homologous");
-  };
-
-  return 0;
-}
 
 int main(int argc, const char **argv) {
   char UR[ArcIndex];
@@ -252,10 +216,13 @@ int main(int argc, const char **argv) {
 }
 
 int mod(int a, int b) {
-  if (a < b) {
+  return a % b;
+  /* old code
+    if (a < b) {
     return a;
   } else
-    return mod(a - b, b);
+  return mod(a - b, b);
+  */
 }
 
 int Mod(int a) {
@@ -265,7 +232,7 @@ int Mod(int a) {
     return (a + ArcIndex);
   } else {
     return (a);
-  };
+    };
 }
 
 int ModUp(int a) {
@@ -1157,8 +1124,8 @@ int NullHomologousD0Q(State init) {
   int outnumber;
   int i;
   int edgecount = 0;
-  numIns = 0;
-  numOuts = 0;
+  int numIns = 0;
+  int numOuts = 0;
   int numNewIns = 0;
   int numNewOuts = 0;
   StateList PresentIn, PresentOut;
@@ -1283,8 +1250,8 @@ int NullHomologousD1Q(State init) {
   int outnumber;
   int i;
   int edgecount = 0;
-  numIns = 0;
-  numOuts = 0;
+  int numIns = 0;
+  int numOuts = 0;
   int numNewIns = 0;
   int numNewOuts = 0;
   StateList PresentIn, PresentOut;
@@ -1420,8 +1387,8 @@ void CreateD1Graph(State init) {
   int outnumber;
   int i;
   int edgecount = 0;
-  numIns = 0;
-  numOuts = 0;
+  int numIns = 0;
+  int numOuts = 0;
   int numNewIns = 0;
   int numNewOuts = 0;
   StateList PresentIn, PresentOut;
