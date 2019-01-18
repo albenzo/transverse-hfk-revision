@@ -4,6 +4,10 @@
    in "Legendrian knots, transverse knots, and combinatorial Floer homology"
    by P. S. Ozsvath, Z. Szabo, and D. P. Thurston*/
 
+/* In progress cleanup of the above listed file by
+ * Lucas Meyers <lmeye22@lsu.edu>
+*/
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
