@@ -17,7 +17,7 @@
 
 /* Hardcoded max arcindex until dynamic allocation can be tested for
  * speed */
-#define MAX_INDEX 20
+#define MAX_INDEX 30
 
 const char* argp_program_version = "transverseHFK revision 0.0.1";
 const char* argp_program_bug_address = "<lmeye22@lsu.edu>";
