@@ -6,7 +6,7 @@
 
 /* In progress cleanup of the above listed file by
  * Lucas Meyers <lmeye22@lsu.edu>
-*/
+ */
 
 #include <math.h>
 #include <stdio.h>
@@ -15,69 +15,37 @@
 #include <stdbool.h>
 #include <argp.h>
 
-/* A transverse knot is specified by its ArcIndex, and the vector of
- * y-coordinates of the Xs and Os. */
+/* Hardcoded max arcindex until dynamic allocation can be tested for
+ * speed */
+#define MAX_INDEX 20
 
-/*
-  These are the examples cited in the paper. To run the program
-  on any example, simply comment out the three lines below defining
-  m(10_132) L_1, and uncomment the corresponding three lines defining
-  the desired knot.
-*/
+const char* argp_program_version = "transverseHFK revision 0.0.0";
+const char* argp_program_bug_address = "<lmeye22@lsu.edu>";
+static const char doc[] =
+  "A program to calculate the Legendrian/Transverse knot invariants\
+ via the algorithm described in \"Transverse knots distinguished by\
+ Knot Floer Homology\" by L. Ng, P. S. Ozsvath, and D. P. Thurston.";
 
-/* Figure 2 */
-/* m(10_132) L_1: LL not null-homologous, UR null-homologous */
-//#define ArcIndex 10
-//char Xs[ArcIndex] = {10, 3, 8, 4, 1, 7, 9, 5, 6, 2};
-//char Os[ArcIndex] = {5, 9, 1, 2, 3, 10, 6, 8, 4, 7};
-/* 10_132 L_2: UR not null-homologous, LL null-homologous */
-/* #define ArcIndex 10 */
-/* char Xs[ArcIndex]={10,5,8,6,3,7,2,4,9,1};*/
-/* char Os[ArcIndex]={7,9,3,4,5,1,6,10,2,8};*/
+static const char args_doc[] = "-i [ArcIndex] -X [Xs] -O [Os]";
 
-/* Figure 3 */
-/* m(12n200) L_1': LL not null-homologous, UR null-homologous */
-#define ArcIndex 12 
-char Xs[ArcIndex]={12,5,10,6,3,4,1,9,11,7,8,2};
-char Os[ArcIndex]={7,11,1,4,5,2,3,12,8,10,6,9};
-/* m(12n200) L_2': UR not null-homologous, LL null-homologous */
-/* #define ArcIndex 12 */
-/* char Xs[ArcIndex]={12,7,10,8,5,6,3,9,2,4,11,1}; */
-/* char Os[ArcIndex]={9,11,3,6,7,4,5,1,8,12,2,10}; */
+static struct argp_option options[]
+= {
+   {"verbose", 'v',          0, 0, "Produce verbose output", 0},
+   {"quiet",   'q',          0, 0, "Don't produce extraneous output", 0},
+   {"index",   'i', "ArcIndex", 0, "ArcIndex of the grid", 0},
+   {0,         'X',       "Xs", 0, "List of Xs", 0},
+   {0,         'O',       "Os", 0, "List of Os", 0},
+   {0}
+};
 
-/* Figure 4 */
-/* P(-4,-3,3) L_1: D1[LL] not null-hom, D1[UR] null-hom */
-/* #define ArcIndex 9 */
-/* char Xs[ArcIndex]={9,8,1,4,6,5,7,2,3}; */
-/* char Os[ArcIndex]={4,2,5,7,9,8,3,6,1}; */
-/* P(-4,-3,3) L_2: D1[LL], D1[UR] not null-hom */
-/* #define ArcIndex 9 */
-/*char Xs[ArcIndex]={9,8,2,4,6,5,3,7,1};*/
-/*char Os[ArcIndex]={4,3,5,7,9,8,1,2,6};*/
+// Temporary location
+static error_t parse_opt(int,char*,struct argp_state*);
+static struct argp argp = {options, parse_opt, args_doc, doc, 0, 0, 0};
 
-/* Figure 5 */
-/* P(-6,-3,3) L_1': D1[LL], D1[UR] null-hom */
-/* #define ArcIndex 11 */
-/* char Xs[ArcIndex]={11,10,4,5,1,6,8,7,9,2,3}; */
-/* char Os[ArcIndex]={6,5,7,2,4,9,11,10,3,8,1}; */
-/* P(-6,-3,3) L_2': D1[LL] null-hom, D1[UR] not null-hom */
-/* #define ArcIndex 11 */
-/* char Xs[ArcIndex]={11,10,4,5,2,6,8,7,3,9,1}; */
-/* char Os[ArcIndex]={6,5,7,3,4,9,11,10,1,2,8}; */
-
-/* Figure 6 */
-/* The following grid diagram is Legendrian isotopic to the REVERSE of L_1 */
-/* The isotopy is easily checked using Gridlink */
-/* LL null-homologous, UR not null-homologous */
-/* #define ArcIndex 17 */
-/* char Xs[ArcIndex]={1,11,15,14,3,7,2,8,16,5,4,10,9,17,6,13,12}; */
-/* char Os[ArcIndex]={10,17,9,6,13,11,12,1,7,15,14,3,2,8,16,5,4}; */
-/* The following grid diagram is Legendrian isotopic to the REVERSE of L_2 */
-/* The isotopy is easily checked using Gridlink */
-/* LL, UR not null-homologous */
-/* #define ArcIndex 17 */
-/* char Xs[ArcIndex]={11,10,16,15,5,12,1,17,7,6,13,2,8,3,9,14,4}; */
-/* char Os[ArcIndex]={3,2,9,8,14,4,11,10,16,15,5,12,1,7,17,6,13}; */
+bool verbose = false;
+int ArcIndex = -1;
+char Xs[MAX_INDEX] = {};
+char Os[MAX_INDEX] = {};
 
 struct vertex {
   int data;
@@ -101,11 +69,11 @@ typedef struct stateNode StateNode;
 typedef StateNode *StateList;
 
 struct stateNode {
-  char data[ArcIndex];
+  char data[MAX_INDEX];
   StateList nextState;
 };
 
-typedef char State[ArcIndex];
+typedef char State[MAX_INDEX];
 
 StateList BigIns;
 StateList BigOuts;
@@ -115,56 +83,130 @@ VertexList outs;
 
 ShortEdges AddModTwo(int a, int b, ShortEdges edges);
 ShortEdges AddModTwoLists(VertexList kids, VertexList parents);
-StateList FixedWtRectanglesOutOf(int wt, State incoming);
 VertexList PrependVertex(int a, VertexList v);
 ShortEdges PrependEdge(int a, int b, ShortEdges e);
+StateList FixedWtRectanglesOutOf(int wt, State incoming);
 StateList RectanglesOutOf(State incoming);
 StateList RectanglesInto(State incoming);
 StateList SwapCols(int x1, int x2, State incoming);
-void PrintState(State state);
-void PrintStateShort(State state);
 int GetNumber(State a, StateList b);
 void FreeStateList(StateList States);
+int NullHomologousD0Q(State init);
+int NullHomologousD1Q(State init);
 void Homology(void);
 void SpecialHomology(int init, int final);
 void Contract(int a, int b);
 VertexList RemoveVertex(int a, VertexList v);
-void FreeVertexList(VertexList vertices);
 void CreateD0Graph(State init);
 void CreateD1Graph(State init);
-void FreeShortEdges(ShortEdges e);
-void PrintEdges(void);
-void PrintStates(StateList states);
-void PrintMathEdges(void);
-void PrintVertices(VertexList vlist);
 StateList CreateStateNode(State state);
-StateList RemoveState(State a, StateList v);
 ShortEdges CreateEdge(int a, int b);
+void FreeVertexList(VertexList vertices);
+void FreeShortEdges(ShortEdges e);
+StateList RemoveState(State a, StateList v);
 
-void PrintMathEdgesA(ShortEdges edges);
-
-// Added function prototypes
-int NullHomologousD0Q(State init);
-int NullHomologousD1Q(State init);
 int NESWpO(char *x);
 int NESWOp(char *x);
 int NESWpp(char *x);
 
+void PrintState(State state);
+void PrintStateShort(State state);
+void PrintEdges(void);
+void PrintStates(StateList states);
+void PrintMathEdges(void);
+void PrintMathEdgesA(ShortEdges edges);
+void PrintVertices(VertexList vlist);
+
+int buildPermutation(char*,char*);
 int EqState(State a, State b) { return (!strncmp(a, b, ArcIndex)); }
 
-int main(int argc, const char **argv) {
+static error_t parse_opt(int key, char *arg, struct argp_state *state)
+{
+  switch(key){
+  case 'v':
+    verbose=true;
+    break;
+  case 'q':
+    verbose=false;
+    break;
+  case 'i':
+    ArcIndex = atoi(arg);
+    if(ArcIndex > MAX_INDEX || ArcIndex < 2) {
+      argp_failure(state,0,0,"ArcIndex value out of range");
+      exit(1);
+    }
+    break;
+  case 'X':
+    if (-1 == buildPermutation(Xs,arg)) {
+      argp_failure(state,0,0,"Malformated Xs");
+      exit(1);
+    }
+    break;
+  case 'O':
+    if(-1 ==buildPermutation(Os,arg)) {
+      argp_failure(state,0,0,"Malformated Os");
+      exit(1);
+    }
+    break;
+  default:
+    break;
+  }
+  return 0;
+}
+
+int buildPermutation(char* perm, char* str)
+{
+  if (str[0] != '[') {
+    return -1;
+  }
+
+  char* s = &str[1];
+  long n=-1;
+  int i=0;
+
+  while(i < MAX_INDEX) {
+    errno = 0;
+    n = strtol(s,&s, 10);
+
+    if ((errno == ERANGE && (n == LONG_MAX || n == LONG_MIN))
+        || (errno != 0 && n == 0)
+        || (n < 1 || n > MAX_INDEX)) {
+      return -1;
+    }
+    
+    perm[i] = n;
+    ++i;
+    
+    if(s[0] == ']') {
+      break;
+    }
+    else if(s[0] ==',') {
+      ++s;
+    }
+  }
+
+  return 0;
+}
+
+int main(int argc, char **argv) {
+  argp_parse(&argp, argc, argv, 0,0,0);
+
   char UR[ArcIndex];
   int i;
 
-  printf("\n \nCalculating graph for LL invariant\n");
-  PrintState(Xs);
+  if(verbose) {
+    printf("\n \nCalculating graph for LL invariant\n");
+    PrintState(Xs);
+  }
   if (NullHomologousD0Q(Xs)) {
     printf("LL is null-homologous\n");
   } else {
-    printf("LL is NOT null-homologous");
+    printf("LL is NOT null-homologous\n");
   }
 
-  printf("\n \nCalculating graph for UR invariant\n");
+  if(verbose) {
+    printf("\n \nCalculating graph for UR invariant\n");
+  }
   if (Xs[ArcIndex - 1] == ArcIndex) {
     UR[0] = 1;
   } else {
@@ -179,22 +221,32 @@ int main(int argc, const char **argv) {
     }
     i++;
   }
-  PrintState(UR);
+
+  if(verbose) {
+    PrintState(UR);      
+  }
+  
   if (NullHomologousD0Q(UR)) {
     printf("UR is null-homologous\n");
   } else {
-    printf("UR is NOT null-homologous");
+    printf("UR is NOT null-homologous\n");
   };
 
-  printf("\n \nCalculating graph for D1[LL] invariant\n");
-  PrintState(Xs);
+  if(verbose) {
+    printf("\n \nCalculating graph for D1[LL] invariant\n");
+    PrintState(Xs);
+  }
+  
   if (NullHomologousD1Q(Xs)) {
     printf("D1[LL] is null-homologous\n");
   } else {
-    printf("D1[LL] is NOT null-homologous");
+    printf("D1[LL] is NOT null-homologous\n");
   }
 
-  printf("\n \nCalculating graph for D1[UR] invariant\n");
+  if(verbose) {
+    printf("\n \nCalculating graph for D1[UR] invariant\n");
+  }
+  
   if (Xs[ArcIndex - 1] == ArcIndex) {
     UR[0] = 1;
   } else {
@@ -209,7 +261,11 @@ int main(int argc, const char **argv) {
     }
     i++;
   }
-  PrintState(UR);
+
+  if(verbose) {
+    PrintState(UR);
+  }
+  
   if (NullHomologousD1Q(UR)) {
     printf("D1[UR] is null-homologous\n");
   } else {
@@ -416,39 +472,6 @@ StateList SwapCols(int x1, int x2, char *incoming) {
   ans->data[x2] = (incoming)[x1];
   ans->nextState = NULL;
   return ans;
-}
-
-void oldPrintState(State state) {
-  int i, j;
-  i = 0;
-  j = 0;
-  while (i < ArcIndex) {
-    j = 0;
-    while (j < ArcIndex) {
-      if (Xs[i] == j) {
-        printf("  X  ");
-      } else {
-        if (Os[i] == j) {
-          printf("  O  ");
-        } else {
-          printf("  -  ");
-        };
-      };
-      j++;
-    };
-    printf("\n");
-    j = 0;
-    while (j < ArcIndex) {
-      if (state[i] == j) {
-        printf("*    ");
-      } else {
-        printf("     ");
-      };
-      j++;
-    };
-    printf("\n");
-    i++;
-  };
 }
 
 int LengthStateList(StateList states) {
@@ -798,7 +821,7 @@ void SpecialHomology(int init, int final) {
     while ((Temp != NULL) && (Temp->end > final)) {
       Temp = Temp->nextPtr;
     };
-    if (j == 100) {
+    if (verbose && j == 100) {
       j = 0;
       if (Temp != NULL)
         printf("Iteration number %d; Contracting edge starting at (%d,%d)\n", i,
@@ -1239,7 +1262,9 @@ int NullHomologousD0Q(State init) {
       NewIns = NULL;
     } else {
       numOuts = numOuts + outnumber;
-      printf("%d %d %d\n", numIns, numOuts, edgecount);
+      if(verbose) {
+        printf("%d %d %d\n", numIns, numOuts, edgecount);
+      }
     };
   };
   return (ans);
@@ -1375,7 +1400,9 @@ int NullHomologousD1Q(State init) {
       NewIns = NULL;
     } else {
       numOuts = numOuts + outnumber;
-      printf("%d %d %d\n", numIns, numOuts, edgecount);
+      if(verbose) {
+        printf("%d %d %d\n", numIns, numOuts, edgecount);
+      }
     };
   };
   return (ans);
@@ -1503,7 +1530,9 @@ void CreateD1Graph(State init) {
     PrevOuts = NewOuts;
     NewOuts = NULL;
     numOuts = numOuts + outnumber;
-    printf("%d %d %d\n", numIns, numOuts, edgecount);
+    if(verbose) {
+      printf("%d %d %d\n", numIns, numOuts, edgecount);
+    }
   };
 }
 
