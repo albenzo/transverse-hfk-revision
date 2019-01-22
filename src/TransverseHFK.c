@@ -19,7 +19,7 @@
  * speed */
 #define MAX_INDEX 20
 
-const char* argp_program_version = "transverseHFK revision 0.0.0";
+const char* argp_program_version = "transverseHFK revision 0.0.1";
 const char* argp_program_bug_address = "<lmeye22@lsu.edu>";
 static const char doc[] =
   "A program to calculate the Legendrian/Transverse knot invariants\

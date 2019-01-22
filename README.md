@@ -6,20 +6,25 @@ linked in the paper "Transverse knots distinguished by Knot Floer Homology"
 by L. Ng, P. S. Ozsvath, and D. P. Thurston.
 
 ## Usage
-Currently in order to change set the knot you must edit the file
-src/TransverseHFK.c and set the lines
-```
-#define ArcIndex <grid size>
-char Xs[ArcIndex] = {<Locations of the Xs seperated by commas>};
-char Os[ArcIndex] = {<Locations of the Os seperated by commas>};
-```
-Go to the root directory of the repo and run
+To compile the code enter the root directory of the repo and run
 ```
 make
 ```
-followed by
+The program will calculate whether or not x^-, x^+, delta_1(x^-), and delta_1(x^+) 
+are null-homologous for the supplied knot. 
+
+The program usage is
 ```
-./transverseHFK
+transverseHFK -i <ArcIndex> -X <List of Xs> -O <List of Os>
 ```
-or the equivalent on your system. The program will calculate
-whether or not x^-, x^+, delta_1(x^-), and delta_1(x^+) are null-homologous. 
+where the three parameters specify a knot via its grid diagram. Currently the
+two lists must be input in the form `[0,1,2,3,4,5,6,7,8,9]` with no spaces.
+
+## Sample Output
+```
+$ transverseHFK -i 10 -X [10,5,8,6,3,7,2,4,9,1] -O [7,9,3,4,5,1,6,10,2,8]
+    LL is null-homologous
+    UR is NOT null-homologous
+    D1[LL] is null-homologous
+    D1[UR] is NOT null-homologous
+```
