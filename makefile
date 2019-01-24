@@ -15,17 +15,18 @@ test: test_m10_132 test_10_132 test_1_m12n200 test_2_m12n200 test_p1_-4_-3_3 tes
 test_long: test 
 
 test_m10_132:
-
+	./transverseHFK `cat test/m10_132.in)` | diff -q test/m10_132.out - > /dev/null || (echo "Target $@ failed" && exit 1)
 test_10_132:
-
+	./transverseHFK `cat test/10_132.in)` | diff -q test/10_132.out - > /dev/null || (echo "Target $@ failed" && exit 1)
 test_1_m12n200:
-
+	./transverseHFK `cat test/1_m12n200.in)` | diff -q test/1_m12n200.out - > /dev/null || (echo "Target $@ failed" && exit 1)
 test_2_m12n200:
-
+	./transverseHFK `cat test/2_m12n200.in)` | diff -q test/2_m12n200.out - > /dev/null || (echo "Target $@ failed" && exit 1)
 test_p1_-4_-3_3:
-
+	./transverseHFK `cat test/p1_-4_-3_3.in)` | diff -q test/p1_-4_-3_3.out - > /dev/null || (echo "Target $@ failed" && exit 1)
 test_p2_-4_-3_3:
-
+	./transverseHFK `cat test/p2_-4_-3_3.in)` | diff -q test/p2_-4_-3_3.out - > /dev/null || (echo "Target $@ failed" && exit 1)
 test_p1_-6_-3_3:
-
+	./transverseHFK `cat test/p1_-6_-3_3.in` | diff -q test/p1_-6_-3_3.out - > /dev/null || (echo "Target $@ failed" && exit 1)
 test_p2_-6_-3_3:
+	./transverseHFK `cat test/p2_-6_-3_3.in` | diff -q test/p2_-6_-3_3.out - > /dev/null || (echo "Target $@ failed" && exit 1)
