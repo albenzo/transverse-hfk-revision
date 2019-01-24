@@ -10,13 +10,22 @@ transverseHFK: src/TransverseHFK.c
 clean:
 	rm -f transverseHFK
 
-test: test_m10_132 test_m12n200 test_p_-4_-3_3 test_p1_-6_-3_3 test_p2_-6_-3_3 test_pr_-4_-3_3
+test: test_m10_132 test_10_132 test_1_m12n200 test_2_m12n200 test_p1_-4_-3_3 test_p2_-4_-3_3 test_p1_-6_-3_3 test_p2_-6_-3_3
 
 test_long: test 
 
 test_m10_132:
-test_m12n200:
-test_p_-4_-3_3:
+
+test_10_132:
+
+test_1_m12n200:
+
+test_2_m12n200:
+
+test_p1_-4_-3_3:
+
+test_p2_-4_-3_3:
+
 test_p1_-6_-3_3:
+
 test_p2_-6_-3_3:
-test_pr_-4_-3_3:
