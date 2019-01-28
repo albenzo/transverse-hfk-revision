@@ -8,38 +8,36 @@
  * Lucas Meyers <lmeye22@lsu.edu>
  */
 
+#include <argp.h>
 #include <math.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
-#include <argp.h>
 
 /* Hardcoded max arcindex until dynamic allocation can be tested for
  * speed */
 #define MAX_INDEX 30
 
-const char* argp_program_version = "transverseHFK revision 0.0.1";
-const char* argp_program_bug_address = "<lmeye22@lsu.edu>";
+const char *argp_program_version = "transverseHFK revision 0.0.1";
+const char *argp_program_bug_address = "<lmeye22@lsu.edu>";
 static const char doc[] =
-  "A program to calculate the Legendrian/Transverse knot invariants\
+    "A program to calculate the Legendrian/Transverse knot invariants\
  via the algorithm described in \"Transverse knots distinguished by\
  Knot Floer Homology\" by L. Ng, P. S. Ozsvath, and D. P. Thurston.";
 
 static const char args_doc[] = "-i [ArcIndex] -X [Xs] -O [Os]";
 
-static struct argp_option options[]
-= {
-   {"verbose", 'v',          0, 0, "Produce verbose output", 0},
-   {"quiet",   'q',          0, 0, "Don't produce extraneous output", 0},
-   {"index",   'i', "ArcIndex", 0, "ArcIndex of the grid", 0},
-   {0,         'X',       "Xs", 0, "List of Xs", 0},
-   {0,         'O',       "Os", 0, "List of Os", 0},
-   {0}
-};
+static struct argp_option options[] = {
+    {"verbose", 'v', 0, 0, "Produce verbose output", 0},
+    {"quiet", 'q', 0, 0, "Don't produce extraneous output", 0},
+    {"index", 'i', "ArcIndex", 0, "ArcIndex of the grid", 0},
+    {0, 'X', "Xs", 0, "List of Xs", 0},
+    {0, 'O', "Os", 0, "List of Os", 0},
+    {0}};
 
 // Temporary location
-static error_t parse_opt(int,char*,struct argp_state*);
+static error_t parse_opt(int, char *, struct argp_state *);
 static struct argp argp = {options, parse_opt, args_doc, doc, 0, 0, 0};
 
 bool verbose = false;
@@ -117,34 +115,33 @@ void PrintMathEdges(void);
 void PrintMathEdgesA(ShortEdges edges);
 void PrintVertices(VertexList vlist);
 
-int buildPermutation(char*,char*);
+int buildPermutation(char *, char *);
 int EqState(State a, State b) { return (!strncmp(a, b, ArcIndex)); }
 
-static error_t parse_opt(int key, char *arg, struct argp_state *state)
-{
-  switch(key){
+static error_t parse_opt(int key, char *arg, struct argp_state *state) {
+  switch (key) {
   case 'v':
-    verbose=true;
+    verbose = true;
     break;
   case 'q':
-    verbose=false;
+    verbose = false;
     break;
   case 'i':
     ArcIndex = atoi(arg);
-    if(ArcIndex > MAX_INDEX || ArcIndex < 2) {
-      argp_failure(state,0,0,"ArcIndex value out of range");
+    if (ArcIndex > MAX_INDEX || ArcIndex < 2) {
+      argp_failure(state, 0, 0, "ArcIndex value out of range");
       exit(1);
     }
     break;
   case 'X':
-    if (-1 == buildPermutation(Xs,arg)) {
-      argp_failure(state,0,0,"Malformated Xs");
+    if (-1 == buildPermutation(Xs, arg)) {
+      argp_failure(state, 0, 0, "Malformated Xs");
       exit(1);
     }
     break;
   case 'O':
-    if(-1 ==buildPermutation(Os,arg)) {
-      argp_failure(state,0,0,"Malformated Os");
+    if (-1 == buildPermutation(Os, arg)) {
+      argp_failure(state, 0, 0, "Malformated Os");
       exit(1);
     }
     break;
@@ -154,33 +151,30 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
   return 0;
 }
 
-int buildPermutation(char* perm, char* str)
-{
+int buildPermutation(char *perm, char *str) {
   if (str[0] != '[') {
     return -1;
   }
 
-  char* s = &str[1];
-  long n=-1;
-  int i=0;
+  char *s = &str[1];
+  long n = -1;
+  int i = 0;
 
-  while(i < MAX_INDEX) {
+  while (i < MAX_INDEX) {
     errno = 0;
-    n = strtol(s,&s, 10);
+    n = strtol(s, &s, 10);
 
-    if ((errno == ERANGE && (n == LONG_MAX || n == LONG_MIN))
-        || (errno != 0 && n == 0)
-        || (n < 1 || n > MAX_INDEX)) {
+    if ((errno == ERANGE && (n == LONG_MAX || n == LONG_MIN)) ||
+        (errno != 0 && n == 0) || (n < 1 || n > MAX_INDEX)) {
       return -1;
     }
-    
+
     perm[i] = n;
     ++i;
-    
-    if(s[0] == ']') {
+
+    if (s[0] == ']') {
       break;
-    }
-    else if(s[0] ==',') {
+    } else if (s[0] == ',') {
       ++s;
     }
   }
@@ -189,12 +183,12 @@ int buildPermutation(char* perm, char* str)
 }
 
 int main(int argc, char **argv) {
-  argp_parse(&argp, argc, argv, 0,0,0);
+  argp_parse(&argp, argc, argv, 0, 0, 0);
 
   char UR[ArcIndex];
   int i;
 
-  if(verbose) {
+  if (verbose) {
     printf("\n \nCalculating graph for LL invariant\n");
     PrintState(Xs);
   }
@@ -204,7 +198,7 @@ int main(int argc, char **argv) {
     printf("LL is NOT null-homologous\n");
   }
 
-  if(verbose) {
+  if (verbose) {
     printf("\n \nCalculating graph for UR invariant\n");
   }
   if (Xs[ArcIndex - 1] == ArcIndex) {
@@ -222,31 +216,31 @@ int main(int argc, char **argv) {
     i++;
   }
 
-  if(verbose) {
-    PrintState(UR);      
+  if (verbose) {
+    PrintState(UR);
   }
-  
+
   if (NullHomologousD0Q(UR)) {
     printf("UR is null-homologous\n");
   } else {
     printf("UR is NOT null-homologous\n");
   };
 
-  if(verbose) {
+  if (verbose) {
     printf("\n \nCalculating graph for D1[LL] invariant\n");
     PrintState(Xs);
   }
-  
+
   if (NullHomologousD1Q(Xs)) {
     printf("D1[LL] is null-homologous\n");
   } else {
     printf("D1[LL] is NOT null-homologous\n");
   }
 
-  if(verbose) {
+  if (verbose) {
     printf("\n \nCalculating graph for D1[UR] invariant\n");
   }
-  
+
   if (Xs[ArcIndex - 1] == ArcIndex) {
     UR[0] = 1;
   } else {
@@ -262,10 +256,10 @@ int main(int argc, char **argv) {
     i++;
   }
 
-  if(verbose) {
+  if (verbose) {
     PrintState(UR);
   }
-  
+
   if (NullHomologousD1Q(UR)) {
     printf("D1[UR] is null-homologous\n");
   } else {
@@ -292,7 +286,7 @@ int Mod(int a) {
     return (a + ArcIndex);
   } else {
     return (a);
-    };
+  };
 }
 
 int ModUp(int a) {
@@ -1254,7 +1248,7 @@ int NullHomologousD0Q(State init) {
       NewIns = NULL;
     } else {
       numOuts = numOuts + outnumber;
-      if(verbose) {
+      if (verbose) {
         printf("%d %d %d\n", numIns, numOuts, edgecount);
       }
     };
@@ -1392,7 +1386,7 @@ int NullHomologousD1Q(State init) {
       NewIns = NULL;
     } else {
       numOuts = numOuts + outnumber;
-      if(verbose) {
+      if (verbose) {
         printf("%d %d %d\n", numIns, numOuts, edgecount);
       }
     };
@@ -1522,7 +1516,7 @@ void CreateD1Graph(State init) {
     PrevOuts = NewOuts;
     NewOuts = NULL;
     numOuts = numOuts + outnumber;
-    if(verbose) {
+    if (verbose) {
       printf("%d %d %d\n", numIns, numOuts, edgecount);
     }
   };
