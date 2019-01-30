@@ -281,6 +281,7 @@ int main(int argc, char **argv) {
  * a multiple of ArcIndex
  * @param a An integer
  * @return a shifted towards the interval [0,ArcIndex)
+ * @see ArcIndex
  */
 int Mod(int a) {
   if (a >= ArcIndex) {
@@ -297,6 +298,7 @@ int Mod(int a) {
  * a multiple of ArcIndex
  * @param a An integer
  * @return a shifted towards the interval (0,ArcIndex]
+ * @see ArcIndex
  */
 int ModUp(int a) {
   if (a > ArcIndex) {
@@ -323,6 +325,7 @@ int min(int a, int b) {
  * @param incoming the source of rectangles used to generate statelist
  * @return A statelist containing states reached from a rectangle leaving
  * incoming not contained in Prevs.
+ * @see ArcIndex
  */
 StateList NewRectanglesOutOf(StateList Prevs, State incoming) {
   StateList Temp, ans;
@@ -372,6 +375,7 @@ StateList NewRectanglesOutOf(StateList Prevs, State incoming) {
  * leaving incoming
  * @param incoming Initial state for generated rectangles
  * @return list of states reached by a rectangle from incoming.
+ * @see ArcIndex
  */
 StateList RectanglesOutOf(State incoming) {
   StateList Temp, ans;
@@ -403,6 +407,7 @@ StateList RectanglesOutOf(State incoming) {
  * pointing to the state incoming
  * @param incoming State that is the destination for generated rectangles
  * @return StateList containing states with a rectangle to incoming.
+ * @see ArcIndex
  */
 StateList RectanglesInto(State incoming) {
   StateList Temp, ans;
@@ -429,6 +434,14 @@ StateList RectanglesInto(State incoming) {
   return ans;
 }
 
+/**
+ * returns a StateList containing those with a rectangle
+ * pointing to the state incoming that do not overlap with Prevs
+ * @param incoming State that is the destination for generated rectangles
+ * @param Prevs StateList of excluded states
+ * @return StateList containing states with a rectangle to incoming.
+ * @see ArcIndex
+ */
 StateList NewRectanglesInto(StateList Prevs, State incoming) {
   StateList ans, Temp;
   State TempState;
@@ -473,6 +486,16 @@ StateList NewRectanglesInto(StateList Prevs, State incoming) {
   return ans;
 }
 
+/**
+ * Returns a single element statelist containing
+ * the permutation incoming with x1 and x2 swapped
+ * @param x1 an integer between 0 and MAX_INDEX
+ * @param x2 an integer between 0 and MAX_INDEX
+ * @param incoming a permutation
+ * @return a single element StateList containing a copy of
+ * the permutation incoming with entries x1 and x2 swapped
+ * @see ArcIndex
+ */
 StateList SwapCols(int x1, int x2, char *incoming) {
   StateList ans;
   int i;
@@ -489,6 +512,11 @@ StateList SwapCols(int x1, int x2, char *incoming) {
   return ans;
 }
 
+/**
+ * Returns the length of the StateList
+ * @param states a StateList
+ * @return an int equal to the length of states
+ */
 int LengthStateList(StateList states) {
   int c;
   StateList Temp;
@@ -501,6 +529,11 @@ int LengthStateList(StateList states) {
   return c;
 }
 
+/**
+ * Returns the length of a VertexList
+ * @param a VertexList
+ * @return an int equal to the length of states
+ */
 int LengthVertexList(VertexList states) {
   int c;
   VertexList Temp;
@@ -513,6 +546,12 @@ int LengthVertexList(VertexList states) {
   return c;
 }
 
+/**
+ * Prints states in the form "{<state>,...}" up
+ * to the first 500,000 states.
+ * @param states a StateList
+ * @see PrintStateShort
+ */
 void PrintStates(StateList states) {
   StateList Temp;
   int c;
@@ -533,6 +572,12 @@ void PrintStates(StateList states) {
   printf("}");
 }
 
+/**
+ * Prints the permutation of state using one line notation
+ * "{_,_,...}"
+ * @param state a State
+ * @see ArcIndex
+ */
 void PrintStateShort(State state) {
   int i;
   i = 0;
@@ -544,6 +589,13 @@ void PrintStateShort(State state) {
   printf("%d}", state[ArcIndex - 1]);
 }
 
+/**
+ * Prints the permutation of state on the grid specified by
+ * Xs and Os, as well as 2A=M=SL+1.
+ * @param state A state
+ * @see Xs
+ * @see Os
+ */
 void PrintState(State state) {
   int i, j;
   j = ArcIndex;
@@ -579,6 +631,13 @@ void PrintState(State state) {
          NESWpp(Xs) - NESWpO(Xs) - NESWOp(Xs) + NESWpp(Os) + 1);
 }
 
+/**
+ * Returns the index of a State within a StateList
+ * Note: Indexed from 1
+ * @param a State
+ * @param b a StateList
+ * @return index of a within b
+ */
 int GetNumber(State a, StateList b) {
   StateList temp;
   int count = 1;
