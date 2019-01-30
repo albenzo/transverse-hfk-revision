@@ -151,6 +151,13 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
   return 0;
 }
 
+
+/**
+ * Takes in a string and converts it into a permutation.
+ * @param String of the form [_,_,...,_] where _ are integers between 1 and MAX_INDEX
+ * @param Destination for the permutation
+ * @return 0 on success, -1 on failure
+ */
 int buildPermutation(char *perm, char *str) {
   if (str[0] != '[') {
     return -1;
@@ -279,6 +286,12 @@ int mod(int a, int b) {
   */
 }
 
+/**
+ * Shifts the input towards the interval [0,ArcIndex) by
+ * a multiple of ArcIndex
+ * @param a An integer
+ * @return a shifted towards the interval [0,ArcIndex)
+ */
 int Mod(int a) {
   if (a >= ArcIndex) {
     return (a - ArcIndex);
@@ -289,6 +302,12 @@ int Mod(int a) {
   };
 }
 
+/**
+ * Shifts the input towards the interval (0,ArcIndex] by
+ * a multiple of ArcIndex
+ * @param a An integer
+ * @return a shifted towards the interval (0,ArcIndex]
+ */
 int ModUp(int a) {
   if (a > ArcIndex) {
     return (a - ArcIndex);
