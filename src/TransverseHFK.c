@@ -276,16 +276,6 @@ int main(int argc, char **argv) {
   return 0;
 }
 
-int mod(int a, int b) {
-  return a % b;
-  /* old code
-    if (a < b) {
-    return a;
-  } else
-  return mod(a - b, b);
-  */
-}
-
 /**
  * Shifts the input towards the interval [0,ArcIndex) by
  * a multiple of ArcIndex
