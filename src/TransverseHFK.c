@@ -316,6 +316,14 @@ int min(int a, int b) {
   }
 }
 
+/**
+ * Returns a StateList of states where a rectangle exists from incoming
+ * that is not contained in Prevs.
+ * @param Prevs Statelist containing previous states
+ * @param incoming the source of rectangles used to generate statelist
+ * @return A statelist containing states reached from a rectangle leaving
+ * incoming not contained in Prevs.
+ */
 StateList NewRectanglesOutOf(StateList Prevs, State incoming) {
   StateList Temp, ans;
   State TempState;
@@ -359,6 +367,12 @@ StateList NewRectanglesOutOf(StateList Prevs, State incoming) {
   return ans;
 }
 
+/**
+ * Returns a StateList consisting of states that are reached by rectangles
+ * leaving incoming
+ * @param incoming Initial state for generated rectangles
+ * @return list of states reached by a rectangle from incoming.
+ */
 StateList RectanglesOutOf(State incoming) {
   StateList Temp, ans;
   int LL;
@@ -384,6 +398,12 @@ StateList RectanglesOutOf(State incoming) {
   return ans;
 }
 
+/**
+ * returns a StateList containing those with a rectangle
+ * pointing to the state incoming
+ * @param incoming State that is the destination for generated rectangles
+ * @return StateList containing states with a rectangle to incoming.
+ */
 StateList RectanglesInto(State incoming) {
   StateList Temp, ans;
   int LL;
