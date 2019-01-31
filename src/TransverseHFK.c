@@ -1087,29 +1087,6 @@ void Contract(int a, int b) {
 
 /**
  *
- * @param L
- * @return 
- */
-int OrderedQ(VertexList L) {
-  int max = 0;
-  int t; // Is there a point to t?
-  VertexList Temp;
-  Temp = L;
-  while (Temp != NULL) {
-    if (Temp->data < max) {
-      printf("XXXX");
-      scanf("%d", &t);
-      return 0;
-    }
-    max = Temp->data;
-    Temp = Temp->nextVertex;
-  };
-  return 1; // Temp will always be one if we hit this point.
-  // if (Temp==NULL) { return 1; }
-}
-
-/**
- *
  * @param a
  * @param v
  * @return
