@@ -873,11 +873,11 @@ ShortEdges AddModTwo(int a, int b, ShortEdges edges) {
 }
 
 /**
- *
- * @param a
- * @param b
- * @param e
- * @return
+ * Add a new edge to the start of a ShortEdges
+ * @param a an int indictating the source of the edge
+ * @param b an int indictating the destination of the edge
+ * @param e a ShortEdges
+ * @return e with the edge (a,b) at the front
  */
 ShortEdges PrependEdge(int a, int b, ShortEdges e) {
   ShortEdges newPtr;
@@ -889,10 +889,10 @@ ShortEdges PrependEdge(int a, int b, ShortEdges e) {
 }
 
 /**
- *
- * @param a
- * @param b
- * @return
+ * Creates a single element ShortEdge
+ * @param a an int indicating the source of the edge
+ * @param b an int indicating the destination of the edge
+ * @return a single element ShortEdges (a,b)
  */
 ShortEdges CreateEdge(int a, int b) {
   ShortEdges newPtr;
@@ -904,10 +904,11 @@ ShortEdges CreateEdge(int a, int b) {
 }
 
 /**
- *
- * @param a
- * @param vertices
- * @return
+ * Creates a vertex and adds it to the start of the supplied
+ * VertexList
+ * @param a an int specifying the vertex
+ * @param vertices a VertexList
+ * @return a VertexList with a Vertex containing a prepended to vertices
  */
 VertexList PrependVertex(int a, VertexList vertices) {
   VertexList newPtr;
@@ -918,7 +919,7 @@ VertexList PrependVertex(int a, VertexList vertices) {
 }
 
 /**
- *
+ * 
  * @see EdgeList
  */
 void Homology() {
