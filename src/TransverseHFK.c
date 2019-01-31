@@ -154,7 +154,8 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 
 /**
  * Takes in a string and converts it into a permutation.
- * @param String of the form [_,_,...,_] where _ are integers between 1 and MAX_INDEX
+ * @param String of the form [_,_,...,_] where _ are integers
+ * between 1 and MAX_INDEX
  * @param Destination for the permutation
  * @return 0 on success, -1 on failure
  */
