@@ -652,6 +652,12 @@ int GetNumber(State a, StateList b) {
   return 0;
 }
 
+/**
+ * Return a single element StateList with data state
+ * @param state a state to initialize the list
+ * @return a single element StateList containing the data from state.
+ * @see ArcIndex
+ */
 StateList CreateStateNode(State state) {
   StateList ans;
   int i;
@@ -665,6 +671,13 @@ StateList CreateStateNode(State state) {
   return (ans);
 }
 
+/**
+ * Places the given state at the end of the provided StateList
+ * @param state a State
+ * @param rest a StateList
+ * @return appends a stateNode containing state to the end of rest
+ * @see ArcIndex
+ */
 StateList AppendToStateList(State state, StateList rest) {
   StateList NewNode, TTTemp;
   int i;
@@ -687,6 +700,12 @@ StateList AppendToStateList(State state, StateList rest) {
   return rest;
 }
 
+/**
+ *
+ * @param parents
+ * @param kids
+ * @return
+ */
 ShortEdges AddModTwoLists(VertexList parents, VertexList kids) {
   VertexList thiskid, thisparent, tempvert;
   ShortEdges thisedge, tempedge, Prev;
@@ -778,6 +797,13 @@ ShortEdges AddModTwoLists(VertexList parents, VertexList kids) {
   return (ans);
 }
 
+/**
+ *
+ * @param a
+ * @param b
+ * @param edges
+ * @return
+ */
 ShortEdges AppendOrdered(int a, int b, ShortEdges edges) {
   ShortEdges Temp, Prev, curr, ans;
   Prev = edges;
@@ -804,6 +830,13 @@ ShortEdges AppendOrdered(int a, int b, ShortEdges edges) {
   return (ans);
 }
 
+/**
+ *
+ * @param a
+ * @param b
+ * @param edges
+ * @return
+ */
 ShortEdges AddModTwo(int a, int b, ShortEdges edges) {
   ShortEdges Temp, Prev, curr, ans;
   Prev = edges;
@@ -839,6 +872,13 @@ ShortEdges AddModTwo(int a, int b, ShortEdges edges) {
   return (ans);
 }
 
+/**
+ *
+ * @param a
+ * @param b
+ * @param e
+ * @return
+ */
 ShortEdges PrependEdge(int a, int b, ShortEdges e) {
   ShortEdges newPtr;
   newPtr = malloc(sizeof(ShortEdgeNode));
@@ -848,6 +888,12 @@ ShortEdges PrependEdge(int a, int b, ShortEdges e) {
   return (newPtr);
 }
 
+/**
+ *
+ * @param a
+ * @param b
+ * @return
+ */
 ShortEdges CreateEdge(int a, int b) {
   ShortEdges newPtr;
   newPtr = malloc(sizeof(ShortEdgeNode));
@@ -857,6 +903,12 @@ ShortEdges CreateEdge(int a, int b) {
   return (newPtr);
 }
 
+/**
+ *
+ * @param a
+ * @param vertices
+ * @return
+ */
 VertexList PrependVertex(int a, VertexList vertices) {
   VertexList newPtr;
   newPtr = malloc(sizeof(Vertex));
@@ -865,6 +917,10 @@ VertexList PrependVertex(int a, VertexList vertices) {
   return newPtr;
 }
 
+/**
+ *
+ * @see EdgeList
+ */
 void Homology() {
   ShortEdges Temp;
   Temp = EdgeList;
@@ -876,6 +932,13 @@ void Homology() {
   };
 }
 
+/**
+ *
+ * @param init
+ * @param final
+ * @return
+ * @see EdgeList
+ */
 void SpecialHomology(int init, int final) {
   int i, j, t;
   ShortEdges Temp;
@@ -910,6 +973,12 @@ void SpecialHomology(int init, int final) {
   };
 }
 
+/**
+ *
+ * @param a
+ * @param b
+ * @see EdgeList
+ */
 void Contract(int a, int b) {
   ShortEdges Temp;
   ShortEdges Prev;
@@ -1015,9 +1084,14 @@ void Contract(int a, int b) {
   EdgeList = AddModTwoLists(parents, kids);
 }
 
+/**
+ *
+ * @param L
+ * @return 
+ */
 int OrderedQ(VertexList L) {
   int max = 0;
-  int t;
+  int t; // Is there a point to t?
   VertexList Temp;
   Temp = L;
   while (Temp != NULL) {
@@ -1033,6 +1107,12 @@ int OrderedQ(VertexList L) {
   // if (Temp==NULL) { return 1; }
 }
 
+/**
+ *
+ * @param a
+ * @param v
+ * @return
+ */
 StateList RemoveState(State a, StateList v) {
   StateList Temp, Prev;
   StateList sList = v;
@@ -1059,6 +1139,11 @@ StateList RemoveState(State a, StateList v) {
   }
 }
 
+/**
+ * @param a
+ * @param v
+ * @return 
+ */
 VertexList RemoveVertex(int a, VertexList v) {
   VertexList Temp, Prev;
   VertexList vList = v;
@@ -1085,6 +1170,10 @@ VertexList RemoveVertex(int a, VertexList v) {
   };
 }
 
+/**
+ *
+ * @see EdgeList
+ */
 void PrintEdges() {
   ShortEdges Temp;
   Temp = EdgeList;
@@ -1094,6 +1183,10 @@ void PrintEdges() {
   };
 }
 
+/**
+ *
+ * @see EdgeList
+ */
 void PrintMathEdges() {
   ShortEdges Temp;
   int t;
@@ -1115,6 +1208,10 @@ void PrintMathEdges() {
   printf("}");
 }
 
+/**
+ *
+ * @param edges
+ */
 void PrintMathEdgesA(ShortEdges edges) {
   ShortEdges Temp;
   Temp = edges;
@@ -1128,6 +1225,10 @@ void PrintMathEdgesA(ShortEdges edges) {
   printf("}");
 }
 
+/**
+ *
+ * @param vlist
+ */
 void PrintVertices(VertexList vlist) {
   VertexList temp;
   temp = vlist;
@@ -1141,6 +1242,10 @@ void PrintVertices(VertexList vlist) {
   printf("}");
 }
 
+/**
+ *
+ * @param states
+ */
 void FreeStateList(StateList states) {
   StateList Temp;
   Temp = states;
@@ -1151,6 +1256,10 @@ void FreeStateList(StateList states) {
   };
 }
 
+/**
+ *
+ * @param e
+ */
 void FreeShortEdges(ShortEdges e) {
   ShortEdges Temp, nTemp;
   Temp = e;
@@ -1162,6 +1271,10 @@ void FreeShortEdges(ShortEdges e) {
   };
 }
 
+/**
+ *
+ * @param vertices
+ */
 void FreeVertexList(VertexList vertices) {
   VertexList Temp, nTemp;
   Temp = vertices;
@@ -1175,6 +1288,13 @@ void FreeVertexList(VertexList vertices) {
 
 /* Higher differentials */
 
+/**
+ *
+ * @param wt
+ * @param incoming
+ * @return
+ * @see ArcIndex
+ */
 StateList FixedWtRectanglesOutOf(int wt, State incoming) {
   StateList Temp, ans;
   int LL;
@@ -1217,6 +1337,13 @@ StateList FixedWtRectanglesOutOf(int wt, State incoming) {
   return ans;
 }
 
+/**
+ *
+ * @param init
+ * @return
+ * @see EdgeList
+ * @see ArcIndex
+ */
 int NullHomologousD0Q(State init) {
   StateList NewIns, NewOuts, LastNewIn, LastNewOut, Temp;
   StateList PrevIns, PrevOuts;
@@ -1344,6 +1471,13 @@ int NullHomologousD0Q(State init) {
   return (ans);
 }
 
+/**
+ *
+ * @param init
+ * @return
+ * @see EdgeList
+ * @see ArcIndex
+ */
 int NullHomologousD1Q(State init) {
   StateList NewIns, NewOuts, LastNewIn, LastNewOut, Temp;
   StateList PrevIns, PrevOuts;
@@ -1482,6 +1616,11 @@ int NullHomologousD1Q(State init) {
   return (ans);
 }
 
+/**
+ *
+ * @param init
+ * @see EdgeList
+ */
 void CreateD1Graph(State init) {
   StateList NewIns, NewOuts, LastNewIn, LastNewOut, Temp;
   StateList PrevIns, PrevOuts;
@@ -1610,6 +1749,11 @@ void CreateD1Graph(State init) {
   };
 }
 
+/**
+ *
+ * @param x
+ * @return
+ */
 int NESWpO(char *x) {
   int i = 0, j = 0;
   int ans = 0;
@@ -1626,6 +1770,11 @@ int NESWpO(char *x) {
   return (ans);
 }
 
+/**
+ *
+ * @param x
+ * @return
+ */
 int NESWOp(char *x) {
   int i = 0, j = 0;
   int ans = 0;
@@ -1642,6 +1791,11 @@ int NESWOp(char *x) {
   return (ans);
 }
 
+/**
+ *
+ * @param x
+ * @return 
+ */
 int NESWpp(char *x) {
   int i = 0, j = 0;
   int ans = 0;
