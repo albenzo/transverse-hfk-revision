@@ -706,6 +706,7 @@ StateList AppendToStateList(State state, StateList rest) {
  * @param parents
  * @param kids
  * @return
+ * @see EdgeList
  */
 ShortEdges AddModTwoLists(VertexList parents, VertexList kids) {
   VertexList thiskid, thisparent, tempvert;
@@ -920,7 +921,8 @@ VertexList PrependVertex(int a, VertexList vertices) {
 }
 
 /**
- * 
+ * Calculate the Homology of Edgelist and storing the result
+ * in EdgeList.
  * @see EdgeList
  */
 void Homology() {
@@ -935,9 +937,11 @@ void Homology() {
 }
 
 /**
- *
- * @param init
- * @param final
+ * Calculates the homology of EdgeList where EdgeList must
+ * have a specified initial state and a terminates at a specified
+ * final state.
+ * @param init an int specifying the required start
+ * @param final State to t
  * @return
  * @see EdgeList
  */
