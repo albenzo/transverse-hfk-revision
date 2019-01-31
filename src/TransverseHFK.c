@@ -1086,10 +1086,11 @@ void Contract(int a, int b) {
 }
 
 /**
- *
- * @param a
- * @param v
- * @return
+ * Removes a state from a StateList. Equality checked using EqState.
+ * @param a a State
+ * @param v a StateList
+ * @return a StateList removing a from v
+ * @see EqState
  */
 StateList RemoveState(State a, StateList v) {
   StateList Temp, Prev;
@@ -1118,9 +1119,10 @@ StateList RemoveState(State a, StateList v) {
 }
 
 /**
- * @param a
- * @param v
- * @return 
+ * Removes a vertex containing the supplied int from a VertexList
+ * @param a an int
+ * @param v a VertexList
+ * @return a VertexList with the Vertex containing a removed
  */
 VertexList RemoveVertex(int a, VertexList v) {
   VertexList Temp, Prev;
@@ -1149,7 +1151,7 @@ VertexList RemoveVertex(int a, VertexList v) {
 }
 
 /**
- *
+ * Prints each edge in EdgeList on a new line
  * @see EdgeList
  */
 void PrintEdges() {
@@ -1162,7 +1164,7 @@ void PrintEdges() {
 }
 
 /**
- *
+ * Print the first 80 edges in EdgeList on the same line
  * @see EdgeList
  */
 void PrintMathEdges() {
@@ -1187,7 +1189,7 @@ void PrintMathEdges() {
 }
 
 /**
- *
+ * Prints the edges in edges on a single line
  * @param edges
  */
 void PrintMathEdgesA(ShortEdges edges) {
@@ -1204,7 +1206,7 @@ void PrintMathEdgesA(ShortEdges edges) {
 }
 
 /**
- *
+ * Prints the vertices in VertexList on a single line
  * @param vlist
  */
 void PrintVertices(VertexList vlist) {
@@ -1221,7 +1223,7 @@ void PrintVertices(VertexList vlist) {
 }
 
 /**
- *
+ * Frees the supplied StateList
  * @param states
  */
 void FreeStateList(StateList states) {
@@ -1235,7 +1237,7 @@ void FreeStateList(StateList states) {
 }
 
 /**
- *
+ * Frees the supplied ShortEdges
  * @param e
  */
 void FreeShortEdges(ShortEdges e) {
@@ -1250,7 +1252,7 @@ void FreeShortEdges(ShortEdges e) {
 }
 
 /**
- *
+ * Frees the supplied VertexList
  * @param vertices
  */
 void FreeVertexList(VertexList vertices) {
@@ -1267,11 +1269,15 @@ void FreeVertexList(VertexList vertices) {
 /* Higher differentials */
 
 /**
- *
- * @param wt
- * @param incoming
- * @return
+ * Calculates a StateList containing all states reachable
+ * by a rectangles of a fixed width
+ * @param wt an int specifying rectangle width
+ * @param incoming origin state for the rectangles
+ * @return a StateList with states that are reached by a rectangle of width
+ * wt from incoming.
  * @see ArcIndex
+ * @see Xs
+ * @see Os
  */
 StateList FixedWtRectanglesOutOf(int wt, State incoming) {
   StateList Temp, ans;
@@ -1316,9 +1322,10 @@ StateList FixedWtRectanglesOutOf(int wt, State incoming) {
 }
 
 /**
- *
- * @param init
- * @return
+ * Calculates whether the supplied state is nullhomologous. Uses
+ the global variable EdgeList.
+ * @param init a State
+ * @return nonzero if nullhomologous and zero otherwise.
  * @see EdgeList
  * @see ArcIndex
  */
@@ -1450,9 +1457,9 @@ int NullHomologousD0Q(State init) {
 }
 
 /**
- *
- * @param init
- * @return
+ * Calculates if D1 of the supplied state is nullhomologous
+ * @param init a State
+ * @return nonzero if nullhomologous and zero otherwise
  * @see EdgeList
  * @see ArcIndex
  */
@@ -1595,7 +1602,7 @@ int NullHomologousD1Q(State init) {
 }
 
 /**
- *
+ * Unused.
  * @param init
  * @see EdgeList
  */
@@ -1729,7 +1736,7 @@ void CreateD1Graph(State init) {
 
 /**
  *
- * @param x
+ * @param x a permutation
  * @return
  */
 int NESWpO(char *x) {
@@ -1750,7 +1757,7 @@ int NESWpO(char *x) {
 
 /**
  *
- * @param x
+ * @param x a permutation
  * @return
  */
 int NESWOp(char *x) {
@@ -1771,7 +1778,7 @@ int NESWOp(char *x) {
 
 /**
  *
- * @param x
+ * @param x a permutation
  * @return 
  */
 int NESWpp(char *x) {
