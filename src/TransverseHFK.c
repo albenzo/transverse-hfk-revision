@@ -196,6 +196,7 @@ int main(int argc, char **argv) {
   char UR[ArcIndex];
   int i;
 
+  CreateD1Graph(Xs);
   if (verbose) {
     printf("\n \nCalculating graph for LL invariant\n");
     PrintState(Xs);
@@ -1604,139 +1605,6 @@ int NullHomologousD1Q(State init) {
     };
   };
   return (ans);
-}
-
-/**
- * Unused.
- * @param init
- * @see EdgeList
- */
-void CreateD1Graph(State init) {
-  StateList NewIns, NewOuts, LastNewIn, LastNewOut, Temp;
-  StateList PrevIns, PrevOuts;
-  StateList ReallyNewOuts = NULL, ReallyNewIns = NULL;
-  ShortEdges LastEdge;
-  ShortEdges PresentEdgeList;
-  int innumber;
-  int outnumber;
-  int i;
-  int edgecount = 0;
-  int numIns = 0;
-  int numOuts = 0;
-  int numNewIns = 0;
-  int numNewOuts = 0;
-  StateList PresentIn, PresentOut;
-  PrevOuts = NULL;
-  PrevIns = NULL;
-  NewIns = FixedWtRectanglesOutOf(1, init);
-  Temp = NewIns;
-  i = 1;
-  LastEdge = NULL;
-  if (Temp != NULL) {
-    i = 1;
-    EdgeList = CreateEdge(0, 1);
-    LastEdge = EdgeList;
-    Temp = Temp->nextState;
-    while (Temp != NULL) {
-      i++;
-      LastEdge->nextPtr = CreateEdge(0, i);
-      LastEdge = LastEdge->nextPtr;
-      Temp = Temp->nextState;
-    };
-  };
-  while (NewIns != NULL) {
-    PresentIn = NewIns;
-    PresentEdgeList = NULL;
-    innumber = 0;
-    numNewOuts = 0;
-    NewOuts = NULL;
-    while (PresentIn != NULL) {
-      innumber++;
-      ReallyNewOuts = NewRectanglesInto(PrevOuts, PresentIn->data);
-      while (ReallyNewOuts != NULL) {
-        outnumber = GetNumber(ReallyNewOuts->data, NewOuts);
-        if (outnumber == 0) {
-          if (numNewOuts == 0) {
-            NewOuts = ReallyNewOuts;
-            ReallyNewOuts = ReallyNewOuts->nextState;
-            NewOuts->nextState = NULL;
-            LastNewOut = NewOuts;
-            numNewOuts++;
-            outnumber = numNewOuts;
-          } else {
-            LastNewOut->nextState = ReallyNewOuts;
-            ReallyNewOuts = ReallyNewOuts->nextState;
-            LastNewOut = LastNewOut->nextState;
-            LastNewOut->nextState = NULL;
-            numNewOuts++;
-            outnumber = numNewOuts;
-          };
-        } else {
-          Temp = ReallyNewOuts;
-          ReallyNewOuts = ReallyNewOuts->nextState;
-          free(Temp);
-        }
-        PresentEdgeList = AppendOrdered(outnumber + numOuts, innumber + numIns,
-                                        PresentEdgeList);
-        edgecount++;
-      }
-      PresentIn = PresentIn->nextState;
-    };
-    FreeStateList(PrevIns);
-    PrevIns = NewIns;
-    numIns = numIns + innumber;
-    numNewIns = 0;
-    NewIns = NULL;
-    outnumber = 0;
-    PresentOut = NewOuts;
-    while (PresentOut != NULL) {
-      outnumber++;
-      ReallyNewIns = NewRectanglesOutOf(PrevIns, PresentOut->data);
-      while (ReallyNewIns != NULL) {
-        innumber = GetNumber(ReallyNewIns->data, NewIns);
-        if (innumber == 0) {
-          if (numNewIns == 0) {
-            NewIns = ReallyNewIns;
-            ReallyNewIns = ReallyNewIns->nextState;
-            NewIns->nextState = NULL;
-            LastNewIn = NewIns;
-            numNewIns++;
-            innumber = numNewIns;
-          } else {
-            LastNewIn->nextState = ReallyNewIns;
-            ReallyNewIns = ReallyNewIns->nextState;
-            LastNewIn = LastNewIn->nextState;
-            LastNewIn->nextState = NULL;
-            numNewIns++;
-            innumber = numNewIns;
-          };
-        } else {
-          Temp = ReallyNewIns;
-          ReallyNewIns = ReallyNewIns->nextState;
-          free(Temp);
-        }
-        PresentEdgeList = AppendOrdered(outnumber + numOuts, innumber + numIns,
-                                        PresentEdgeList);
-        edgecount++;
-      };
-      PresentOut = PresentOut->nextState;
-    };
-    if (PresentEdgeList != NULL) {
-      LastEdge->nextPtr = PresentEdgeList;
-      LastEdge = PresentEdgeList;
-      while (LastEdge->nextPtr != NULL) {
-        LastEdge = LastEdge->nextPtr;
-      };
-      PresentEdgeList = NULL;
-    };
-    FreeStateList(PrevOuts);
-    PrevOuts = NewOuts;
-    NewOuts = NULL;
-    numOuts = numOuts + outnumber;
-    if (verbose) {
-      printf("%d %d %d\n", numIns, numOuts, edgecount);
-    }
-  };
 }
 
 /**
