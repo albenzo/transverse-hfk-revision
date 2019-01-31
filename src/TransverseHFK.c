@@ -714,7 +714,7 @@ ShortEdges AddModTwoLists(VertexList parents, VertexList kids) {
   ShortEdges thisedge, tempedge, Prev;
   ShortEdges ans;
   if ((parents == NULL) || (kids == NULL)) {
-    ans = EdgeList;
+    ans = EdgeList; // change to return
   } else {
     thisparent = parents;
     thiskid = kids;
@@ -723,7 +723,7 @@ ShortEdges AddModTwoLists(VertexList parents, VertexList kids) {
     while (thisparent != NULL && thisedge != NULL &&
            (thisedge->start == thisparent->data &&
             thisedge->end == thiskid->data)) {
-      tempedge = thisedge;
+      tempedge = thisedge; // This may need to be freed
       thisedge = thisedge->nextPtr;
       thiskid = thiskid->nextVertex;
       if (thiskid == NULL) {
@@ -991,12 +991,12 @@ void Contract(int a, int b) {
   ShortEdges Prev;
   VertexList parents, kids, tempkids, tempparents;
   VertexList LastParent, LastKid;
-  Prev = EdgeList;
+  Prev = EdgeList; // Multiple equal initializations
   parents = NULL;
   kids = NULL;
   tempkids = NULL;
   tempparents = NULL;
-  LastParent = NULL;
+  LastParent = NULL; 
   LastKid = NULL;
   while (EdgeList != NULL && ((EdgeList)->end == b || EdgeList->start == a)) {
     if ((EdgeList->end == b) && (EdgeList->start == a)) {
