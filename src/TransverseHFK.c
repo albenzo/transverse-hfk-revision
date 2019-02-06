@@ -117,6 +117,8 @@ void PrintMathEdges(void);
 void PrintMathEdgesA(ShortEdges edges);
 void PrintVertices(VertexList vlist);
 
+int perm_len(const char*);
+int is_grid(const int,const char*,const char*);
 int buildPermutation(char*,char*);
 int EqState(State a, State b) { return (!strncmp(a, b, ArcIndex)); }
 
@@ -188,11 +190,71 @@ int buildPermutation(char* perm, char* str)
   return 0;
 }
 
+/**
+ * Returns the number of characters in the character array before a zero is found
+ * @param p a character array
+ * @return the number of characters before a zero is found. Returns -1 if not found
+ */
+int perm_len(const char* p)
+{
+  for(int i=0;;++i) {
+    if(0 == p[i]) {
+      return i;
+    }
+  }
+
+  // Will segfault before reaching this point if no 0 is found
+  return -1;
+}
+
+/**
+ * Determines whether the grid specified by the parameters is valid
+ * @param i the grid size
+ * @param Xs a permutation specifying the Xs of the grid
+ * @param Os a permutation specifygin the Os of the grid
+ * @return 1 if the grid is valid, 0 otherwise
+ */
+int is_grid(const int i, const char* Xs, const char* Os)
+{
+  if(perm_len(Xs) != i || perm_len(Os) != i || 1 >= i || MAX_INDEX <= i) {
+    return 0;
+  }
+
+  for(int j=0; j< i; ++j) {
+    if(Xs[j] == Os[j]) {
+      return 0;
+    }
+    int found_x = 0;
+    int found_o = 0;
+
+    for(int k=0;k<i && (found_x == 0 || found_o == 0); ++k) {
+      if(Xs[k] == j+1) {
+        found_x = 1;
+      }
+
+      if(Os[k] == j+1) {
+        found_o = 1;
+      }
+    }
+
+    if(0 == found_x || 0 == found_o) {
+      return 0;
+    }
+  }
+  
+  return 1;
+}
+
 int main(int argc, char **argv) {
   argp_parse(&argp, argc, argv, 0,0,0);
 
   char UR[ArcIndex];
   int i;
+
+  if(!is_grid(ArcIndex,Xs,Os)) {
+    printf("Invalid input\n");
+    exit(1);
+  }
 
   if(verbose) {
     printf("\n \nCalculating graph for LL invariant\n");
