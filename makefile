@@ -6,7 +6,7 @@ LDFLAGS= -L/usr/local/lib/ -largp
 all: transverseHFK
 
 transverseHFK: src/TransverseHFK.c
-	$(CC) $(CFLAGS) $(SRC)/TransverseHFK.c -o transverseHFK
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC)/TransverseHFK.c -o transverseHFK
 
 clean:
 	rm -f transverseHFK
