@@ -79,7 +79,6 @@ StateList BigOuts;
 VertexList ins;
 VertexList outs;
 
-ShortEdges AddModTwo(int a, int b, ShortEdges edges);
 ShortEdges AddModTwoLists(VertexList kids, VertexList parents);
 VertexList PrependVertex(int a, VertexList v);
 ShortEdges PrependEdge(int a, int b, ShortEdges e);
@@ -829,48 +828,6 @@ ShortEdges AppendOrdered(int a, int b, ShortEdges edges) {
     Temp->end = b;
     Temp->nextPtr = curr;
     Prev->nextPtr = Temp;
-  };
-  return (ans);
-}
-
-/**
- *
- * @param a
- * @param b
- * @param edges
- * @return
- */
-ShortEdges AddModTwo(int a, int b, ShortEdges edges) {
-  ShortEdges Temp, Prev, curr, ans;
-  Prev = edges;
-  if ((edges == NULL) || (edges->start > a) ||
-      (edges->start == a && edges->end > b)) {
-    ans = malloc(sizeof(ShortEdgeNode));
-    ans->start = a;
-    ans->end = b;
-    ans->nextPtr = Prev;
-  } else if (edges->start == a && edges->end == b) {
-    Temp = edges;
-    ans = edges->nextPtr;
-    free(Temp);
-  } else {
-    ans = edges;
-    curr = Prev->nextPtr;
-    while (curr != NULL &&
-           ((curr->start < a) || ((curr->start == a) && (curr->end < b)))) {
-      curr = curr->nextPtr;
-      Prev = Prev->nextPtr;
-    };
-    if ((curr != NULL) && (curr->start == a) && (curr->end == b)) {
-      Prev->nextPtr = curr->nextPtr;
-      free(curr);
-    } else {
-      Temp = malloc(sizeof(ShortEdgeNode));
-      Temp->start = a;
-      Temp->end = b;
-      Temp->nextPtr = curr;
-      Prev->nextPtr = Temp;
-    };
   };
   return (ans);
 }
