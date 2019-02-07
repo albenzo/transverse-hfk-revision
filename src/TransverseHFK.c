@@ -702,10 +702,10 @@ StateList AppendToStateList(State state, StateList rest) {
 }
 
 /**
- *
- * @param parents
- * @param kids
- * @return
+ * Takes in two lists of vertices and adds them mod two. Uses EdgeList
+ * @param parents a list of parent vertices
+ * @param kids a list of child vertices
+ * @return A shortEdges containing the result of adding them mod two.
  * @see EdgeList
  */
 ShortEdges AddModTwoLists(VertexList parents, VertexList kids) {
@@ -800,11 +800,11 @@ ShortEdges AddModTwoLists(VertexList parents, VertexList kids) {
 }
 
 /**
- *
- * @param a
- * @param b
- * @param edges
- * @return
+ * Places a new edge into the supplied edgelist in order.
+ * @param a an int specifying the parent vertex
+ * @param b an int specifying the child vertex
+ * @param edges a ShortEdges where the new edge will be placed
+ * @return a pointer to edges with the new edge added
  */
 ShortEdges AppendOrdered(int a, int b, ShortEdges edges) {
   ShortEdges Temp, Prev, curr, ans;
@@ -938,9 +938,9 @@ void SpecialHomology(int init, int final) {
 }
 
 /**
- *
- * @param a
- * @param b
+ * Contracts the edge specified by the input within EdgeList
+ * @param a the parent vertex of the edge
+ * @param b the child vertex of the edge
  * @see EdgeList
  */
 void Contract(int a, int b) {
@@ -1565,9 +1565,11 @@ int NullHomologousD1Q(State init) {
 }
 
 /**
- *
+ * For each point in the permutation count the number of Os
+ * that occur to the northeast
  * @param x a permutation
- * @return
+ * @return an int containing the quantity described above
+ * @see Os
  */
 int NESWpO(char *x) {
   int i = 0, j = 0;
@@ -1586,9 +1588,11 @@ int NESWpO(char *x) {
 }
 
 /**
- *
+ * For each O in Os count the number of points in the permutation
+ * to the northeast
  * @param x a permutation
- * @return
+ * @return an int containing the quantity described above
+ * @see Os
  */
 int NESWOp(char *x) {
   int i = 0, j = 0;
@@ -1607,9 +1611,10 @@ int NESWOp(char *x) {
 }
 
 /**
- *
+ * For each point in the permutation count the number of points in
+ * the same permutation that occur to the northeast
  * @param x a permutation
- * @return 
+ * @return an int containing the quantity described above
  */
 int NESWpp(char *x) {
   int i = 0, j = 0;
