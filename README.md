@@ -28,3 +28,6 @@ $ transverseHFK -i 10 -X [10,5,8,6,3,7,2,4,9,1] -O [7,9,3,4,5,1,6,10,2,8]
     D1[LL] is null-homologous
     D1[UR] is NOT null-homologous
 ```
+
+## Platform specific notes
+Building on mac requires argp-standalone to be installed
