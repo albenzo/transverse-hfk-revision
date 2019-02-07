@@ -8,38 +8,36 @@
  * Lucas Meyers <lmeye22@lsu.edu>
  */
 
+#include <argp.h>
 #include <math.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
-#include <argp.h>
 
 /* Hardcoded max arcindex until dynamic allocation can be tested for
  * speed */
 #define MAX_INDEX 30
 
-const char* argp_program_version = "transverseHFK revision 0.0.1";
-const char* argp_program_bug_address = "<lmeye22@lsu.edu>";
+const char *argp_program_version = "transverseHFK revision 0.0.1";
+const char *argp_program_bug_address = "<lmeye22@lsu.edu>";
 static const char doc[] =
-  "A program to calculate the Legendrian/Transverse knot invariants\
+    "A program to calculate the Legendrian/Transverse knot invariants\
  via the algorithm described in \"Transverse knots distinguished by\
  Knot Floer Homology\" by L. Ng, P. S. Ozsvath, and D. P. Thurston.";
 
 static const char args_doc[] = "-i [ArcIndex] -X [Xs] -O [Os]";
 
-static struct argp_option options[]
-= {
-   {"verbose", 'v',          0, 0, "Produce verbose output", 0},
-   {"quiet",   'q',          0, 0, "Don't produce extraneous output", 0},
-   {"index",   'i', "ArcIndex", 0, "ArcIndex of the grid", 0},
-   {0,         'X',       "Xs", 0, "List of Xs", 0},
-   {0,         'O',       "Os", 0, "List of Os", 0},
-   {0}
-};
+static struct argp_option options[] = {
+    {"verbose", 'v', 0, 0, "Produce verbose output", 0},
+    {"quiet", 'q', 0, 0, "Don't produce extraneous output", 0},
+    {"index", 'i', "ArcIndex", 0, "ArcIndex of the grid", 0},
+    {0, 'X', "Xs", 0, "List of Xs", 0},
+    {0, 'O', "Os", 0, "List of Os", 0},
+    {0}};
 
 // Temporary location
-static error_t parse_opt(int,char*,struct argp_state*);
+static error_t parse_opt(int, char *, struct argp_state *);
 static struct argp argp = {options, parse_opt, args_doc, doc, 0, 0, 0};
 
 bool verbose = false;
@@ -81,7 +79,6 @@ StateList BigOuts;
 VertexList ins;
 VertexList outs;
 
-ShortEdges AddModTwo(int a, int b, ShortEdges edges);
 ShortEdges AddModTwoLists(VertexList kids, VertexList parents);
 VertexList PrependVertex(int a, VertexList v);
 ShortEdges PrependEdge(int a, int b, ShortEdges e);
@@ -122,31 +119,30 @@ int is_grid(const int,const char*,const char*);
 int buildPermutation(char*,char*);
 int EqState(State a, State b) { return (!strncmp(a, b, ArcIndex)); }
 
-static error_t parse_opt(int key, char *arg, struct argp_state *state)
-{
-  switch(key){
+static error_t parse_opt(int key, char *arg, struct argp_state *state) {
+  switch (key) {
   case 'v':
-    verbose=true;
+    verbose = true;
     break;
   case 'q':
-    verbose=false;
+    verbose = false;
     break;
   case 'i':
     ArcIndex = atoi(arg);
-    if(ArcIndex > MAX_INDEX || ArcIndex < 2) {
-      argp_failure(state,0,0,"ArcIndex value out of range");
+    if (ArcIndex > MAX_INDEX || ArcIndex < 2) {
+      argp_failure(state, 0, 0, "ArcIndex value out of range");
       exit(1);
     }
     break;
   case 'X':
-    if (-1 == buildPermutation(Xs,arg)) {
-      argp_failure(state,0,0,"Malformated Xs");
+    if (-1 == buildPermutation(Xs, arg)) {
+      argp_failure(state, 0, 0, "Malformated Xs");
       exit(1);
     }
     break;
   case 'O':
-    if(-1 ==buildPermutation(Os,arg)) {
-      argp_failure(state,0,0,"Malformated Os");
+    if (-1 == buildPermutation(Os, arg)) {
+      argp_failure(state, 0, 0, "Malformated Os");
       exit(1);
     }
     break;
@@ -156,33 +152,38 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
   return 0;
 }
 
-int buildPermutation(char* perm, char* str)
-{
+
+/**
+ * Takes in a string and converts it into a permutation.
+ * @param String of the form [_,_,...,_] where _ are integers
+ * between 1 and MAX_INDEX
+ * @param Destination for the permutation
+ * @return 0 on success, -1 on failure
+ */
+int buildPermutation(char *perm, char *str) {
   if (str[0] != '[') {
     return -1;
   }
 
-  char* s = &str[1];
-  long n=-1;
-  int i=0;
+  char *s = &str[1];
+  long n = -1;
+  int i = 0;
 
-  while(i < MAX_INDEX) {
+  while (i < MAX_INDEX) {
     errno = 0;
-    n = strtol(s,&s, 10);
+    n = strtol(s, &s, 10);
 
-    if ((errno == ERANGE && (n == LONG_MAX || n == LONG_MIN))
-        || (errno != 0 && n == 0)
-        || (n < 1 || n > MAX_INDEX)) {
+    if ((errno == ERANGE && (n == LONG_MAX || n == LONG_MIN)) ||
+        (errno != 0 && n == 0) || (n < 1 || n > MAX_INDEX)) {
       return -1;
     }
-    
+
     perm[i] = n;
     ++i;
-    
-    if(s[0] == ']') {
+
+    if (s[0] == ']') {
       break;
-    }
-    else if(s[0] ==',') {
+    } else if (s[0] == ',') {
       ++s;
     }
   }
@@ -246,7 +247,7 @@ int is_grid(const int i, const char* Xs, const char* Os)
 }
 
 int main(int argc, char **argv) {
-  argp_parse(&argp, argc, argv, 0,0,0);
+  argp_parse(&argp, argc, argv, 0, 0, 0);
 
   char UR[ArcIndex];
   int i;
@@ -266,7 +267,7 @@ int main(int argc, char **argv) {
     printf("LL is NOT null-homologous\n");
   }
 
-  if(verbose) {
+  if (verbose) {
     printf("\n \nCalculating graph for UR invariant\n");
   }
   if (Xs[ArcIndex - 1] == ArcIndex) {
@@ -284,31 +285,31 @@ int main(int argc, char **argv) {
     i++;
   }
 
-  if(verbose) {
-    PrintState(UR);      
+  if (verbose) {
+    PrintState(UR);
   }
-  
+
   if (NullHomologousD0Q(UR)) {
     printf("UR is null-homologous\n");
   } else {
     printf("UR is NOT null-homologous\n");
   };
 
-  if(verbose) {
+  if (verbose) {
     printf("\n \nCalculating graph for D1[LL] invariant\n");
     PrintState(Xs);
   }
-  
+
   if (NullHomologousD1Q(Xs)) {
     printf("D1[LL] is null-homologous\n");
   } else {
     printf("D1[LL] is NOT null-homologous\n");
   }
 
-  if(verbose) {
+  if (verbose) {
     printf("\n \nCalculating graph for D1[UR] invariant\n");
   }
-  
+
   if (Xs[ArcIndex - 1] == ArcIndex) {
     UR[0] = 1;
   } else {
@@ -324,10 +325,10 @@ int main(int argc, char **argv) {
     i++;
   }
 
-  if(verbose) {
+  if (verbose) {
     PrintState(UR);
   }
-  
+
   if (NullHomologousD1Q(UR)) {
     printf("D1[UR] is null-homologous\n");
   } else {
@@ -337,16 +338,13 @@ int main(int argc, char **argv) {
   return 0;
 }
 
-int mod(int a, int b) {
-  return a % b;
-  /* old code
-    if (a < b) {
-    return a;
-  } else
-  return mod(a - b, b);
-  */
-}
-
+/**
+ * Shifts the input towards the interval [0,ArcIndex) by
+ * a multiple of ArcIndex
+ * @param a An integer
+ * @return a shifted towards the interval [0,ArcIndex)
+ * @see ArcIndex
+ */
 int Mod(int a) {
   if (a >= ArcIndex) {
     return (a - ArcIndex);
@@ -354,9 +352,16 @@ int Mod(int a) {
     return (a + ArcIndex);
   } else {
     return (a);
-    };
+  };
 }
 
+/**
+ * Shifts the input towards the interval (0,ArcIndex] by
+ * a multiple of ArcIndex
+ * @param a An integer
+ * @return a shifted towards the interval (0,ArcIndex]
+ * @see ArcIndex
+ */
 int ModUp(int a) {
   if (a > ArcIndex) {
     return (a - ArcIndex);
@@ -375,14 +380,15 @@ int min(int a, int b) {
   }
 }
 
-int max(int a, int b) {
-  if (a > b) {
-    return (a);
-  } else {
-    return (b);
-  }
-}
-
+/**
+ * Returns a StateList of states where a rectangle exists from incoming
+ * that is not contained in Prevs.
+ * @param Prevs Statelist containing previous states
+ * @param incoming the source of rectangles used to generate statelist
+ * @return A statelist containing states reached from a rectangle leaving
+ * incoming not contained in Prevs.
+ * @see ArcIndex
+ */
 StateList NewRectanglesOutOf(StateList Prevs, State incoming) {
   StateList Temp, ans;
   State TempState;
@@ -426,6 +432,13 @@ StateList NewRectanglesOutOf(StateList Prevs, State incoming) {
   return ans;
 }
 
+/**
+ * Returns a StateList consisting of states that are reached by rectangles
+ * leaving incoming
+ * @param incoming Initial state for generated rectangles
+ * @return list of states reached by a rectangle from incoming.
+ * @see ArcIndex
+ */
 StateList RectanglesOutOf(State incoming) {
   StateList Temp, ans;
   int LL;
@@ -451,6 +464,13 @@ StateList RectanglesOutOf(State incoming) {
   return ans;
 }
 
+/**
+ * returns a StateList containing those with a rectangle
+ * pointing to the state incoming
+ * @param incoming State that is the destination for generated rectangles
+ * @return StateList containing states with a rectangle to incoming.
+ * @see ArcIndex
+ */
 StateList RectanglesInto(State incoming) {
   StateList Temp, ans;
   int LL;
@@ -476,6 +496,14 @@ StateList RectanglesInto(State incoming) {
   return ans;
 }
 
+/**
+ * returns a StateList containing those with a rectangle
+ * pointing to the state incoming that do not overlap with Prevs
+ * @param incoming State that is the destination for generated rectangles
+ * @param Prevs StateList of excluded states
+ * @return StateList containing states with a rectangle to incoming.
+ * @see ArcIndex
+ */
 StateList NewRectanglesInto(StateList Prevs, State incoming) {
   StateList ans, Temp;
   State TempState;
@@ -520,6 +548,16 @@ StateList NewRectanglesInto(StateList Prevs, State incoming) {
   return ans;
 }
 
+/**
+ * Returns a single element statelist containing
+ * the permutation incoming with x1 and x2 swapped
+ * @param x1 an integer between 0 and MAX_INDEX
+ * @param x2 an integer between 0 and MAX_INDEX
+ * @param incoming a permutation
+ * @return a single element StateList containing a copy of
+ * the permutation incoming with entries x1 and x2 swapped
+ * @see ArcIndex
+ */
 StateList SwapCols(int x1, int x2, char *incoming) {
   StateList ans;
   int i;
@@ -536,6 +574,11 @@ StateList SwapCols(int x1, int x2, char *incoming) {
   return ans;
 }
 
+/**
+ * Returns the length of the StateList
+ * @param states a StateList
+ * @return an int equal to the length of states
+ */
 int LengthStateList(StateList states) {
   int c;
   StateList Temp;
@@ -548,6 +591,11 @@ int LengthStateList(StateList states) {
   return c;
 }
 
+/**
+ * Returns the length of a VertexList
+ * @param a VertexList
+ * @return an int equal to the length of states
+ */
 int LengthVertexList(VertexList states) {
   int c;
   VertexList Temp;
@@ -560,6 +608,12 @@ int LengthVertexList(VertexList states) {
   return c;
 }
 
+/**
+ * Prints states in the form "{<state>,...}" up
+ * to the first 500,000 states.
+ * @param states a StateList
+ * @see PrintStateShort
+ */
 void PrintStates(StateList states) {
   StateList Temp;
   int c;
@@ -580,6 +634,12 @@ void PrintStates(StateList states) {
   printf("}");
 }
 
+/**
+ * Prints the permutation of state using one line notation
+ * "{_,_,...}"
+ * @param state a State
+ * @see ArcIndex
+ */
 void PrintStateShort(State state) {
   int i;
   i = 0;
@@ -591,6 +651,13 @@ void PrintStateShort(State state) {
   printf("%d}", state[ArcIndex - 1]);
 }
 
+/**
+ * Prints the permutation of state on the grid specified by
+ * Xs and Os, as well as 2A=M=SL+1.
+ * @param state A state
+ * @see Xs
+ * @see Os
+ */
 void PrintState(State state) {
   int i, j;
   j = ArcIndex;
@@ -626,6 +693,13 @@ void PrintState(State state) {
          NESWpp(Xs) - NESWpO(Xs) - NESWOp(Xs) + NESWpp(Os) + 1);
 }
 
+/**
+ * Returns the index of a State within a StateList
+ * Note: Indexed from 1
+ * @param a State
+ * @param b a StateList
+ * @return index of a within b
+ */
 int GetNumber(State a, StateList b) {
   StateList temp;
   int count = 1;
@@ -640,6 +714,12 @@ int GetNumber(State a, StateList b) {
   return 0;
 }
 
+/**
+ * Return a single element StateList with data state
+ * @param state a state to initialize the list
+ * @return a single element StateList containing the data from state.
+ * @see ArcIndex
+ */
 StateList CreateStateNode(State state) {
   StateList ans;
   int i;
@@ -653,6 +733,13 @@ StateList CreateStateNode(State state) {
   return (ans);
 }
 
+/**
+ * Places the given state at the end of the provided StateList
+ * @param state a State
+ * @param rest a StateList
+ * @return appends a stateNode containing state to the end of rest
+ * @see ArcIndex
+ */
 StateList AppendToStateList(State state, StateList rest) {
   StateList NewNode, TTTemp;
   int i;
@@ -675,12 +762,19 @@ StateList AppendToStateList(State state, StateList rest) {
   return rest;
 }
 
+/**
+ * Takes in two lists of vertices and adds them mod two. Uses EdgeList
+ * @param parents a list of parent vertices
+ * @param kids a list of child vertices
+ * @return A shortEdges containing the result of adding them mod two.
+ * @see EdgeList
+ */
 ShortEdges AddModTwoLists(VertexList parents, VertexList kids) {
   VertexList thiskid, thisparent, tempvert;
   ShortEdges thisedge, tempedge, Prev;
   ShortEdges ans;
   if ((parents == NULL) || (kids == NULL)) {
-    ans = EdgeList;
+    ans = EdgeList; // change to return
   } else {
     thisparent = parents;
     thiskid = kids;
@@ -689,7 +783,7 @@ ShortEdges AddModTwoLists(VertexList parents, VertexList kids) {
     while (thisparent != NULL && thisedge != NULL &&
            (thisedge->start == thisparent->data &&
             thisedge->end == thiskid->data)) {
-      tempedge = thisedge;
+      tempedge = thisedge; // This may need to be freed
       thisedge = thisedge->nextPtr;
       thiskid = thiskid->nextVertex;
       if (thiskid == NULL) {
@@ -766,6 +860,13 @@ ShortEdges AddModTwoLists(VertexList parents, VertexList kids) {
   return (ans);
 }
 
+/**
+ * Places a new edge into the supplied edgelist in order.
+ * @param a an int specifying the parent vertex
+ * @param b an int specifying the child vertex
+ * @param edges a ShortEdges where the new edge will be placed
+ * @return a pointer to edges with the new edge added
+ */
 ShortEdges AppendOrdered(int a, int b, ShortEdges edges) {
   ShortEdges Temp, Prev, curr, ans;
   Prev = edges;
@@ -792,41 +893,13 @@ ShortEdges AppendOrdered(int a, int b, ShortEdges edges) {
   return (ans);
 }
 
-ShortEdges AddModTwo(int a, int b, ShortEdges edges) {
-  ShortEdges Temp, Prev, curr, ans;
-  Prev = edges;
-  if ((edges == NULL) || (edges->start > a) ||
-      (edges->start == a && edges->end > b)) {
-    ans = malloc(sizeof(ShortEdgeNode));
-    ans->start = a;
-    ans->end = b;
-    ans->nextPtr = Prev;
-  } else if (edges->start == a && edges->end == b) {
-    Temp = edges;
-    ans = edges->nextPtr;
-    free(Temp);
-  } else {
-    ans = edges;
-    curr = Prev->nextPtr;
-    while (curr != NULL &&
-           ((curr->start < a) || ((curr->start == a) && (curr->end < b)))) {
-      curr = curr->nextPtr;
-      Prev = Prev->nextPtr;
-    };
-    if ((curr != NULL) && (curr->start == a) && (curr->end == b)) {
-      Prev->nextPtr = curr->nextPtr;
-      free(curr);
-    } else {
-      Temp = malloc(sizeof(ShortEdgeNode));
-      Temp->start = a;
-      Temp->end = b;
-      Temp->nextPtr = curr;
-      Prev->nextPtr = Temp;
-    };
-  };
-  return (ans);
-}
-
+/**
+ * Add a new edge to the start of a ShortEdges
+ * @param a an int indictating the source of the edge
+ * @param b an int indictating the destination of the edge
+ * @param e a ShortEdges
+ * @return e with the edge (a,b) at the front
+ */
 ShortEdges PrependEdge(int a, int b, ShortEdges e) {
   ShortEdges newPtr;
   newPtr = malloc(sizeof(ShortEdgeNode));
@@ -836,6 +909,12 @@ ShortEdges PrependEdge(int a, int b, ShortEdges e) {
   return (newPtr);
 }
 
+/**
+ * Creates a single element ShortEdge
+ * @param a an int indicating the source of the edge
+ * @param b an int indicating the destination of the edge
+ * @return a single element ShortEdges (a,b)
+ */
 ShortEdges CreateEdge(int a, int b) {
   ShortEdges newPtr;
   newPtr = malloc(sizeof(ShortEdgeNode));
@@ -845,6 +924,13 @@ ShortEdges CreateEdge(int a, int b) {
   return (newPtr);
 }
 
+/**
+ * Creates a vertex and adds it to the start of the supplied
+ * VertexList
+ * @param a an int specifying the vertex
+ * @param vertices a VertexList
+ * @return a VertexList with a Vertex containing a prepended to vertices
+ */
 VertexList PrependVertex(int a, VertexList vertices) {
   VertexList newPtr;
   newPtr = malloc(sizeof(Vertex));
@@ -853,6 +939,11 @@ VertexList PrependVertex(int a, VertexList vertices) {
   return newPtr;
 }
 
+/**
+ * Calculate the Homology of Edgelist and storing the result
+ * in EdgeList.
+ * @see EdgeList
+ */
 void Homology() {
   ShortEdges Temp;
   Temp = EdgeList;
@@ -864,6 +955,15 @@ void Homology() {
   };
 }
 
+/**
+ * Calculates the homology of EdgeList where EdgeList must
+ * have a specified initial state and a terminates at a specified
+ * final state.
+ * @param init an int specifying the required start
+ * @param final State to t
+ * @return
+ * @see EdgeList
+ */
 void SpecialHomology(int init, int final) {
   int i, j, t;
   ShortEdges Temp;
@@ -898,17 +998,23 @@ void SpecialHomology(int init, int final) {
   };
 }
 
+/**
+ * Contracts the edge specified by the input within EdgeList
+ * @param a the parent vertex of the edge
+ * @param b the child vertex of the edge
+ * @see EdgeList
+ */
 void Contract(int a, int b) {
   ShortEdges Temp;
   ShortEdges Prev;
   VertexList parents, kids, tempkids, tempparents;
   VertexList LastParent, LastKid;
-  Prev = EdgeList;
+  Prev = EdgeList; // Multiple equal initializations
   parents = NULL;
   kids = NULL;
   tempkids = NULL;
   tempparents = NULL;
-  LastParent = NULL;
+  LastParent = NULL; 
   LastKid = NULL;
   while (EdgeList != NULL && ((EdgeList)->end == b || EdgeList->start == a)) {
     if ((EdgeList->end == b) && (EdgeList->start == a)) {
@@ -1003,24 +1109,13 @@ void Contract(int a, int b) {
   EdgeList = AddModTwoLists(parents, kids);
 }
 
-int OrderedQ(VertexList L) {
-  int max = 0;
-  int t;
-  VertexList Temp;
-  Temp = L;
-  while (Temp != NULL) {
-    if (Temp->data < max) {
-      printf("XXXX");
-      scanf("%d", &t);
-      return 0;
-    }
-    max = Temp->data;
-    Temp = Temp->nextVertex;
-  };
-  return 1; // Temp will always be one if we hit this point.
-  // if (Temp==NULL) { return 1; }
-}
-
+/**
+ * Removes a state from a StateList. Equality checked using EqState.
+ * @param a a State
+ * @param v a StateList
+ * @return a StateList removing a from v
+ * @see EqState
+ */
 StateList RemoveState(State a, StateList v) {
   StateList Temp, Prev;
   StateList sList = v;
@@ -1047,6 +1142,12 @@ StateList RemoveState(State a, StateList v) {
   }
 }
 
+/**
+ * Removes a vertex containing the supplied int from a VertexList
+ * @param a an int
+ * @param v a VertexList
+ * @return a VertexList with the Vertex containing a removed
+ */
 VertexList RemoveVertex(int a, VertexList v) {
   VertexList Temp, Prev;
   VertexList vList = v;
@@ -1073,6 +1174,10 @@ VertexList RemoveVertex(int a, VertexList v) {
   };
 }
 
+/**
+ * Prints each edge in EdgeList on a new line
+ * @see EdgeList
+ */
 void PrintEdges() {
   ShortEdges Temp;
   Temp = EdgeList;
@@ -1082,6 +1187,10 @@ void PrintEdges() {
   };
 }
 
+/**
+ * Print the first 80 edges in EdgeList on the same line
+ * @see EdgeList
+ */
 void PrintMathEdges() {
   ShortEdges Temp;
   int t;
@@ -1103,6 +1212,10 @@ void PrintMathEdges() {
   printf("}");
 }
 
+/**
+ * Prints the edges in edges on a single line
+ * @param edges
+ */
 void PrintMathEdgesA(ShortEdges edges) {
   ShortEdges Temp;
   Temp = edges;
@@ -1116,6 +1229,10 @@ void PrintMathEdgesA(ShortEdges edges) {
   printf("}");
 }
 
+/**
+ * Prints the vertices in VertexList on a single line
+ * @param vlist
+ */
 void PrintVertices(VertexList vlist) {
   VertexList temp;
   temp = vlist;
@@ -1129,6 +1246,10 @@ void PrintVertices(VertexList vlist) {
   printf("}");
 }
 
+/**
+ * Frees the supplied StateList
+ * @param states
+ */
 void FreeStateList(StateList states) {
   StateList Temp;
   Temp = states;
@@ -1139,6 +1260,10 @@ void FreeStateList(StateList states) {
   };
 }
 
+/**
+ * Frees the supplied ShortEdges
+ * @param e
+ */
 void FreeShortEdges(ShortEdges e) {
   ShortEdges Temp, nTemp;
   Temp = e;
@@ -1150,6 +1275,10 @@ void FreeShortEdges(ShortEdges e) {
   };
 }
 
+/**
+ * Frees the supplied VertexList
+ * @param vertices
+ */
 void FreeVertexList(VertexList vertices) {
   VertexList Temp, nTemp;
   Temp = vertices;
@@ -1163,6 +1292,17 @@ void FreeVertexList(VertexList vertices) {
 
 /* Higher differentials */
 
+/**
+ * Calculates a StateList containing all states reachable
+ * by a rectangles of a fixed width
+ * @param wt an int specifying rectangle width
+ * @param incoming origin state for the rectangles
+ * @return a StateList with states that are reached by a rectangle of width
+ * wt from incoming.
+ * @see ArcIndex
+ * @see Xs
+ * @see Os
+ */
 StateList FixedWtRectanglesOutOf(int wt, State incoming) {
   StateList Temp, ans;
   int LL;
@@ -1205,6 +1345,14 @@ StateList FixedWtRectanglesOutOf(int wt, State incoming) {
   return ans;
 }
 
+/**
+ * Calculates whether the supplied state is nullhomologous. Uses
+ the global variable EdgeList.
+ * @param init a State
+ * @return nonzero if nullhomologous and zero otherwise.
+ * @see EdgeList
+ * @see ArcIndex
+ */
 int NullHomologousD0Q(State init) {
   StateList NewIns, NewOuts, LastNewIn, LastNewOut, Temp;
   StateList PrevIns, PrevOuts;
@@ -1324,7 +1472,7 @@ int NullHomologousD0Q(State init) {
       NewIns = NULL;
     } else {
       numOuts = numOuts + outnumber;
-      if(verbose) {
+      if (verbose) {
         printf("%d %d %d\n", numIns, numOuts, edgecount);
       }
     };
@@ -1332,6 +1480,13 @@ int NullHomologousD0Q(State init) {
   return (ans);
 }
 
+/**
+ * Calculates if D1 of the supplied state is nullhomologous
+ * @param init a State
+ * @return nonzero if nullhomologous and zero otherwise
+ * @see EdgeList
+ * @see ArcIndex
+ */
 int NullHomologousD1Q(State init) {
   StateList NewIns, NewOuts, LastNewIn, LastNewOut, Temp;
   StateList PrevIns, PrevOuts;
@@ -1462,7 +1617,7 @@ int NullHomologousD1Q(State init) {
       NewIns = NULL;
     } else {
       numOuts = numOuts + outnumber;
-      if(verbose) {
+      if (verbose) {
         printf("%d %d %d\n", numIns, numOuts, edgecount);
       }
     };
@@ -1470,134 +1625,13 @@ int NullHomologousD1Q(State init) {
   return (ans);
 }
 
-void CreateD1Graph(State init) {
-  StateList NewIns, NewOuts, LastNewIn, LastNewOut, Temp;
-  StateList PrevIns, PrevOuts;
-  StateList ReallyNewOuts = NULL, ReallyNewIns = NULL;
-  ShortEdges LastEdge;
-  ShortEdges PresentEdgeList;
-  int innumber;
-  int outnumber;
-  int i;
-  int edgecount = 0;
-  int numIns = 0;
-  int numOuts = 0;
-  int numNewIns = 0;
-  int numNewOuts = 0;
-  StateList PresentIn, PresentOut;
-  PrevOuts = NULL;
-  PrevIns = NULL;
-  NewIns = FixedWtRectanglesOutOf(1, init);
-  Temp = NewIns;
-  i = 1;
-  LastEdge = NULL;
-  if (Temp != NULL) {
-    i = 1;
-    EdgeList = CreateEdge(0, 1);
-    LastEdge = EdgeList;
-    Temp = Temp->nextState;
-    while (Temp != NULL) {
-      i++;
-      LastEdge->nextPtr = CreateEdge(0, i);
-      LastEdge = LastEdge->nextPtr;
-      Temp = Temp->nextState;
-    };
-  };
-  while (NewIns != NULL) {
-    PresentIn = NewIns;
-    PresentEdgeList = NULL;
-    innumber = 0;
-    numNewOuts = 0;
-    NewOuts = NULL;
-    while (PresentIn != NULL) {
-      innumber++;
-      ReallyNewOuts = NewRectanglesInto(PrevOuts, PresentIn->data);
-      while (ReallyNewOuts != NULL) {
-        outnumber = GetNumber(ReallyNewOuts->data, NewOuts);
-        if (outnumber == 0) {
-          if (numNewOuts == 0) {
-            NewOuts = ReallyNewOuts;
-            ReallyNewOuts = ReallyNewOuts->nextState;
-            NewOuts->nextState = NULL;
-            LastNewOut = NewOuts;
-            numNewOuts++;
-            outnumber = numNewOuts;
-          } else {
-            LastNewOut->nextState = ReallyNewOuts;
-            ReallyNewOuts = ReallyNewOuts->nextState;
-            LastNewOut = LastNewOut->nextState;
-            LastNewOut->nextState = NULL;
-            numNewOuts++;
-            outnumber = numNewOuts;
-          };
-        } else {
-          Temp = ReallyNewOuts;
-          ReallyNewOuts = ReallyNewOuts->nextState;
-          free(Temp);
-        }
-        PresentEdgeList = AppendOrdered(outnumber + numOuts, innumber + numIns,
-                                        PresentEdgeList);
-        edgecount++;
-      }
-      PresentIn = PresentIn->nextState;
-    };
-    FreeStateList(PrevIns);
-    PrevIns = NewIns;
-    numIns = numIns + innumber;
-    numNewIns = 0;
-    NewIns = NULL;
-    outnumber = 0;
-    PresentOut = NewOuts;
-    while (PresentOut != NULL) {
-      outnumber++;
-      ReallyNewIns = NewRectanglesOutOf(PrevIns, PresentOut->data);
-      while (ReallyNewIns != NULL) {
-        innumber = GetNumber(ReallyNewIns->data, NewIns);
-        if (innumber == 0) {
-          if (numNewIns == 0) {
-            NewIns = ReallyNewIns;
-            ReallyNewIns = ReallyNewIns->nextState;
-            NewIns->nextState = NULL;
-            LastNewIn = NewIns;
-            numNewIns++;
-            innumber = numNewIns;
-          } else {
-            LastNewIn->nextState = ReallyNewIns;
-            ReallyNewIns = ReallyNewIns->nextState;
-            LastNewIn = LastNewIn->nextState;
-            LastNewIn->nextState = NULL;
-            numNewIns++;
-            innumber = numNewIns;
-          };
-        } else {
-          Temp = ReallyNewIns;
-          ReallyNewIns = ReallyNewIns->nextState;
-          free(Temp);
-        }
-        PresentEdgeList = AppendOrdered(outnumber + numOuts, innumber + numIns,
-                                        PresentEdgeList);
-        edgecount++;
-      };
-      PresentOut = PresentOut->nextState;
-    };
-    if (PresentEdgeList != NULL) {
-      LastEdge->nextPtr = PresentEdgeList;
-      LastEdge = PresentEdgeList;
-      while (LastEdge->nextPtr != NULL) {
-        LastEdge = LastEdge->nextPtr;
-      };
-      PresentEdgeList = NULL;
-    };
-    FreeStateList(PrevOuts);
-    PrevOuts = NewOuts;
-    NewOuts = NULL;
-    numOuts = numOuts + outnumber;
-    if(verbose) {
-      printf("%d %d %d\n", numIns, numOuts, edgecount);
-    }
-  };
-}
-
+/**
+ * For each point in the permutation count the number of Os
+ * that occur to the northeast
+ * @param x a permutation
+ * @return an int containing the quantity described above
+ * @see Os
+ */
 int NESWpO(char *x) {
   int i = 0, j = 0;
   int ans = 0;
@@ -1614,6 +1648,13 @@ int NESWpO(char *x) {
   return (ans);
 }
 
+/**
+ * For each O in Os count the number of points in the permutation
+ * to the northeast
+ * @param x a permutation
+ * @return an int containing the quantity described above
+ * @see Os
+ */
 int NESWOp(char *x) {
   int i = 0, j = 0;
   int ans = 0;
@@ -1630,6 +1671,12 @@ int NESWOp(char *x) {
   return (ans);
 }
 
+/**
+ * For each point in the permutation count the number of points in
+ * the same permutation that occur to the northeast
+ * @param x a permutation
+ * @return an int containing the quantity described above
+ */
 int NESWpp(char *x) {
   int i = 0, j = 0;
   int ans = 0;
