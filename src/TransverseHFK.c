@@ -166,7 +166,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 }
 
 /**
- * Signal handler for SIGALRM
+ * Signal handler for SIGALRM that exits when the signal is received.
  * @param sig
  */
 void timeout(int sig)
