@@ -20,6 +20,8 @@ transverseHFK -i <ArcIndex> -X <List of Xs> -O <List of Os>
 where the three parameters specify a knot via its grid diagram. Currently the
 two lists must be input in the form `[0,1,2,3,4,5,6,7,8,9]` with no spaces.
 
+For a full list of options run `transverseHFK --help`
+
 ## Sample Output
 ```
 $ transverseHFK -i 10 -X [10,5,8,6,3,7,2,4,9,1] -O [7,9,3,4,5,1,6,10,2,8]
