@@ -1,7 +1,14 @@
 CC=gcc
 SRC=src
-CFLAGS= -O3 -Wall -Wextra -Wundef -Wshadow -Wpointer-arith -Wcast-align -Wstrict-prototypes -Wwrite-strings -g -I/usr/local/include/
-LDFLAGS= -L/usr/local/lib/ -largp
+CFLAGS= -O3 -Wall -Wextra -Wundef -Wshadow -Wpointer-arith -Wcast-align -Wstrict-prototypes -Wwrite-strings -g
+LDFLAGS= 
+
+UNAME_S= $(shell uname -s)
+
+ifeq ($(UNAME_S),Darwin)
+	CFLAGS += -I/usr/local/include/
+	LDFLAGS += -L/usr/local/lib/ -largp
+endif
 
 all: transverseHFK
 
