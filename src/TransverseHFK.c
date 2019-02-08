@@ -88,8 +88,6 @@ ShortEdges AddModTwoLists(VertexList kids, VertexList parents);
 VertexList PrependVertex(int a, VertexList v);
 ShortEdges PrependEdge(int a, int b, ShortEdges e);
 StateList FixedWtRectanglesOutOf(int wt, State incoming);
-StateList RectanglesOutOf(State incoming);
-StateList RectanglesInto(State incoming);
 StateList SwapCols(int x1, int x2, State incoming);
 int GetNumber(State a, StateList b);
 void FreeStateList(StateList States);
@@ -460,70 +458,6 @@ StateList NewRectanglesOutOf(StateList Prevs, State incoming) {
       };
       h = min(h, min(Mod(Os[Mod(LL + w)] - incoming[LL]),
                      Mod(Xs[Mod(LL + w)] - incoming[LL])));
-      w++;
-    };
-    LL++;
-  };
-  return ans;
-}
-
-/**
- * Returns a StateList consisting of states that are reached by rectangles
- * leaving incoming
- * @param incoming Initial state for generated rectangles
- * @return list of states reached by a rectangle from incoming.
- * @see ArcIndex
- */
-StateList RectanglesOutOf(State incoming) {
-  StateList Temp, ans;
-  int LL;
-  int w, h;
-  ans = NULL;
-  LL = 0;
-  while (LL < ArcIndex) {
-    w = 1;
-    h = min(Mod(Os[LL] - incoming[LL]), Mod(Xs[LL] - incoming[LL]));
-    while (w < ArcIndex && h > 0) {
-      if (Mod(incoming[Mod(LL + w)] - incoming[LL]) <= h) {
-        Temp = SwapCols(LL, Mod(LL + w), incoming);
-        Temp->nextState = ans;
-        ans = Temp;
-        h = Mod(incoming[Mod(LL + w)] - incoming[LL]);
-      };
-      h = min(h, min(Mod(Os[Mod(LL + w)] - incoming[LL]),
-                     Mod(Xs[Mod(LL + w)] - incoming[LL])));
-      w++;
-    };
-    LL++;
-  };
-  return ans;
-}
-
-/**
- * returns a StateList containing those with a rectangle
- * pointing to the state incoming
- * @param incoming State that is the destination for generated rectangles
- * @return StateList containing states with a rectangle to incoming.
- * @see ArcIndex
- */
-StateList RectanglesInto(State incoming) {
-  StateList Temp, ans;
-  int LL;
-  int w, h;
-  ans = NULL;
-  LL = 0;
-  while (LL < ArcIndex) {
-    w = 1;
-    h = min(ModUp(incoming[LL] - Os[LL]), ModUp(incoming[LL] - Xs[LL]));
-    while (w < ArcIndex && h > 0) {
-      if (ModUp(incoming[LL] - incoming[Mod(LL + w)]) < h) {
-        Temp = SwapCols(LL, Mod(LL + w), incoming);
-        Temp->nextState = ans;
-        ans = Temp;
-        h = ModUp(incoming[LL] - incoming[Mod(LL + w)]);
-      };
-      h = min(h, min(ModUp(incoming[LL] - Os[Mod(LL + w)]),
-                     ModUp(incoming[LL] - Xs[Mod(LL + w)])));
       w++;
     };
     LL++;
