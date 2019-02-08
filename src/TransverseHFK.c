@@ -11,10 +11,12 @@
 #include <argp.h>
 #include <limits.h>
 #include <math.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 /* Hardcoded max arcindex until dynamic allocation can be tested for
  * speed */
@@ -43,6 +45,7 @@ static struct argp argp = {options, parse_opt, args_doc, doc, 0, 0, 0};
 
 bool verbose = false;
 int ArcIndex = -1;
+int max_time = -1;
 char Xs[MAX_INDEX] = {};
 char Os[MAX_INDEX] = {};
 
@@ -115,6 +118,7 @@ void PrintMathEdges(void);
 void PrintMathEdgesA(ShortEdges edges);
 void PrintVertices(VertexList vlist);
 
+void timeout(int);
 int perm_len(const char*);
 int is_grid(const int,const char*,const char*);
 int buildPermutation(char*,char*);
@@ -153,6 +157,17 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
   return 0;
 }
 
+/**
+ * Signal handler for SIGALRM
+ * @param sig
+ */
+void timeout(int sig)
+{
+  if(SIGALRM == sig) {
+      printf("Timeout reached. Terminating\n");
+      exit(0);
+  }
+}
 
 /**
  * Takes in a string and converts it into a permutation.
@@ -256,6 +271,14 @@ int main(int argc, char **argv) {
   if(!is_grid(ArcIndex,Xs,Os)) {
     printf("Invalid input\n");
     exit(1);
+  }
+
+  if(max_time > 0) {
+    if(signal(SIGALRM, timeout) == SIG_ERR) {
+      perror("An error occured while setting the timer");
+      exit(1);
+    }
+    alarm(max_time);
   }
 
   if(verbose) {
