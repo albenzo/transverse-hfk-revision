@@ -206,6 +206,9 @@ int buildPermutation(char *perm, char *str) {
     ++i;
 
     if (s[0] == ']') {
+      if(s[1] != '\0') {
+        return -1;
+      }
       break;
     } else if (s[0] == ',') {
       ++s;
