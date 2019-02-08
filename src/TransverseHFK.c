@@ -993,12 +993,10 @@ void Homology() {
 }
 
 /**
- * Calculates the homology of EdgeList where EdgeList must
- * have a specified initial state and a terminates at a specified
- * final state.
+ * Contracts all edges such that the parents occur after init
+ * and the children are before or at final.
  * @param init an int specifying the required start
  * @param final State to t
- * @return
  * @see EdgeList
  */
 void SpecialHomology(int init, int final) {
