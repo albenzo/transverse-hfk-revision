@@ -32,11 +32,12 @@ static const char doc[] =
 static const char args_doc[] = "-i [ArcIndex] -X [Xs] -O [Os]";
 
 static struct argp_option options[] = {
-    {"verbose", 'v', 0, 0, "Produce verbose output", 0},
-    {"quiet", 'q', 0, 0, "Don't produce extraneous output", 0},
-    {"index", 'i', "ArcIndex", 0, "ArcIndex of the grid", 0},
-    {0, 'X', "Xs", 0, "List of Xs", 0},
-    {0, 'O', "Os", 0, "List of Os", 0},
+    {"verbose", 'v',               0, 0,          "Produce verbose output", 0},
+    {  "quiet", 'q',               0, 0, "Don't produce extraneous output", 0},
+    {  "index", 'i',      "ArcIndex", 0,            "ArcIndex of the grid", 0},
+    {     "Xs", 'X',         "[...]", 0,                      "List of Xs", 0},
+    {     "Os", 'O',         "[...]", 0,                      "List of Os", 0},
+    {"timeout", 't',       "SECONDS", 0,  "Maximum time to run in seconds", 0},
     {0}};
 
 // Temporary location
@@ -131,6 +132,13 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     break;
   case 'q':
     verbose = false;
+    break;
+  case 't':
+    max_time = atoi(arg);
+    if(max_time <= 0) {
+      argp_failure(state, 0, 0, "Invalid timeout");
+      exit(1);
+    }
     break;
   case 'i':
     ArcIndex = atoi(arg);
