@@ -798,7 +798,9 @@ StateList AppendToStateList(State state, StateList rest) {
 }
 
 /**
- * Takes in two lists of vertices and adds them mod two. Uses EdgeList
+ * Takes in a list of parent vertices and a list of child vertices,
+ * generates all edges between them and adds this ShortEdges to EdgeList
+ * mod 2
  * @param parents a list of parent vertices
  * @param kids a list of child vertices
  * @return A shortEdges containing the result of adding them mod two.
