@@ -1661,7 +1661,7 @@ int NullHomologousD1Q(State init) {
 }
 
 /**
- * For each point in the permutation count the number of Os
+ * Sum over each point in the permutation count the number of Os
  * that occur to the northeast
  * @param x a permutation
  * @return an int containing the quantity described above
@@ -1684,7 +1684,7 @@ int NESWpO(char *x) {
 }
 
 /**
- * For each O in Os count the number of points in the permutation
+ * Sum over each O in Os count the number of points in the permutation
  * to the northeast
  * @param x a permutation
  * @return an int containing the quantity described above
@@ -1707,7 +1707,7 @@ int NESWOp(char *x) {
 }
 
 /**
- * For each point in the permutation count the number of points in
+ * Sum over each point in the permutation count the number of points in
  * the same permutation that occur to the northeast
  * @param x a permutation
  * @return an int containing the quantity described above
