@@ -149,13 +149,13 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     break;
   case 'X':
     if (-1 == buildPermutation(Xs, arg)) {
-      argp_failure(state, 0, 0, "Malformated Xs");
+      argp_failure(state, 0, 0, "Malformatted Xs");
       exit(1);
     }
     break;
   case 'O':
     if (-1 == buildPermutation(Os, arg)) {
-      argp_failure(state, 0, 0, "Malformated Os");
+      argp_failure(state, 0, 0, "Malformatted Os");
       exit(1);
     }
     break;
