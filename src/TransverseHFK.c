@@ -280,7 +280,7 @@ int main(int argc, char **argv) {
   int i;
 
   if(!is_grid(ArcIndex,Xs,Os)) {
-    printf("Invalid input\n");
+    printf("Invalid grid\n");
     exit(1);
   }
 
