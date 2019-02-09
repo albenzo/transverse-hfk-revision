@@ -24,6 +24,6 @@ clean:
 test: $(ALL_TESTS)
 
 %.test: transverseHFK $(TEST_DIR)/%.in $(TEST_DIR)/%.out
-	./transverseHFK `cat $(TEST_DIR)/$*.in` | diff -q $(TEST_DIR)/$*.out - > /dev/null || (echo "Target $@ failed" && exit 1)
+	./transverseHFK `cat $(TEST_DIR)/$*.in` 2>&1 | diff -q $(TEST_DIR)/$*.out - > /dev/null || (echo "Target $@ failed" && exit 1)
 
 .PHONY: clean test %.test
