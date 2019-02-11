@@ -50,6 +50,14 @@ int max_time = -1;
 char Xs[MAX_INDEX] = {};
 char Os[MAX_INDEX] = {};
 
+struct Grid {
+  char Xs[MAX_INDEX];
+  char Os[MAX_INDEX];
+  int arc_index;
+};
+
+typedef struct Grid Grid_t;
+
 struct Vertex {
   int data;
   struct Vertex *nextVertex;
@@ -114,7 +122,7 @@ void print_vertices(VertexList);
 
 void timeout(int);
 int perm_len(const char *);
-int is_grid(const int, const char *, const char *);
+int is_grid(const Grid_t *);
 int build_permutation(char *, char *);
 int eq_state(State a, State b) { return (!strncmp(a, b, arc_index)); }
 
@@ -235,19 +243,19 @@ int perm_len(const char *p) {
  * @param Os a permutation specifygin the Os of the grid
  * @return 1 if the grid is valid, 0 otherwise
  */
-int is_grid(const int i, const char *Xs, const char *Os) {
-  if (perm_len(Xs) != i || perm_len(Os) != i || 1 >= i || MAX_INDEX <= i) {
+int is_grid(const Grid_t* G) {
+  if (perm_len(Xs) != G->arc_index || perm_len(Os) != G->arc_index || 1 >= G->arc_index || MAX_INDEX <= G->arc_index) {
     return 0;
   }
 
-  for (int j = 0; j < i; ++j) {
+  for (int j = 0; j < G->arc_index; ++j) {
     if (Xs[j] == Os[j]) {
       return 0;
     }
     int found_x = 0;
     int found_o = 0;
 
-    for (int k = 0; k < i && (found_x == 0 || found_o == 0); ++k) {
+    for (int k = 0; k < G->arc_index && (found_x == 0 || found_o == 0); ++k) {
       if (Xs[k] == j + 1) {
         found_x = 1;
       }
@@ -270,8 +278,15 @@ int main(int argc, char **argv) {
 
   char UR[arc_index];
   int i;
+  Grid_t G;
 
-  if (!is_grid(arc_index, Xs, Os)) {
+  G.arc_index = arc_index;
+  for(i=0; i<G.arc_index; ++i) {
+    G.Xs[i] = Xs[i];
+    G.Os[i] = Os[i];
+  }
+  
+  if (!is_grid(&G)) {
     printf("Invalid grid\n");
     exit(1);
   }
