@@ -50,22 +50,22 @@ int max_time = -1;
 char Xs[MAX_INDEX] = {};
 char Os[MAX_INDEX] = {};
 
-struct vertex {
+struct Vertex {
   int data;
-  struct vertex *nextVertex;
+  struct Vertex *nextVertex;
 };
 
-typedef struct vertex Vertex;
+typedef struct Vertex Vertex;
 typedef Vertex *VertexList;
 
-struct shortEdgeNode {
+struct EdgeNode {
   int start;
   int end;
-  struct shortEdgeNode *nextPtr;
+  struct EdgeNode *nextPtr;
 };
 
-typedef struct shortEdgeNode ShortEdgeNode;
-typedef ShortEdgeNode *ShortEdges;
+typedef struct EdgeNode EdgeNode;
+typedef EdgeNode *ShortEdges;
 ShortEdges EdgeList;
 
 typedef struct stateNode StateNode;
@@ -837,7 +837,7 @@ ShortEdges AppendOrdered(int a, int b, ShortEdges edges) {
   Prev = edges;
   if ((edges == NULL) || (edges->start > a) ||
       (edges->start == a && edges->end > b)) {
-    ans = malloc(sizeof(ShortEdgeNode));
+    ans = malloc(sizeof(EdgeNode));
     ans->start = a;
     ans->end = b;
     ans->nextPtr = Prev;
@@ -849,7 +849,7 @@ ShortEdges AppendOrdered(int a, int b, ShortEdges edges) {
       curr = curr->nextPtr;
       Prev = Prev->nextPtr;
     };
-    Temp = malloc(sizeof(ShortEdgeNode));
+    Temp = malloc(sizeof(EdgeNode));
     Temp->start = a;
     Temp->end = b;
     Temp->nextPtr = curr;
@@ -867,7 +867,7 @@ ShortEdges AppendOrdered(int a, int b, ShortEdges edges) {
  */
 ShortEdges PrependEdge(int a, int b, ShortEdges e) {
   ShortEdges newPtr;
-  newPtr = malloc(sizeof(ShortEdgeNode));
+  newPtr = malloc(sizeof(EdgeNode));
   newPtr->start = a;
   newPtr->end = b;
   newPtr->nextPtr = e;
@@ -882,7 +882,7 @@ ShortEdges PrependEdge(int a, int b, ShortEdges e) {
  */
 ShortEdges CreateEdge(int a, int b) {
   ShortEdges newPtr;
-  newPtr = malloc(sizeof(ShortEdgeNode));
+  newPtr = malloc(sizeof(EdgeNode));
   newPtr->start = a;
   newPtr->end = b;
   newPtr->nextPtr = NULL;
