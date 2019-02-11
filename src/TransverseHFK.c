@@ -32,12 +32,12 @@ static const char doc[] =
 static const char args_doc[] = "-i [ArcIndex] -X [Xs] -O [Os]";
 
 static struct argp_option options[] = {
-    {"verbose", 'v',               0, 0,          "Produce verbose output", 0},
-    {  "quiet", 'q',               0, 0, "Don't produce extraneous output", 0},
-    {  "index", 'i',      "ArcIndex", 0,            "ArcIndex of the grid", 0},
-    {     "Xs", 'X',         "[...]", 0,                      "List of Xs", 0},
-    {     "Os", 'O',         "[...]", 0,                      "List of Os", 0},
-    {"timeout", 't',       "SECONDS", 0,  "Maximum time to run in seconds", 0},
+    {"verbose", 'v', 0, 0, "Produce verbose output", 0},
+    {"quiet", 'q', 0, 0, "Don't produce extraneous output", 0},
+    {"index", 'i', "ArcIndex", 0, "ArcIndex of the grid", 0},
+    {"Xs", 'X', "[...]", 0, "List of Xs", 0},
+    {"Os", 'O', "[...]", 0, "List of Os", 0},
+    {"timeout", 't', "SECONDS", 0, "Maximum time to run in seconds", 0},
     {0}};
 
 // Temporary location
@@ -78,44 +78,44 @@ struct StateNode {
 
 typedef char State[MAX_INDEX];
 
-EdgeList add_mod_two_lists(VertexList kids, VertexList parents);
-VertexList prepend_vertex(int a, VertexList v);
-EdgeList prepend_edge(int a, int b, EdgeList e);
-StateList fixed_wt_rectangles_out_of(int wt, State incoming);
-StateList swap_cols(int x1, int x2, State incoming);
-int get_number(State a, StateList b);
-void free_state_list(StateList States);
-int null_homologous_D0Q(State init);
-int null_homologous_D1Q(State init);
+EdgeList add_mod_two_lists(VertexList, VertexList);
+VertexList prepend_vertex(int, VertexList);
+EdgeList prepend_edge(int, int, EdgeList);
+StateList fixed_wt_rectangles_out_of(int, State);
+StateList swap_cols(int, int, State);
+int get_number(State, StateList);
+void free_state_list(StateList);
+int null_homologous_D0Q(State);
+int null_homologous_D1Q(State);
 void homology(void);
-void special_homology(int init, int final);
-void contract(int a, int b);
-VertexList remove_vertex(int a, VertexList v);
-EdgeList create_edge(int a, int b);
-void free_edge_list(EdgeList e);
-StateList remove_state(State a, StateList v);
+void special_homology(int, int);
+void contract(int, int);
+VertexList remove_vertex(int, VertexList);
+EdgeList create_edge(int, int);
+void free_edge_list(EdgeList);
+StateList remove_state(State, StateList);
 int mod(int);
 int mod_up(int);
 StateList new_rectangles_out_of(StateList, State);
 StateList new_rectangles_into(StateList, State);
 EdgeList append_ordered(int, int, EdgeList);
 
-int NESW_pO(char *x);
-int NESW_Op(char *x);
-int NESW_pp(char *x);
+int NESW_pO(char *);
+int NESW_Op(char *);
+int NESW_pp(char *);
 
-void print_state(State state);
-void print_state_short(State state);
+void print_state(State);
+void print_state_short(State);
 void print_edges(void);
-void print_states(StateList states);
+void print_states(StateList);
 void print_math_edges(void);
-void print_math_edges_a(EdgeList edges);
-void print_vertices(VertexList vlist);
+void print_math_edges_a(EdgeList);
+void print_vertices(VertexList);
 
 void timeout(int);
-int perm_len(const char*);
-int is_grid(const int,const char*,const char*);
-int build_permutation(char*,char*);
+int perm_len(const char *);
+int is_grid(const int, const char *, const char *);
+int build_permutation(char *, char *);
 int eq_state(State a, State b) { return (!strncmp(a, b, arc_index)); }
 
 static error_t parse_opt(int key, char *arg, struct argp_state *state) {
@@ -128,7 +128,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     break;
   case 't':
     max_time = atoi(arg);
-    if(max_time <= 0) {
+    if (max_time <= 0) {
       argp_failure(state, 0, 0, "Invalid timeout");
       exit(1);
     }
@@ -162,11 +162,10 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
  * Signal handler for SIGALRM that exits when the signal is received.
  * @param sig
  */
-void timeout(int sig)
-{
-  if(SIGALRM == sig) {
-      printf("Timeout reached. Terminating\n");
-      exit(0);
+void timeout(int sig) {
+  if (SIGALRM == sig) {
+    printf("Timeout reached. Terminating\n");
+    exit(0);
   }
 }
 
@@ -199,7 +198,7 @@ int build_permutation(char *perm, char *str) {
     ++i;
 
     if (s[0] == ']') {
-      if(s[1] != '\0') {
+      if (s[1] != '\0') {
         return -1;
       }
       break;
@@ -212,14 +211,15 @@ int build_permutation(char *perm, char *str) {
 }
 
 /**
- * Returns the number of characters in the character array before a zero is found
+ * Returns the number of characters in the character array before a zero is
+ * found
  * @param p a character array
- * @return the number of characters before a zero is found. Returns -1 if not found
+ * @return the number of characters before a zero is found. Returns -1 if not
+ * found
  */
-int perm_len(const char* p)
-{
-  for(int i=0;;++i) {
-    if(0 == p[i]) {
+int perm_len(const char *p) {
+  for (int i = 0;; ++i) {
+    if (0 == p[i]) {
       return i;
     }
   }
@@ -235,34 +235,33 @@ int perm_len(const char* p)
  * @param Os a permutation specifygin the Os of the grid
  * @return 1 if the grid is valid, 0 otherwise
  */
-int is_grid(const int i, const char* Xs, const char* Os)
-{
-  if(perm_len(Xs) != i || perm_len(Os) != i || 1 >= i || MAX_INDEX <= i) {
+int is_grid(const int i, const char *Xs, const char *Os) {
+  if (perm_len(Xs) != i || perm_len(Os) != i || 1 >= i || MAX_INDEX <= i) {
     return 0;
   }
 
-  for(int j=0; j< i; ++j) {
-    if(Xs[j] == Os[j]) {
+  for (int j = 0; j < i; ++j) {
+    if (Xs[j] == Os[j]) {
       return 0;
     }
     int found_x = 0;
     int found_o = 0;
 
-    for(int k=0;k<i && (found_x == 0 || found_o == 0); ++k) {
-      if(Xs[k] == j+1) {
+    for (int k = 0; k < i && (found_x == 0 || found_o == 0); ++k) {
+      if (Xs[k] == j + 1) {
         found_x = 1;
       }
 
-      if(Os[k] == j+1) {
+      if (Os[k] == j + 1) {
         found_o = 1;
       }
     }
 
-    if(0 == found_x || 0 == found_o) {
+    if (0 == found_x || 0 == found_o) {
       return 0;
     }
   }
-  
+
   return 1;
 }
 
@@ -272,20 +271,20 @@ int main(int argc, char **argv) {
   char UR[arc_index];
   int i;
 
-  if(!is_grid(arc_index,Xs,Os)) {
+  if (!is_grid(arc_index, Xs, Os)) {
     printf("Invalid grid\n");
     exit(1);
   }
 
-  if(max_time > 0) {
-    if(signal(SIGALRM, timeout) == SIG_ERR) {
+  if (max_time > 0) {
+    if (signal(SIGALRM, timeout) == SIG_ERR) {
       perror("An error occured while setting the timer");
       exit(1);
     }
     alarm(max_time);
   }
 
-  if(verbose) {
+  if (verbose) {
     printf("\n \nCalculating graph for LL invariant\n");
     print_state(Xs);
   }
@@ -896,9 +895,10 @@ void contract(int a, int b) {
   kids = NULL;
   tempkids = NULL;
   tempparents = NULL;
-  LastParent = NULL; 
+  LastParent = NULL;
   LastKid = NULL;
-  while (global_edge_list != NULL && ((global_edge_list)->end == b || global_edge_list->start == a)) {
+  while (global_edge_list != NULL &&
+         ((global_edge_list)->end == b || global_edge_list->start == a)) {
     if ((global_edge_list->end == b) && (global_edge_list->start == a)) {
       Temp = global_edge_list;
       global_edge_list = global_edge_list->nextEdge;
@@ -1244,8 +1244,8 @@ int null_homologous_D0Q(State init) {
           ReallyNewOuts = ReallyNewOuts->nextState;
           free(Temp);
         }
-        global_edge_list =
-            append_ordered(outnumber + numOuts, innumber + numIns, global_edge_list);
+        global_edge_list = append_ordered(outnumber + numOuts,
+                                          innumber + numIns, global_edge_list);
         edgecount++;
       }
       PresentIn = PresentIn->nextState;
@@ -1285,8 +1285,8 @@ int null_homologous_D0Q(State init) {
           ReallyNewIns = ReallyNewIns->nextState;
           free(Temp);
         }
-        global_edge_list =
-            append_ordered(outnumber + numOuts, innumber + numIns, global_edge_list);
+        global_edge_list = append_ordered(outnumber + numOuts,
+                                          innumber + numIns, global_edge_list);
         edgecount++;
       };
       PresentOut = PresentOut->nextState;
@@ -1389,8 +1389,8 @@ int null_homologous_D1Q(State init) {
           ReallyNewOuts = ReallyNewOuts->nextState;
           free(Temp);
         }
-        global_edge_list =
-            append_ordered(outnumber + numOuts, innumber + numIns, global_edge_list);
+        global_edge_list = append_ordered(outnumber + numOuts,
+                                          innumber + numIns, global_edge_list);
         edgecount++;
       }
       PresentIn = PresentIn->nextState;
@@ -1430,8 +1430,8 @@ int null_homologous_D1Q(State init) {
           ReallyNewIns = ReallyNewIns->nextState;
           free(Temp);
         }
-        global_edge_list =
-            append_ordered(outnumber + numOuts, innumber + numIns, global_edge_list);
+        global_edge_list = append_ordered(outnumber + numOuts,
+                                          innumber + numIns, global_edge_list);
         edgecount++;
       };
       PresentOut = PresentOut->nextState;
