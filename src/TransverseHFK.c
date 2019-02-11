@@ -68,10 +68,10 @@ typedef struct EdgeNode EdgeNode;
 typedef EdgeNode *EdgeList;
 EdgeList global_edge_list;
 
-typedef struct stateNode StateNode;
+typedef struct StateNode StateNode;
 typedef StateNode *StateList;
 
-struct stateNode {
+struct StateNode {
   char data[MAX_INDEX];
   StateList nextState;
 };
@@ -700,7 +700,7 @@ StateList CreateStateNode(State state) {
  * Places the given state at the end of the provided StateList
  * @param state a State
  * @param rest a StateList
- * @return appends a stateNode containing state to the end of rest
+ * @return appends a StateNode containing state to the end of rest
  * @see arc_index
  */
 StateList AppendToStateList(State state, StateList rest) {
