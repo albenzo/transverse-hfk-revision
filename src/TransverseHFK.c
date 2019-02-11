@@ -135,7 +135,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
   case 'i':
     arc_index = atoi(arg);
     if (arc_index > MAX_INDEX || arc_index < 2) {
-      argp_failure(state, 0, 0, "arc_index value out of range");
+      argp_failure(state, 0, 0, "ArcIndex value out of range");
       exit(1);
     }
     break;
