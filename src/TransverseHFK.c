@@ -66,7 +66,7 @@ struct EdgeNode {
 
 typedef struct EdgeNode EdgeNode;
 typedef EdgeNode *ShortEdges;
-ShortEdges EdgeList;
+ShortEdges global_edge_list;
 
 typedef struct stateNode StateNode;
 typedef StateNode *StateList;
@@ -727,24 +727,24 @@ StateList AppendToStateList(State state, StateList rest) {
 
 /**
  * Takes in a list of parent vertices and a list of child vertices,
- * generates all edges between them and adds this ShortEdges to EdgeList
+ * generates all edges between them and adds this ShortEdges to global_edge_list
  * mod 2
  * @param parents a list of parent vertices
  * @param kids a list of child vertices
  * @return A shortEdges containing the result of adding them mod two.
- * @see EdgeList
+ * @see global_edge_list
  */
 ShortEdges AddModTwoLists(VertexList parents, VertexList kids) {
   VertexList thiskid, thisparent, tempvert;
   ShortEdges thisedge, tempedge, Prev;
   ShortEdges ans;
   if ((parents == NULL) || (kids == NULL)) {
-    ans = EdgeList; // change to return
+    ans = global_edge_list; // change to return
   } else {
     thisparent = parents;
     thiskid = kids;
     ans = NULL;
-    thisedge = EdgeList;
+    thisedge = global_edge_list;
     while (thisparent != NULL && thisedge != NULL &&
            (thisedge->start == thisparent->data &&
             thisedge->end == thiskid->data)) {
@@ -906,16 +906,16 @@ VertexList PrependVertex(int a, VertexList vertices) {
 
 /**
  * Calculate the Homology of Edgelist and storing the result
- * in EdgeList.
- * @see EdgeList
+ * in global_edge_list.
+ * @see global_edge_list
  */
 void Homology() {
   ShortEdges Temp;
-  Temp = EdgeList;
+  Temp = global_edge_list;
   while (Temp != NULL) {
     if (Temp != NULL) {
       Contract(Temp->start, Temp->end);
-      Temp = EdgeList;
+      Temp = global_edge_list;
     };
   };
 }
@@ -925,21 +925,21 @@ void Homology() {
  * and the children are before or at final.
  * @param init an int specifying the required start
  * @param final State to t
- * @see EdgeList
+ * @see global_edge_list
  */
 void SpecialHomology(int init, int final) {
   int i, j, t;
   ShortEdges Temp;
   i = 0;
   j = 0;
-  Temp = EdgeList;
-  if ((EdgeList == NULL) || (EdgeList->start != init)) {
+  Temp = global_edge_list;
+  if ((global_edge_list == NULL) || (global_edge_list->start != init)) {
     printf("FOOO");
     scanf("%d", &t);
-    FreeShortEdges(EdgeList);
-    EdgeList = NULL;
+    FreeShortEdges(global_edge_list);
+    global_edge_list = NULL;
   };
-  while ((EdgeList != NULL) && (Temp != NULL)) {
+  while ((global_edge_list != NULL) && (Temp != NULL)) {
     while ((Temp != NULL) && (Temp->start == init)) {
       Temp = Temp->nextPtr;
     };
@@ -956,65 +956,65 @@ void SpecialHomology(int init, int final) {
     j++;
     if (Temp != NULL) {
       Contract(Temp->start, Temp->end);
-      Temp = EdgeList;
+      Temp = global_edge_list;
     };
   };
 }
 
 /**
- * Contracts the edge specified by the input within EdgeList
+ * Contracts the edge specified by the input within global_edge_list
  * @param a the parent vertex of the edge
  * @param b the child vertex of the edge
- * @see EdgeList
+ * @see global_edge_list
  */
 void Contract(int a, int b) {
   ShortEdges Temp;
   ShortEdges Prev;
   VertexList parents, kids, tempkids, tempparents;
   VertexList LastParent, LastKid;
-  Prev = EdgeList; // Multiple equal initializations
+  Prev = global_edge_list; // Multiple equal initializations
   parents = NULL;
   kids = NULL;
   tempkids = NULL;
   tempparents = NULL;
   LastParent = NULL; 
   LastKid = NULL;
-  while (EdgeList != NULL && ((EdgeList)->end == b || EdgeList->start == a)) {
-    if ((EdgeList->end == b) && (EdgeList->start == a)) {
-      Temp = EdgeList;
-      EdgeList = EdgeList->nextPtr;
+  while (global_edge_list != NULL && ((global_edge_list)->end == b || global_edge_list->start == a)) {
+    if ((global_edge_list->end == b) && (global_edge_list->start == a)) {
+      Temp = global_edge_list;
+      global_edge_list = global_edge_list->nextPtr;
       free(Temp);
     } else {
-      if (EdgeList->end == b) {
+      if (global_edge_list->end == b) {
         if (LastParent == NULL) {
-          parents = PrependVertex(EdgeList->start, NULL);
+          parents = PrependVertex(global_edge_list->start, NULL);
           LastParent = parents;
         } else {
-          tempparents = PrependVertex(EdgeList->start, NULL);
+          tempparents = PrependVertex(global_edge_list->start, NULL);
           LastParent->nextVertex = tempparents;
           LastParent = LastParent->nextVertex;
         };
-        Temp = EdgeList;
-        EdgeList = EdgeList->nextPtr;
+        Temp = global_edge_list;
+        global_edge_list = global_edge_list->nextPtr;
         free(Temp);
-      } else if (EdgeList->start == a) {
+      } else if (global_edge_list->start == a) {
         if (LastKid == NULL) {
-          kids = PrependVertex(EdgeList->end, kids);
+          kids = PrependVertex(global_edge_list->end, kids);
           LastKid = kids;
         } else {
-          tempkids = PrependVertex(EdgeList->end, NULL);
+          tempkids = PrependVertex(global_edge_list->end, NULL);
           LastKid->nextVertex = tempkids;
           LastKid = LastKid->nextVertex;
         };
-        Temp = EdgeList;
-        EdgeList = EdgeList->nextPtr;
+        Temp = global_edge_list;
+        global_edge_list = global_edge_list->nextPtr;
         free(Temp);
       };
     };
   };
-  Prev = EdgeList;
-  if (EdgeList != NULL) {
-    Temp = (EdgeList->nextPtr);
+  Prev = global_edge_list;
+  if (global_edge_list != NULL) {
+    Temp = (global_edge_list->nextPtr);
   } else {
     Temp = NULL;
   };
@@ -1069,7 +1069,7 @@ void Contract(int a, int b) {
       Prev = (Prev)->nextPtr;
     }
   };
-  EdgeList = AddModTwoLists(parents, kids);
+  global_edge_list = AddModTwoLists(parents, kids);
 }
 
 /**
@@ -1138,12 +1138,12 @@ VertexList RemoveVertex(int a, VertexList v) {
 }
 
 /**
- * Prints each edge in EdgeList on a new line
- * @see EdgeList
+ * Prints each edge in global_edge_list on a new line
+ * @see global_edge_list
  */
 void PrintEdges() {
   ShortEdges Temp;
-  Temp = EdgeList;
+  Temp = global_edge_list;
   while (Temp != NULL) {
     printf("%d %d\n", Temp->start, Temp->end);
     Temp = (Temp->nextPtr);
@@ -1151,13 +1151,13 @@ void PrintEdges() {
 }
 
 /**
- * Print the first 80 edges in EdgeList on the same line
- * @see EdgeList
+ * Print the first 80 edges in global_edge_list on the same line
+ * @see global_edge_list
  */
 void PrintMathEdges() {
   ShortEdges Temp;
   int t;
-  Temp = EdgeList;
+  Temp = global_edge_list;
   printf("{");
   t = 0;
   while (Temp != NULL) {
@@ -1310,10 +1310,10 @@ StateList FixedWtRectanglesOutOf(int wt, State incoming) {
 
 /**
  * Calculates whether the supplied state is nullhomologous. Uses
- the global variable EdgeList.
+ the global variable global_edge_list.
  * @param init a State
  * @return nonzero if nullhomologous and zero otherwise.
- * @see EdgeList
+ * @see global_edge_list
  * @see ArcIndex
  */
 int NullHomologousD0Q(State init) {
@@ -1329,7 +1329,7 @@ int NullHomologousD0Q(State init) {
   int numNewIns = 0;
   int numNewOuts = 0;
   StateList PresentIn, PresentOut;
-  EdgeList = PrependEdge(0, 1, NULL);
+  global_edge_list = PrependEdge(0, 1, NULL);
   PrevOuts = NULL;
   PrevIns = NULL;
   NewIns = malloc(sizeof(StateNode));
@@ -1372,8 +1372,8 @@ int NullHomologousD0Q(State init) {
           ReallyNewOuts = ReallyNewOuts->nextState;
           free(Temp);
         }
-        EdgeList =
-            AppendOrdered(outnumber + numOuts, innumber + numIns, EdgeList);
+        global_edge_list =
+            AppendOrdered(outnumber + numOuts, innumber + numIns, global_edge_list);
         edgecount++;
       }
       PresentIn = PresentIn->nextState;
@@ -1413,8 +1413,8 @@ int NullHomologousD0Q(State init) {
           ReallyNewIns = ReallyNewIns->nextState;
           free(Temp);
         }
-        EdgeList =
-            AppendOrdered(outnumber + numOuts, innumber + numIns, EdgeList);
+        global_edge_list =
+            AppendOrdered(outnumber + numOuts, innumber + numIns, global_edge_list);
         edgecount++;
       };
       PresentOut = PresentOut->nextState;
@@ -1423,12 +1423,12 @@ int NullHomologousD0Q(State init) {
     PrevOuts = NewOuts;
     NewOuts = NULL;
     SpecialHomology(0, previnnumber);
-    if ((EdgeList == NULL) || (EdgeList->start != 0)) {
+    if ((global_edge_list == NULL) || (global_edge_list->start != 0)) {
       ans = 1;
       FreeStateList(NewIns);
       FreeStateList(NewOuts);
       NewIns = NULL;
-    } else if (EdgeList->end <= previnnumber) {
+    } else if (global_edge_list->end <= previnnumber) {
       ans = 0;
       FreeStateList(NewIns);
       FreeStateList(NewOuts);
@@ -1447,7 +1447,7 @@ int NullHomologousD0Q(State init) {
  * Calculates if D1 of the supplied state is nullhomologous
  * @param init a State
  * @return nonzero if nullhomologous and zero otherwise
- * @see EdgeList
+ * @see global_edge_list
  * @see ArcIndex
  */
 int NullHomologousD1Q(State init) {
@@ -1464,18 +1464,18 @@ int NullHomologousD1Q(State init) {
   int numNewIns = 0;
   int numNewOuts = 0;
   StateList PresentIn, PresentOut;
-  LastEdge = EdgeList;
+  LastEdge = global_edge_list;
   PrevOuts = NULL;
   PrevIns = NULL;
   NewIns = FixedWtRectanglesOutOf(1, init);
-  EdgeList = PrependEdge(0, 1, NULL);
+  global_edge_list = PrependEdge(0, 1, NULL);
   Temp = NewIns;
   i = 1;
   LastEdge = NULL;
   if (Temp != NULL) {
     i = 1;
-    EdgeList = CreateEdge(0, 1);
-    LastEdge = EdgeList;
+    global_edge_list = CreateEdge(0, 1);
+    LastEdge = global_edge_list;
     Temp = Temp->nextState;
     while (Temp != NULL) {
       i++;
@@ -1517,8 +1517,8 @@ int NullHomologousD1Q(State init) {
           ReallyNewOuts = ReallyNewOuts->nextState;
           free(Temp);
         }
-        EdgeList =
-            AppendOrdered(outnumber + numOuts, innumber + numIns, EdgeList);
+        global_edge_list =
+            AppendOrdered(outnumber + numOuts, innumber + numIns, global_edge_list);
         edgecount++;
       }
       PresentIn = PresentIn->nextState;
@@ -1558,8 +1558,8 @@ int NullHomologousD1Q(State init) {
           ReallyNewIns = ReallyNewIns->nextState;
           free(Temp);
         }
-        EdgeList =
-            AppendOrdered(outnumber + numOuts, innumber + numIns, EdgeList);
+        global_edge_list =
+            AppendOrdered(outnumber + numOuts, innumber + numIns, global_edge_list);
         edgecount++;
       };
       PresentOut = PresentOut->nextState;
@@ -1568,12 +1568,12 @@ int NullHomologousD1Q(State init) {
     PrevOuts = NewOuts;
     NewOuts = NULL;
     SpecialHomology(0, previnnumber);
-    if ((EdgeList == NULL) || (EdgeList->start != 0)) {
+    if ((global_edge_list == NULL) || (global_edge_list->start != 0)) {
       ans = 1;
       FreeStateList(NewIns);
       FreeStateList(NewOuts);
       NewIns = NULL;
-    } else if (EdgeList->end <= previnnumber) {
+    } else if (global_edge_list->end <= previnnumber) {
       ans = 0;
       FreeStateList(NewIns);
       FreeStateList(NewOuts);
