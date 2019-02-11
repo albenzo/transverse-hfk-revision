@@ -78,12 +78,6 @@ struct stateNode {
 
 typedef char State[MAX_INDEX];
 
-StateList BigIns;
-StateList BigOuts;
-
-VertexList ins;
-VertexList outs;
-
 ShortEdges AddModTwoLists(VertexList kids, VertexList parents);
 VertexList PrependVertex(int a, VertexList v);
 ShortEdges PrependEdge(int a, int b, ShortEdges e);
