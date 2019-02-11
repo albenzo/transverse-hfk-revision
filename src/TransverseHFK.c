@@ -11,10 +11,12 @@
 #include <argp.h>
 #include <limits.h>
 #include <math.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 /* Hardcoded max arcindex until dynamic allocation can be tested for
  * speed */
@@ -30,11 +32,12 @@ static const char doc[] =
 static const char args_doc[] = "-i [ArcIndex] -X [Xs] -O [Os]";
 
 static struct argp_option options[] = {
-    {"verbose", 'v', 0, 0, "Produce verbose output", 0},
-    {"quiet", 'q', 0, 0, "Don't produce extraneous output", 0},
-    {"index", 'i', "ArcIndex", 0, "ArcIndex of the grid", 0},
-    {0, 'X', "Xs", 0, "List of Xs", 0},
-    {0, 'O', "Os", 0, "List of Os", 0},
+    {"verbose", 'v',               0, 0,          "Produce verbose output", 0},
+    {  "quiet", 'q',               0, 0, "Don't produce extraneous output", 0},
+    {  "index", 'i',      "ArcIndex", 0,            "ArcIndex of the grid", 0},
+    {     "Xs", 'X',         "[...]", 0,                      "List of Xs", 0},
+    {     "Os", 'O',         "[...]", 0,                      "List of Os", 0},
+    {"timeout", 't',       "SECONDS", 0,  "Maximum time to run in seconds", 0},
     {0}};
 
 // Temporary location
@@ -43,6 +46,7 @@ static struct argp argp = {options, parse_opt, args_doc, doc, 0, 0, 0};
 
 bool verbose = false;
 int ArcIndex = -1;
+int max_time = -1;
 char Xs[MAX_INDEX] = {};
 char Os[MAX_INDEX] = {};
 
@@ -84,8 +88,6 @@ ShortEdges AddModTwoLists(VertexList kids, VertexList parents);
 VertexList PrependVertex(int a, VertexList v);
 ShortEdges PrependEdge(int a, int b, ShortEdges e);
 StateList FixedWtRectanglesOutOf(int wt, State incoming);
-StateList RectanglesOutOf(State incoming);
-StateList RectanglesInto(State incoming);
 StateList SwapCols(int x1, int x2, State incoming);
 int GetNumber(State a, StateList b);
 void FreeStateList(StateList States);
@@ -115,6 +117,7 @@ void PrintMathEdges(void);
 void PrintMathEdgesA(ShortEdges edges);
 void PrintVertices(VertexList vlist);
 
+void timeout(int);
 int perm_len(const char*);
 int is_grid(const int,const char*,const char*);
 int buildPermutation(char*,char*);
@@ -128,6 +131,13 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
   case 'q':
     verbose = false;
     break;
+  case 't':
+    max_time = atoi(arg);
+    if(max_time <= 0) {
+      argp_failure(state, 0, 0, "Invalid timeout");
+      exit(1);
+    }
+    break;
   case 'i':
     ArcIndex = atoi(arg);
     if (ArcIndex > MAX_INDEX || ArcIndex < 2) {
@@ -137,13 +147,13 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     break;
   case 'X':
     if (-1 == buildPermutation(Xs, arg)) {
-      argp_failure(state, 0, 0, "Malformated Xs");
+      argp_failure(state, 0, 0, "Malformatted Xs");
       exit(1);
     }
     break;
   case 'O':
     if (-1 == buildPermutation(Os, arg)) {
-      argp_failure(state, 0, 0, "Malformated Os");
+      argp_failure(state, 0, 0, "Malformatted Os");
       exit(1);
     }
     break;
@@ -153,6 +163,17 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
   return 0;
 }
 
+/**
+ * Signal handler for SIGALRM that exits when the signal is received.
+ * @param sig
+ */
+void timeout(int sig)
+{
+  if(SIGALRM == sig) {
+      printf("Timeout reached. Terminating\n");
+      exit(0);
+  }
+}
 
 /**
  * Takes in a string and converts it into a permutation.
@@ -183,6 +204,9 @@ int buildPermutation(char *perm, char *str) {
     ++i;
 
     if (s[0] == ']') {
+      if(s[1] != '\0') {
+        return -1;
+      }
       break;
     } else if (s[0] == ',') {
       ++s;
@@ -254,8 +278,16 @@ int main(int argc, char **argv) {
   int i;
 
   if(!is_grid(ArcIndex,Xs,Os)) {
-    printf("Invalid input\n");
+    printf("Invalid grid\n");
     exit(1);
+  }
+
+  if(max_time > 0) {
+    if(signal(SIGALRM, timeout) == SIG_ERR) {
+      perror("An error occured while setting the timer");
+      exit(1);
+    }
+    alarm(max_time);
   }
 
   if(verbose) {
@@ -426,70 +458,6 @@ StateList NewRectanglesOutOf(StateList Prevs, State incoming) {
       };
       h = min(h, min(Mod(Os[Mod(LL + w)] - incoming[LL]),
                      Mod(Xs[Mod(LL + w)] - incoming[LL])));
-      w++;
-    };
-    LL++;
-  };
-  return ans;
-}
-
-/**
- * Returns a StateList consisting of states that are reached by rectangles
- * leaving incoming
- * @param incoming Initial state for generated rectangles
- * @return list of states reached by a rectangle from incoming.
- * @see ArcIndex
- */
-StateList RectanglesOutOf(State incoming) {
-  StateList Temp, ans;
-  int LL;
-  int w, h;
-  ans = NULL;
-  LL = 0;
-  while (LL < ArcIndex) {
-    w = 1;
-    h = min(Mod(Os[LL] - incoming[LL]), Mod(Xs[LL] - incoming[LL]));
-    while (w < ArcIndex && h > 0) {
-      if (Mod(incoming[Mod(LL + w)] - incoming[LL]) <= h) {
-        Temp = SwapCols(LL, Mod(LL + w), incoming);
-        Temp->nextState = ans;
-        ans = Temp;
-        h = Mod(incoming[Mod(LL + w)] - incoming[LL]);
-      };
-      h = min(h, min(Mod(Os[Mod(LL + w)] - incoming[LL]),
-                     Mod(Xs[Mod(LL + w)] - incoming[LL])));
-      w++;
-    };
-    LL++;
-  };
-  return ans;
-}
-
-/**
- * returns a StateList containing those with a rectangle
- * pointing to the state incoming
- * @param incoming State that is the destination for generated rectangles
- * @return StateList containing states with a rectangle to incoming.
- * @see ArcIndex
- */
-StateList RectanglesInto(State incoming) {
-  StateList Temp, ans;
-  int LL;
-  int w, h;
-  ans = NULL;
-  LL = 0;
-  while (LL < ArcIndex) {
-    w = 1;
-    h = min(ModUp(incoming[LL] - Os[LL]), ModUp(incoming[LL] - Xs[LL]));
-    while (w < ArcIndex && h > 0) {
-      if (ModUp(incoming[LL] - incoming[Mod(LL + w)]) < h) {
-        Temp = SwapCols(LL, Mod(LL + w), incoming);
-        Temp->nextState = ans;
-        ans = Temp;
-        h = ModUp(incoming[LL] - incoming[Mod(LL + w)]);
-      };
-      h = min(h, min(ModUp(incoming[LL] - Os[Mod(LL + w)]),
-                     ModUp(incoming[LL] - Xs[Mod(LL + w)])));
       w++;
     };
     LL++;
@@ -764,7 +732,9 @@ StateList AppendToStateList(State state, StateList rest) {
 }
 
 /**
- * Takes in two lists of vertices and adds them mod two. Uses EdgeList
+ * Takes in a list of parent vertices and a list of child vertices,
+ * generates all edges between them and adds this ShortEdges to EdgeList
+ * mod 2
  * @param parents a list of parent vertices
  * @param kids a list of child vertices
  * @return A shortEdges containing the result of adding them mod two.
@@ -957,12 +927,10 @@ void Homology() {
 }
 
 /**
- * Calculates the homology of EdgeList where EdgeList must
- * have a specified initial state and a terminates at a specified
- * final state.
+ * Contracts all edges such that the parents occur after init
+ * and the children are before or at final.
  * @param init an int specifying the required start
  * @param final State to t
- * @return
  * @see EdgeList
  */
 void SpecialHomology(int init, int final) {
@@ -1627,7 +1595,7 @@ int NullHomologousD1Q(State init) {
 }
 
 /**
- * For each point in the permutation count the number of Os
+ * Sum over each point in the permutation count the number of Os
  * that occur to the northeast
  * @param x a permutation
  * @return an int containing the quantity described above
@@ -1650,7 +1618,7 @@ int NESWpO(char *x) {
 }
 
 /**
- * For each O in Os count the number of points in the permutation
+ * Sum over each O in Os count the number of points in the permutation
  * to the northeast
  * @param x a permutation
  * @return an int containing the quantity described above
@@ -1673,7 +1641,7 @@ int NESWOp(char *x) {
 }
 
 /**
- * For each point in the permutation count the number of points in
+ * Sum over each point in the permutation count the number of points in
  * the same permutation that occur to the northeast
  * @param x a permutation
  * @return an int containing the quantity described above

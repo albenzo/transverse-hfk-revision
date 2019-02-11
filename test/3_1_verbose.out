@@ -1,0 +1,64 @@
+
+ 
+Calculating graph for LL invariant
+  X    -    -    O    -  
+*                        
+  -    X    -    -    O  
+     *                   
+  O    -    X    -    -  
+          *              
+  -    O    -    X    -  
+               *         
+  -    -    O    -    X  
+                    *    
+
+2A=M=SL+1=-4
+LL is null-homologous
+
+ 
+Calculating graph for UR invariant
+  X    -    -    O    -  
+          *              
+  -    X    -    -    O  
+               *         
+  O    -    X    -    -  
+                    *    
+  -    O    -    X    -  
+*                        
+  -    -    O    -    X  
+     *                   
+
+2A=M=SL+1=-4
+UR is null-homologous
+
+ 
+Calculating graph for D1[LL] invariant
+  X    -    -    O    -  
+*                        
+  -    X    -    -    O  
+     *                   
+  O    -    X    -    -  
+          *              
+  -    O    -    X    -  
+               *         
+  -    -    O    -    X  
+                    *    
+
+2A=M=SL+1=-4
+D1[LL] is NOT null-homologous
+
+ 
+Calculating graph for D1[UR] invariant
+  X    -    -    O    -  
+          *              
+  -    X    -    -    O  
+               *         
+  O    -    X    -    -  
+                    *    
+  -    O    -    X    -  
+*                        
+  -    -    O    -    X  
+     *                   
+
+2A=M=SL+1=-4
+D1[UR] is NOT null-homologous

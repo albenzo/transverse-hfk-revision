@@ -2,6 +2,7 @@ CC=gcc
 SRC=src
 CFLAGS= -O3 -Wall -Wextra -Wundef -Wshadow -Wpointer-arith -Wcast-align -Wstrict-prototypes -Wwrite-strings -g
 LDFLAGS= 
+TEST_DIR=test
 
 UNAME_S= $(shell uname -s)
 
@@ -9,6 +10,8 @@ ifeq ($(UNAME_S),Darwin)
 	CFLAGS += -I/usr/local/include/
 	LDFLAGS += -L/usr/local/lib/ -largp
 endif
+
+ALL_TESTS := $(addsuffix .test, $(patsubst $(TEST_DIR)/%.in,%, $(wildcard $(TEST_DIR)/*.in)))
 
 all: transverseHFK
 
@@ -18,23 +21,9 @@ transverseHFK: src/TransverseHFK.c
 clean:
 	rm -f transverseHFK
 
-test: test_m10_132 test_10_132 test_1_m12n200 test_2_m12n200 test_p1_-4_-3_3 test_p2_-4_-3_3 test_p1_-6_-3_3 test_p2_-6_-3_3
+test: $(ALL_TESTS)
 
-test_long: test 
+%.test: transverseHFK $(TEST_DIR)/%.in $(TEST_DIR)/%.out
+	./transverseHFK `cat $(TEST_DIR)/$*.in` 2>&1 | diff -q $(TEST_DIR)/$*.out - > /dev/null || (echo "Target $@ failed" && exit 1)
 
-test_m10_132:
-	./transverseHFK `cat test/m10_132.in` | diff -q test/m10_132.out - > /dev/null || (echo "Target $@ failed" && exit 1)
-test_10_132:
-	./transverseHFK `cat test/10_132.in` | diff -q test/10_132.out - > /dev/null || (echo "Target $@ failed" && exit 1)
-test_1_m12n200:
-	./transverseHFK `cat test/1_m12n200.in` | diff -q test/1_m12n200.out - > /dev/null || (echo "Target $@ failed" && exit 1)
-test_2_m12n200:
-	./transverseHFK `cat test/2_m12n200.in` | diff -q test/2_m12n200.out - > /dev/null || (echo "Target $@ failed" && exit 1)
-test_p1_-4_-3_3:
-	./transverseHFK `cat test/p1_-4_-3_3.in` | diff -q test/p1_-4_-3_3.out - > /dev/null || (echo "Target $@ failed" && exit 1)
-test_p2_-4_-3_3:
-	./transverseHFK `cat test/p2_-4_-3_3.in` | diff -q test/p2_-4_-3_3.out - > /dev/null || (echo "Target $@ failed" && exit 1)
-test_p1_-6_-3_3:
-	./transverseHFK `cat test/p1_-6_-3_3.in` | diff -q test/p1_-6_-3_3.out - > /dev/null || (echo "Target $@ failed" && exit 1)
-test_p2_-6_-3_3:
-	./transverseHFK `cat test/p2_-6_-3_3.in` | diff -q test/p2_-6_-3_3.out - > /dev/null || (echo "Target $@ failed" && exit 1)
+.PHONY: clean test %.test
