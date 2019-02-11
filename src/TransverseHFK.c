@@ -65,8 +65,8 @@ struct EdgeNode {
 };
 
 typedef struct EdgeNode EdgeNode;
-typedef EdgeNode *ShortEdges;
-ShortEdges global_edge_list;
+typedef EdgeNode *EdgeList;
+EdgeList global_edge_list;
 
 typedef struct stateNode StateNode;
 typedef StateNode *StateList;
@@ -78,9 +78,9 @@ struct stateNode {
 
 typedef char State[MAX_INDEX];
 
-ShortEdges AddModTwoLists(VertexList kids, VertexList parents);
+EdgeList AddModTwoLists(VertexList kids, VertexList parents);
 VertexList PrependVertex(int a, VertexList v);
-ShortEdges PrependEdge(int a, int b, ShortEdges e);
+EdgeList PrependEdge(int a, int b, EdgeList e);
 StateList FixedWtRectanglesOutOf(int wt, State incoming);
 StateList SwapCols(int x1, int x2, State incoming);
 int GetNumber(State a, StateList b);
@@ -94,9 +94,9 @@ VertexList RemoveVertex(int a, VertexList v);
 void CreateD0Graph(State init);
 void CreateD1Graph(State init);
 StateList CreateStateNode(State state);
-ShortEdges CreateEdge(int a, int b);
+EdgeList CreateEdge(int a, int b);
 void FreeVertexList(VertexList vertices);
-void FreeShortEdges(ShortEdges e);
+void FreeEdgeList(EdgeList e);
 StateList RemoveState(State a, StateList v);
 
 int NESWpO(char *x);
@@ -108,7 +108,7 @@ void PrintStateShort(State state);
 void PrintEdges(void);
 void PrintStates(StateList states);
 void PrintMathEdges(void);
-void PrintMathEdgesA(ShortEdges edges);
+void PrintMathEdgesA(EdgeList edges);
 void PrintVertices(VertexList vlist);
 
 void timeout(int);
@@ -727,17 +727,17 @@ StateList AppendToStateList(State state, StateList rest) {
 
 /**
  * Takes in a list of parent vertices and a list of child vertices,
- * generates all edges between them and adds this ShortEdges to global_edge_list
+ * generates all edges between them and adds this EdgeList to global_edge_list
  * mod 2
  * @param parents a list of parent vertices
  * @param kids a list of child vertices
  * @return A shortEdges containing the result of adding them mod two.
  * @see global_edge_list
  */
-ShortEdges AddModTwoLists(VertexList parents, VertexList kids) {
+EdgeList AddModTwoLists(VertexList parents, VertexList kids) {
   VertexList thiskid, thisparent, tempvert;
-  ShortEdges thisedge, tempedge, Prev;
-  ShortEdges ans;
+  EdgeList thisedge, tempedge, Prev;
+  EdgeList ans;
   if ((parents == NULL) || (kids == NULL)) {
     ans = global_edge_list; // change to return
   } else {
@@ -829,11 +829,11 @@ ShortEdges AddModTwoLists(VertexList parents, VertexList kids) {
  * Places a new edge into the supplied edgelist in order.
  * @param a an int specifying the parent vertex
  * @param b an int specifying the child vertex
- * @param edges a ShortEdges where the new edge will be placed
+ * @param edges a EdgeList where the new edge will be placed
  * @return a pointer to edges with the new edge added
  */
-ShortEdges AppendOrdered(int a, int b, ShortEdges edges) {
-  ShortEdges Temp, Prev, curr, ans;
+EdgeList AppendOrdered(int a, int b, EdgeList edges) {
+  EdgeList Temp, Prev, curr, ans;
   Prev = edges;
   if ((edges == NULL) || (edges->start > a) ||
       (edges->start == a && edges->end > b)) {
@@ -859,14 +859,14 @@ ShortEdges AppendOrdered(int a, int b, ShortEdges edges) {
 }
 
 /**
- * Add a new edge to the start of a ShortEdges
+ * Add a new edge to the start of a EdgeList
  * @param a an int indictating the source of the edge
  * @param b an int indictating the destination of the edge
- * @param e a ShortEdges
+ * @param e a EdgeList
  * @return e with the edge (a,b) at the front
  */
-ShortEdges PrependEdge(int a, int b, ShortEdges e) {
-  ShortEdges newPtr;
+EdgeList PrependEdge(int a, int b, EdgeList e) {
+  EdgeList newPtr;
   newPtr = malloc(sizeof(EdgeNode));
   newPtr->start = a;
   newPtr->end = b;
@@ -878,10 +878,10 @@ ShortEdges PrependEdge(int a, int b, ShortEdges e) {
  * Creates a single element ShortEdge
  * @param a an int indicating the source of the edge
  * @param b an int indicating the destination of the edge
- * @return a single element ShortEdges (a,b)
+ * @return a single element EdgeList (a,b)
  */
-ShortEdges CreateEdge(int a, int b) {
-  ShortEdges newPtr;
+EdgeList CreateEdge(int a, int b) {
+  EdgeList newPtr;
   newPtr = malloc(sizeof(EdgeNode));
   newPtr->start = a;
   newPtr->end = b;
@@ -910,7 +910,7 @@ VertexList PrependVertex(int a, VertexList vertices) {
  * @see global_edge_list
  */
 void Homology() {
-  ShortEdges Temp;
+  EdgeList Temp;
   Temp = global_edge_list;
   while (Temp != NULL) {
     if (Temp != NULL) {
@@ -929,14 +929,14 @@ void Homology() {
  */
 void SpecialHomology(int init, int final) {
   int i, j, t;
-  ShortEdges Temp;
+  EdgeList Temp;
   i = 0;
   j = 0;
   Temp = global_edge_list;
   if ((global_edge_list == NULL) || (global_edge_list->start != init)) {
     printf("FOOO");
     scanf("%d", &t);
-    FreeShortEdges(global_edge_list);
+    FreeEdgeList(global_edge_list);
     global_edge_list = NULL;
   };
   while ((global_edge_list != NULL) && (Temp != NULL)) {
@@ -968,8 +968,8 @@ void SpecialHomology(int init, int final) {
  * @see global_edge_list
  */
 void Contract(int a, int b) {
-  ShortEdges Temp;
-  ShortEdges Prev;
+  EdgeList Temp;
+  EdgeList Prev;
   VertexList parents, kids, tempkids, tempparents;
   VertexList LastParent, LastKid;
   Prev = global_edge_list; // Multiple equal initializations
@@ -1142,7 +1142,7 @@ VertexList RemoveVertex(int a, VertexList v) {
  * @see global_edge_list
  */
 void PrintEdges() {
-  ShortEdges Temp;
+  EdgeList Temp;
   Temp = global_edge_list;
   while (Temp != NULL) {
     printf("%d %d\n", Temp->start, Temp->end);
@@ -1155,7 +1155,7 @@ void PrintEdges() {
  * @see global_edge_list
  */
 void PrintMathEdges() {
-  ShortEdges Temp;
+  EdgeList Temp;
   int t;
   Temp = global_edge_list;
   printf("{");
@@ -1179,8 +1179,8 @@ void PrintMathEdges() {
  * Prints the edges in edges on a single line
  * @param edges
  */
-void PrintMathEdgesA(ShortEdges edges) {
-  ShortEdges Temp;
+void PrintMathEdgesA(EdgeList edges) {
+  EdgeList Temp;
   Temp = edges;
   printf("{");
   while (Temp != NULL) {
@@ -1224,11 +1224,11 @@ void FreeStateList(StateList states) {
 }
 
 /**
- * Frees the supplied ShortEdges
+ * Frees the supplied EdgeList
  * @param e
  */
-void FreeShortEdges(ShortEdges e) {
-  ShortEdges Temp, nTemp;
+void FreeEdgeList(EdgeList e) {
+  EdgeList Temp, nTemp;
   Temp = e;
   nTemp = Temp;
   while (Temp != NULL) {
@@ -1454,7 +1454,7 @@ int NullHomologousD1Q(State init) {
   StateList NewIns, NewOuts, LastNewIn, LastNewOut, Temp;
   StateList PrevIns, PrevOuts;
   StateList ReallyNewOuts = NULL, ReallyNewIns = NULL;
-  ShortEdges LastEdge;
+  EdgeList LastEdge;
   int innumber, ans, previnnumber;
   int outnumber;
   int i;
