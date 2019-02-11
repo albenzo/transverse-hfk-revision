@@ -1187,21 +1187,6 @@ void FreeEdgeList(EdgeList e) {
   };
 }
 
-/**
- * Frees the supplied VertexList
- * @param vertices
- */
-void FreeVertexList(VertexList vertices) {
-  VertexList Temp, nTemp;
-  Temp = vertices;
-  nTemp = Temp;
-  while (Temp != NULL) {
-    nTemp = Temp;
-    Temp = Temp->nextVertex;
-    free(nTemp);
-  };
-}
-
 /* Higher differentials */
 
 /**
