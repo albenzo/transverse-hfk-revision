@@ -61,7 +61,7 @@ typedef Vertex *VertexList;
 struct EdgeNode {
   int start;
   int end;
-  struct EdgeNode *nextPtr;
+  struct EdgeNode *nextEdge;
 };
 
 typedef struct EdgeNode EdgeNode;
@@ -749,7 +749,7 @@ ShortEdges AddModTwoLists(VertexList parents, VertexList kids) {
            (thisedge->start == thisparent->data &&
             thisedge->end == thiskid->data)) {
       tempedge = thisedge; // This may need to be freed
-      thisedge = thisedge->nextPtr;
+      thisedge = thisedge->nextEdge;
       thiskid = thiskid->nextVertex;
       if (thiskid == NULL) {
         tempvert = thisparent;
@@ -764,10 +764,10 @@ ShortEdges AddModTwoLists(VertexList parents, VertexList kids) {
                                  thisedge->end < thiskid->data)))) {
       ans = thisedge;
       Prev = ans;
-      thisedge = thisedge->nextPtr;
+      thisedge = thisedge->nextEdge;
     } else if (thisparent != NULL) {
       ans = CreateEdge(thisparent->data, thiskid->data);
-      ans->nextPtr = NULL;
+      ans->nextEdge = NULL;
       thiskid = thiskid->nextVertex;
       if (thiskid == NULL) {
         tempvert = thisparent;
@@ -783,16 +783,16 @@ ShortEdges AddModTwoLists(VertexList parents, VertexList kids) {
       while (thisedge != NULL && ((thisedge->start < thisparent->data ||
                                    (thisedge->start == thisparent->data &&
                                     thisedge->end < thiskid->data)))) {
-        Prev->nextPtr = thisedge;
-        Prev = Prev->nextPtr;
-        thisedge = thisedge->nextPtr;
+        Prev->nextEdge = thisedge;
+        Prev = Prev->nextEdge;
+        thisedge = thisedge->nextEdge;
       };
       while (thisedge != NULL && thisparent != NULL &&
              (thisedge->start == thisparent->data &&
               thisedge->end == thiskid->data)) {
         tempedge = thisedge;
-        thisedge = tempedge->nextPtr;
-        Prev->nextPtr = thisedge;
+        thisedge = tempedge->nextEdge;
+        Prev->nextEdge = thisedge;
         free(tempedge);
         thiskid = thiskid->nextVertex;
         if (thiskid == NULL) {
@@ -806,9 +806,9 @@ ShortEdges AddModTwoLists(VertexList parents, VertexList kids) {
              ((thisedge == NULL) || ((thisedge->start > thisparent->data ||
                                       (thisedge->start == thisparent->data &&
                                        thisedge->end > thiskid->data))))) {
-        Prev->nextPtr = CreateEdge(thisparent->data, thiskid->data);
-        Prev = Prev->nextPtr;
-        Prev->nextPtr = NULL;
+        Prev->nextEdge = CreateEdge(thisparent->data, thiskid->data);
+        Prev = Prev->nextEdge;
+        Prev->nextEdge = NULL;
         thiskid = thiskid->nextVertex;
         if (thiskid == NULL) {
           tempvert = thisparent;
@@ -819,7 +819,7 @@ ShortEdges AddModTwoLists(VertexList parents, VertexList kids) {
       };
     };
     if ((thisparent == NULL) && (Prev != NULL)) {
-      Prev->nextPtr = thisedge;
+      Prev->nextEdge = thisedge;
     }
   };
   return (ans);
@@ -840,20 +840,20 @@ ShortEdges AppendOrdered(int a, int b, ShortEdges edges) {
     ans = malloc(sizeof(EdgeNode));
     ans->start = a;
     ans->end = b;
-    ans->nextPtr = Prev;
+    ans->nextEdge = Prev;
   } else {
     ans = edges;
-    curr = Prev->nextPtr;
+    curr = Prev->nextEdge;
     while (curr != NULL &&
            ((curr->start < a) || ((curr->start == a) && (curr->end < b)))) {
-      curr = curr->nextPtr;
-      Prev = Prev->nextPtr;
+      curr = curr->nextEdge;
+      Prev = Prev->nextEdge;
     };
     Temp = malloc(sizeof(EdgeNode));
     Temp->start = a;
     Temp->end = b;
-    Temp->nextPtr = curr;
-    Prev->nextPtr = Temp;
+    Temp->nextEdge = curr;
+    Prev->nextEdge = Temp;
   };
   return (ans);
 }
@@ -870,7 +870,7 @@ ShortEdges PrependEdge(int a, int b, ShortEdges e) {
   newPtr = malloc(sizeof(EdgeNode));
   newPtr->start = a;
   newPtr->end = b;
-  newPtr->nextPtr = e;
+  newPtr->nextEdge = e;
   return (newPtr);
 }
 
@@ -885,7 +885,7 @@ ShortEdges CreateEdge(int a, int b) {
   newPtr = malloc(sizeof(EdgeNode));
   newPtr->start = a;
   newPtr->end = b;
-  newPtr->nextPtr = NULL;
+  newPtr->nextEdge = NULL;
   return (newPtr);
 }
 
@@ -941,10 +941,10 @@ void SpecialHomology(int init, int final) {
   };
   while ((global_edge_list != NULL) && (Temp != NULL)) {
     while ((Temp != NULL) && (Temp->start == init)) {
-      Temp = Temp->nextPtr;
+      Temp = Temp->nextEdge;
     };
     while ((Temp != NULL) && (Temp->end > final)) {
-      Temp = Temp->nextPtr;
+      Temp = Temp->nextEdge;
     };
     if (verbose && j == 100) {
       j = 0;
@@ -982,7 +982,7 @@ void Contract(int a, int b) {
   while (global_edge_list != NULL && ((global_edge_list)->end == b || global_edge_list->start == a)) {
     if ((global_edge_list->end == b) && (global_edge_list->start == a)) {
       Temp = global_edge_list;
-      global_edge_list = global_edge_list->nextPtr;
+      global_edge_list = global_edge_list->nextEdge;
       free(Temp);
     } else {
       if (global_edge_list->end == b) {
@@ -995,7 +995,7 @@ void Contract(int a, int b) {
           LastParent = LastParent->nextVertex;
         };
         Temp = global_edge_list;
-        global_edge_list = global_edge_list->nextPtr;
+        global_edge_list = global_edge_list->nextEdge;
         free(Temp);
       } else if (global_edge_list->start == a) {
         if (LastKid == NULL) {
@@ -1007,14 +1007,14 @@ void Contract(int a, int b) {
           LastKid = LastKid->nextVertex;
         };
         Temp = global_edge_list;
-        global_edge_list = global_edge_list->nextPtr;
+        global_edge_list = global_edge_list->nextEdge;
         free(Temp);
       };
     };
   };
   Prev = global_edge_list;
   if (global_edge_list != NULL) {
-    Temp = (global_edge_list->nextPtr);
+    Temp = (global_edge_list->nextEdge);
   } else {
     Temp = NULL;
   };
@@ -1028,12 +1028,12 @@ void Contract(int a, int b) {
         LastParent->nextVertex = tempparents;
         LastParent = LastParent->nextVertex;
       };
-      (Prev->nextPtr) = (Temp->nextPtr);
+      (Prev->nextEdge) = (Temp->nextEdge);
       free(Temp);
-      Temp = Prev->nextPtr;
+      Temp = Prev->nextEdge;
     } else {
-      Temp = (Temp)->nextPtr;
-      Prev = (Prev)->nextPtr;
+      Temp = (Temp)->nextEdge;
+      Prev = (Prev)->nextEdge;
     };
   };
   while (Temp != NULL && (Temp)->start == a) {
@@ -1047,9 +1047,9 @@ void Contract(int a, int b) {
         LastKid = LastKid->nextVertex;
       };
     };
-    (Prev)->nextPtr = Temp->nextPtr;
+    (Prev)->nextEdge = Temp->nextEdge;
     free(Temp);
-    Temp = (Prev)->nextPtr;
+    Temp = (Prev)->nextEdge;
   };
   while (Temp != NULL) {
     if ((Temp)->end == b) {
@@ -1061,12 +1061,12 @@ void Contract(int a, int b) {
         LastParent->nextVertex = tempparents;
         LastParent = LastParent->nextVertex;
       };
-      (Prev)->nextPtr = (Temp)->nextPtr;
+      (Prev)->nextEdge = (Temp)->nextEdge;
       free(Temp);
-      Temp = (Prev)->nextPtr;
+      Temp = (Prev)->nextEdge;
     } else {
-      Temp = (Temp)->nextPtr;
-      Prev = (Prev)->nextPtr;
+      Temp = (Temp)->nextEdge;
+      Prev = (Prev)->nextEdge;
     }
   };
   global_edge_list = AddModTwoLists(parents, kids);
@@ -1146,7 +1146,7 @@ void PrintEdges() {
   Temp = global_edge_list;
   while (Temp != NULL) {
     printf("%d %d\n", Temp->start, Temp->end);
-    Temp = (Temp->nextPtr);
+    Temp = (Temp->nextEdge);
   };
 }
 
@@ -1167,7 +1167,7 @@ void PrintMathEdges() {
       Temp = NULL;
       printf("...}\n");
     } else {
-      Temp = (Temp->nextPtr);
+      Temp = (Temp->nextEdge);
       if (Temp != NULL)
         printf(",");
     }
@@ -1185,7 +1185,7 @@ void PrintMathEdgesA(ShortEdges edges) {
   printf("{");
   while (Temp != NULL) {
     printf("{%d,%d}", Temp->start, Temp->end);
-    Temp = (Temp->nextPtr);
+    Temp = (Temp->nextEdge);
     if (Temp != NULL)
       printf(",");
   };
@@ -1233,7 +1233,7 @@ void FreeShortEdges(ShortEdges e) {
   nTemp = Temp;
   while (Temp != NULL) {
     nTemp = Temp;
-    Temp = Temp->nextPtr;
+    Temp = Temp->nextEdge;
     free(nTemp);
   };
 }
@@ -1479,8 +1479,8 @@ int NullHomologousD1Q(State init) {
     Temp = Temp->nextState;
     while (Temp != NULL) {
       i++;
-      LastEdge->nextPtr = CreateEdge(0, i);
-      LastEdge = LastEdge->nextPtr;
+      LastEdge->nextEdge = CreateEdge(0, i);
+      LastEdge = LastEdge->nextEdge;
       Temp = Temp->nextState;
     };
   };
