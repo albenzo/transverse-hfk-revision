@@ -409,22 +409,22 @@ int min(int a, int b) {
 
 /**
  * Returns a StateList of states where a rectangle exists from incoming
- * that is not contained in Prevs.
- * @param Prevs Statelist containing previous states
+ * that is not contained in prevs.
+ * @param prevs Statelist containing previous states
  * @param incoming the source of rectangles used to generate statelist
  * @return A statelist containing states reached from a rectangle leaving
- * incoming not contained in Prevs.
+ * incoming not contained in prevs.
  * @see arc_index
  */
-StateList new_rectangles_out_of(StateList Prevs, State incoming) {
-  StateList Temp, ans;
-  State TempState;
+StateList new_rectangles_out_of(StateList prevs, State incoming) {
+  StateList temp, ans;
+  State temp_state;
   int LL;
   int w, h, m, n, i;
   ans = NULL;
   i = 0;
   while (i < arc_index) {
-    TempState[i] = incoming[i];
+    temp_state[i] = incoming[i];
     i++;
   }
   LL = 0;
@@ -433,21 +433,21 @@ StateList new_rectangles_out_of(StateList Prevs, State incoming) {
     h = min(mod(Os[LL] - incoming[LL]), mod(Xs[LL] - incoming[LL]));
     while (w < arc_index && h > 0) {
       if (mod(incoming[mod(LL + w)] - incoming[LL]) <= h) {
-        TempState[LL] = incoming[mod(LL + w)];
-        TempState[mod(LL + w)] = incoming[LL];
-        m = get_number(TempState, Prevs);
+        temp_state[LL] = incoming[mod(LL + w)];
+        temp_state[mod(LL + w)] = incoming[LL];
+        m = get_number(temp_state, prevs);
         if (m == 0) {
-          n = get_number(TempState, ans);
+          n = get_number(temp_state, ans);
           if (n != 0) {
-            ans = remove_state(TempState, ans);
+            ans = remove_state(temp_state, ans);
           } else {
-            Temp = swap_cols(LL, mod(LL + w), incoming);
-            Temp->nextState = ans;
-            ans = Temp;
+            temp = swap_cols(LL, mod(LL + w), incoming);
+            temp->nextState = ans;
+            ans = temp;
           }
         };
-        TempState[LL] = incoming[LL];
-        TempState[mod(LL + w)] = incoming[mod(LL + w)];
+        temp_state[LL] = incoming[LL];
+        temp_state[mod(LL + w)] = incoming[mod(LL + w)];
         h = mod(incoming[mod(LL + w)] - incoming[LL]);
       };
       h = min(h, min(mod(Os[mod(LL + w)] - incoming[LL]),
@@ -461,22 +461,22 @@ StateList new_rectangles_out_of(StateList Prevs, State incoming) {
 
 /**
  * returns a StateList containing those with a rectangle
- * pointing to the state incoming that do not overlap with Prevs
+ * pointing to the state incoming that do not overlap with prevs
  * @param incoming State that is the destination for generated rectangles
- * @param Prevs StateList of excluded states
+ * @param prevs StateList of excluded states
  * @return StateList containing states with a rectangle to incoming.
  * @see arc_index
  */
-StateList new_rectangles_into(StateList Prevs, State incoming) {
-  StateList ans, Temp;
-  State TempState;
+StateList new_rectangles_into(StateList prevs, State incoming) {
+  StateList ans, temp;
+  State temp_state;
   int LL, m, n;
   int w, h;
   int i;
   ans = NULL;
   i = 0;
   while (i < arc_index) {
-    TempState[i] = incoming[i];
+    temp_state[i] = incoming[i];
     i++;
   }
   LL = 0;
@@ -485,21 +485,21 @@ StateList new_rectangles_into(StateList Prevs, State incoming) {
     h = min(mod_up(incoming[LL] - Os[LL]), mod_up(incoming[LL] - Xs[LL]));
     while (w < arc_index && h > 0) {
       if (mod_up(incoming[LL] - incoming[mod(LL + w)]) < h) {
-        TempState[LL] = incoming[mod(LL + w)];
-        TempState[mod(LL + w)] = incoming[LL];
-        m = get_number(TempState, Prevs);
+        temp_state[LL] = incoming[mod(LL + w)];
+        temp_state[mod(LL + w)] = incoming[LL];
+        m = get_number(temp_state, prevs);
         if (m == 0) {
-          n = get_number(TempState, ans);
+          n = get_number(temp_state, ans);
           if (n != 0) {
-            ans = remove_state(TempState, ans);
+            ans = remove_state(temp_state, ans);
           } else {
-            Temp = swap_cols(LL, mod(LL + w), incoming);
-            Temp->nextState = ans;
-            ans = Temp;
+            temp = swap_cols(LL, mod(LL + w), incoming);
+            temp->nextState = ans;
+            ans = temp;
           }
         };
-        TempState[LL] = incoming[LL];
-        TempState[mod(LL + w)] = incoming[mod(LL + w)];
+        temp_state[LL] = incoming[LL];
+        temp_state[mod(LL + w)] = incoming[mod(LL + w)];
         h = mod_up(incoming[LL] - incoming[mod(LL + w)]);
       };
       h = min(h, min(mod_up(incoming[LL] - Os[mod(LL + w)]),
@@ -544,15 +544,15 @@ StateList swap_cols(int x1, int x2, char *incoming) {
  * @see print_state_short
  */
 void print_states(StateList states) {
-  StateList Temp;
+  StateList temp;
   int c;
-  Temp = states;
+  temp = states;
   printf("{");
   c = 0;
-  while ((Temp != NULL) && c < 500000) {
-    print_state_short(Temp->data);
-    Temp = Temp->nextState;
-    if (Temp != NULL) {
+  while ((temp != NULL) && c < 500000) {
+    print_state_short(temp->data);
+    temp = temp->nextState;
+    if (temp != NULL) {
       printf(",");
     };
     c++;
@@ -653,91 +653,91 @@ int get_number(State a, StateList b) {
  * @see global_edge_list
  */
 EdgeList add_mod_two_lists(VertexList parents, VertexList kids) {
-  VertexList thiskid, thisparent, tempvert;
-  EdgeList thisedge, tempedge, Prev;
+  VertexList this_kid, this_parent, temp_vert;
+  EdgeList this_edge, temp_edge, prev;
   EdgeList ans;
   if ((parents == NULL) || (kids == NULL)) {
     ans = global_edge_list; // change to return
   } else {
-    thisparent = parents;
-    thiskid = kids;
+    this_parent = parents;
+    this_kid = kids;
     ans = NULL;
-    thisedge = global_edge_list;
-    while (thisparent != NULL && thisedge != NULL &&
-           (thisedge->start == thisparent->data &&
-            thisedge->end == thiskid->data)) {
-      tempedge = thisedge; // This may need to be freed
-      thisedge = thisedge->nextEdge;
-      thiskid = thiskid->nextVertex;
-      if (thiskid == NULL) {
-        tempvert = thisparent;
-        thisparent = thisparent->nextVertex;
-        free(tempvert);
-        thiskid = kids;
+    this_edge = global_edge_list;
+    while (this_parent != NULL && this_edge != NULL &&
+           (this_edge->start == this_parent->data &&
+            this_edge->end == this_kid->data)) {
+      temp_edge = this_edge; // This may need to be freed
+      this_edge = this_edge->nextEdge;
+      this_kid = this_kid->nextVertex;
+      if (this_kid == NULL) {
+        temp_vert = this_parent;
+        this_parent = this_parent->nextVertex;
+        free(temp_vert);
+        this_kid = kids;
       };
     };
-    if (thisedge != NULL &&
-        (thisparent == NULL || (thisedge->start < thisparent->data ||
-                                (thisedge->start == thisparent->data &&
-                                 thisedge->end < thiskid->data)))) {
-      ans = thisedge;
-      Prev = ans;
-      thisedge = thisedge->nextEdge;
-    } else if (thisparent != NULL) {
-      ans = create_edge(thisparent->data, thiskid->data);
+    if (this_edge != NULL &&
+        (this_parent == NULL || (this_edge->start < this_parent->data ||
+                                 (this_edge->start == this_parent->data &&
+                                  this_edge->end < this_kid->data)))) {
+      ans = this_edge;
+      prev = ans;
+      this_edge = this_edge->nextEdge;
+    } else if (this_parent != NULL) {
+      ans = create_edge(this_parent->data, this_kid->data);
       ans->nextEdge = NULL;
-      thiskid = thiskid->nextVertex;
-      if (thiskid == NULL) {
-        tempvert = thisparent;
-        thisparent = thisparent->nextVertex;
-        free(tempvert);
-        thiskid = kids;
+      this_kid = this_kid->nextVertex;
+      if (this_kid == NULL) {
+        temp_vert = this_parent;
+        this_parent = this_parent->nextVertex;
+        free(temp_vert);
+        this_kid = kids;
       };
     } else {
       ans = NULL;
     }
-    Prev = ans;
-    while (thisedge != NULL && thisparent != NULL) {
-      while (thisedge != NULL && ((thisedge->start < thisparent->data ||
-                                   (thisedge->start == thisparent->data &&
-                                    thisedge->end < thiskid->data)))) {
-        Prev->nextEdge = thisedge;
-        Prev = Prev->nextEdge;
-        thisedge = thisedge->nextEdge;
+    prev = ans;
+    while (this_edge != NULL && this_parent != NULL) {
+      while (this_edge != NULL && ((this_edge->start < this_parent->data ||
+                                    (this_edge->start == this_parent->data &&
+                                     this_edge->end < this_kid->data)))) {
+        prev->nextEdge = this_edge;
+        prev = prev->nextEdge;
+        this_edge = this_edge->nextEdge;
       };
-      while (thisedge != NULL && thisparent != NULL &&
-             (thisedge->start == thisparent->data &&
-              thisedge->end == thiskid->data)) {
-        tempedge = thisedge;
-        thisedge = tempedge->nextEdge;
-        Prev->nextEdge = thisedge;
-        free(tempedge);
-        thiskid = thiskid->nextVertex;
-        if (thiskid == NULL) {
-          tempvert = thisparent;
-          thisparent = thisparent->nextVertex;
-          free(tempvert);
-          thiskid = kids;
+      while (this_edge != NULL && this_parent != NULL &&
+             (this_edge->start == this_parent->data &&
+              this_edge->end == this_kid->data)) {
+        temp_edge = this_edge;
+        this_edge = temp_edge->nextEdge;
+        prev->nextEdge = this_edge;
+        free(temp_edge);
+        this_kid = this_kid->nextVertex;
+        if (this_kid == NULL) {
+          temp_vert = this_parent;
+          this_parent = this_parent->nextVertex;
+          free(temp_vert);
+          this_kid = kids;
         };
       };
-      while (thisparent != NULL &&
-             ((thisedge == NULL) || ((thisedge->start > thisparent->data ||
-                                      (thisedge->start == thisparent->data &&
-                                       thisedge->end > thiskid->data))))) {
-        Prev->nextEdge = create_edge(thisparent->data, thiskid->data);
-        Prev = Prev->nextEdge;
-        Prev->nextEdge = NULL;
-        thiskid = thiskid->nextVertex;
-        if (thiskid == NULL) {
-          tempvert = thisparent;
-          thisparent = thisparent->nextVertex;
-          free(tempvert);
-          thiskid = kids;
+      while (this_parent != NULL &&
+             ((this_edge == NULL) || ((this_edge->start > this_parent->data ||
+                                       (this_edge->start == this_parent->data &&
+                                        this_edge->end > this_kid->data))))) {
+        prev->nextEdge = create_edge(this_parent->data, this_kid->data);
+        prev = prev->nextEdge;
+        prev->nextEdge = NULL;
+        this_kid = this_kid->nextVertex;
+        if (this_kid == NULL) {
+          temp_vert = this_parent;
+          this_parent = this_parent->nextVertex;
+          free(temp_vert);
+          this_kid = kids;
         };
       };
     };
-    if ((thisparent == NULL) && (Prev != NULL)) {
-      Prev->nextEdge = thisedge;
+    if ((this_parent == NULL) && (prev != NULL)) {
+      prev->nextEdge = this_edge;
     }
   };
   return (ans);
@@ -751,27 +751,27 @@ EdgeList add_mod_two_lists(VertexList parents, VertexList kids) {
  * @return a pointer to edges with the new edge added
  */
 EdgeList append_ordered(int a, int b, EdgeList edges) {
-  EdgeList Temp, Prev, curr, ans;
-  Prev = edges;
+  EdgeList temp, prev, curr, ans;
+  prev = edges;
   if ((edges == NULL) || (edges->start > a) ||
       (edges->start == a && edges->end > b)) {
     ans = malloc(sizeof(EdgeNode_t));
     ans->start = a;
     ans->end = b;
-    ans->nextEdge = Prev;
+    ans->nextEdge = prev;
   } else {
     ans = edges;
-    curr = Prev->nextEdge;
+    curr = prev->nextEdge;
     while (curr != NULL &&
            ((curr->start < a) || ((curr->start == a) && (curr->end < b)))) {
       curr = curr->nextEdge;
-      Prev = Prev->nextEdge;
+      prev = prev->nextEdge;
     };
-    Temp = malloc(sizeof(EdgeNode_t));
-    Temp->start = a;
-    Temp->end = b;
-    Temp->nextEdge = curr;
-    Prev->nextEdge = Temp;
+    temp = malloc(sizeof(EdgeNode_t));
+    temp->start = a;
+    temp->end = b;
+    temp->nextEdge = curr;
+    prev->nextEdge = temp;
   };
   return (ans);
 }
@@ -784,12 +784,12 @@ EdgeList append_ordered(int a, int b, EdgeList edges) {
  * @return e with the edge (a,b) at the front
  */
 EdgeList prepend_edge(int a, int b, EdgeList e) {
-  EdgeList newPtr;
-  newPtr = malloc(sizeof(EdgeNode_t));
-  newPtr->start = a;
-  newPtr->end = b;
-  newPtr->nextEdge = e;
-  return (newPtr);
+  EdgeList new_ptr;
+  new_ptr = malloc(sizeof(EdgeNode_t));
+  new_ptr->start = a;
+  new_ptr->end = b;
+  new_ptr->nextEdge = e;
+  return (new_ptr);
 }
 
 /**
@@ -799,12 +799,12 @@ EdgeList prepend_edge(int a, int b, EdgeList e) {
  * @return a single element EdgeList (a,b)
  */
 EdgeList create_edge(int a, int b) {
-  EdgeList newPtr;
-  newPtr = malloc(sizeof(EdgeNode_t));
-  newPtr->start = a;
-  newPtr->end = b;
-  newPtr->nextEdge = NULL;
-  return (newPtr);
+  EdgeList new_ptr;
+  new_ptr = malloc(sizeof(EdgeNode_t));
+  new_ptr->start = a;
+  new_ptr->end = b;
+  new_ptr->nextEdge = NULL;
+  return (new_ptr);
 }
 
 /**
@@ -815,11 +815,11 @@ EdgeList create_edge(int a, int b) {
  * @return a VertexList with a Vertex containing a prepended to vertices
  */
 VertexList prepend_vertex(int a, VertexList vertices) {
-  VertexList newPtr;
-  newPtr = malloc(sizeof(Vertex_t));
-  (newPtr->data) = a;
-  (newPtr->nextVertex) = vertices;
-  return newPtr;
+  VertexList new_ptr;
+  new_ptr = malloc(sizeof(Vertex_t));
+  (new_ptr->data) = a;
+  (new_ptr->nextVertex) = vertices;
+  return new_ptr;
 }
 
 /**
@@ -828,12 +828,12 @@ VertexList prepend_vertex(int a, VertexList vertices) {
  * @see global_edge_list
  */
 void homology() {
-  EdgeList Temp;
-  Temp = global_edge_list;
-  while (Temp != NULL) {
-    if (Temp != NULL) {
-      contract(Temp->start, Temp->end);
-      Temp = global_edge_list;
+  EdgeList temp;
+  temp = global_edge_list;
+  while (temp != NULL) {
+    if (temp != NULL) {
+      contract(temp->start, temp->end);
+      temp = global_edge_list;
     };
   };
 }
@@ -847,34 +847,34 @@ void homology() {
  */
 void special_homology(int init, int final) {
   int i, j, t;
-  EdgeList Temp;
+  EdgeList temp;
   i = 0;
   j = 0;
-  Temp = global_edge_list;
+  temp = global_edge_list;
   if ((global_edge_list == NULL) || (global_edge_list->start != init)) {
     printf("FOOO");
     scanf("%d", &t);
     free_edge_list(global_edge_list);
     global_edge_list = NULL;
   };
-  while ((global_edge_list != NULL) && (Temp != NULL)) {
-    while ((Temp != NULL) && (Temp->start == init)) {
-      Temp = Temp->nextEdge;
+  while ((global_edge_list != NULL) && (temp != NULL)) {
+    while ((temp != NULL) && (temp->start == init)) {
+      temp = temp->nextEdge;
     };
-    while ((Temp != NULL) && (Temp->end > final)) {
-      Temp = Temp->nextEdge;
+    while ((temp != NULL) && (temp->end > final)) {
+      temp = temp->nextEdge;
     };
     if (verbose && j == 100) {
       j = 0;
-      if (Temp != NULL)
+      if (temp != NULL)
         printf("Iteration number %d; contracting edge starting at (%d,%d)\n", i,
-               Temp->start, Temp->end);
+               temp->start, temp->end);
     };
     i++;
     j++;
-    if (Temp != NULL) {
-      contract(Temp->start, Temp->end);
-      Temp = global_edge_list;
+    if (temp != NULL) {
+      contract(temp->start, temp->end);
+      temp = global_edge_list;
     };
   };
 }
@@ -886,106 +886,106 @@ void special_homology(int init, int final) {
  * @see global_edge_list
  */
 void contract(int a, int b) {
-  EdgeList Temp;
-  EdgeList Prev;
-  VertexList parents, kids, tempkids, tempparents;
-  VertexList LastParent, LastKid;
-  Prev = global_edge_list; // Multiple equal initializations
+  EdgeList temp;
+  EdgeList prev;
+  VertexList parents, kids, temp_kids, temp_parents;
+  VertexList last_parent, last_kid;
+  prev = global_edge_list; // Multiple equal initializations
   parents = NULL;
   kids = NULL;
-  tempkids = NULL;
-  tempparents = NULL;
-  LastParent = NULL;
-  LastKid = NULL;
+  temp_kids = NULL;
+  temp_parents = NULL;
+  last_parent = NULL;
+  last_kid = NULL;
   while (global_edge_list != NULL &&
          ((global_edge_list)->end == b || global_edge_list->start == a)) {
     if ((global_edge_list->end == b) && (global_edge_list->start == a)) {
-      Temp = global_edge_list;
+      temp = global_edge_list;
       global_edge_list = global_edge_list->nextEdge;
-      free(Temp);
+      free(temp);
     } else {
       if (global_edge_list->end == b) {
-        if (LastParent == NULL) {
+        if (last_parent == NULL) {
           parents = prepend_vertex(global_edge_list->start, NULL);
-          LastParent = parents;
+          last_parent = parents;
         } else {
-          tempparents = prepend_vertex(global_edge_list->start, NULL);
-          LastParent->nextVertex = tempparents;
-          LastParent = LastParent->nextVertex;
+          temp_parents = prepend_vertex(global_edge_list->start, NULL);
+          last_parent->nextVertex = temp_parents;
+          last_parent = last_parent->nextVertex;
         };
-        Temp = global_edge_list;
+        temp = global_edge_list;
         global_edge_list = global_edge_list->nextEdge;
-        free(Temp);
+        free(temp);
       } else if (global_edge_list->start == a) {
-        if (LastKid == NULL) {
+        if (last_kid == NULL) {
           kids = prepend_vertex(global_edge_list->end, kids);
-          LastKid = kids;
+          last_kid = kids;
         } else {
-          tempkids = prepend_vertex(global_edge_list->end, NULL);
-          LastKid->nextVertex = tempkids;
-          LastKid = LastKid->nextVertex;
+          temp_kids = prepend_vertex(global_edge_list->end, NULL);
+          last_kid->nextVertex = temp_kids;
+          last_kid = last_kid->nextVertex;
         };
-        Temp = global_edge_list;
+        temp = global_edge_list;
         global_edge_list = global_edge_list->nextEdge;
-        free(Temp);
+        free(temp);
       };
     };
   };
-  Prev = global_edge_list;
+  prev = global_edge_list;
   if (global_edge_list != NULL) {
-    Temp = (global_edge_list->nextEdge);
+    temp = (global_edge_list->nextEdge);
   } else {
-    Temp = NULL;
+    temp = NULL;
   };
-  while (Temp != NULL && (Temp)->start < a) {
-    if ((Temp)->end == b) {
-      if (LastParent == NULL) {
-        parents = prepend_vertex((Temp)->start, NULL);
-        LastParent = parents;
+  while (temp != NULL && (temp)->start < a) {
+    if ((temp)->end == b) {
+      if (last_parent == NULL) {
+        parents = prepend_vertex((temp)->start, NULL);
+        last_parent = parents;
       } else {
-        tempparents = prepend_vertex((Temp)->start, NULL);
-        LastParent->nextVertex = tempparents;
-        LastParent = LastParent->nextVertex;
+        temp_parents = prepend_vertex((temp)->start, NULL);
+        last_parent->nextVertex = temp_parents;
+        last_parent = last_parent->nextVertex;
       };
-      (Prev->nextEdge) = (Temp->nextEdge);
-      free(Temp);
-      Temp = Prev->nextEdge;
+      (prev->nextEdge) = (temp->nextEdge);
+      free(temp);
+      temp = prev->nextEdge;
     } else {
-      Temp = (Temp)->nextEdge;
-      Prev = (Prev)->nextEdge;
+      temp = (temp)->nextEdge;
+      prev = (prev)->nextEdge;
     };
   };
-  while (Temp != NULL && (Temp)->start == a) {
-    if (Temp->end != b) {
-      if (LastKid == NULL) {
-        kids = prepend_vertex(Temp->end, NULL);
-        LastKid = kids;
+  while (temp != NULL && (temp)->start == a) {
+    if (temp->end != b) {
+      if (last_kid == NULL) {
+        kids = prepend_vertex(temp->end, NULL);
+        last_kid = kids;
       } else {
-        tempkids = prepend_vertex(Temp->end, NULL);
-        LastKid->nextVertex = tempkids;
-        LastKid = LastKid->nextVertex;
+        temp_kids = prepend_vertex(temp->end, NULL);
+        last_kid->nextVertex = temp_kids;
+        last_kid = last_kid->nextVertex;
       };
     };
-    (Prev)->nextEdge = Temp->nextEdge;
-    free(Temp);
-    Temp = (Prev)->nextEdge;
+    (prev)->nextEdge = temp->nextEdge;
+    free(temp);
+    temp = (prev)->nextEdge;
   };
-  while (Temp != NULL) {
-    if ((Temp)->end == b) {
-      if (LastParent == NULL) {
-        parents = prepend_vertex(Temp->start, NULL);
-        LastParent = parents;
+  while (temp != NULL) {
+    if ((temp)->end == b) {
+      if (last_parent == NULL) {
+        parents = prepend_vertex(temp->start, NULL);
+        last_parent = parents;
       } else {
-        tempparents = prepend_vertex((Temp)->start, NULL);
-        LastParent->nextVertex = tempparents;
-        LastParent = LastParent->nextVertex;
+        temp_parents = prepend_vertex((temp)->start, NULL);
+        last_parent->nextVertex = temp_parents;
+        last_parent = last_parent->nextVertex;
       };
-      (Prev)->nextEdge = (Temp)->nextEdge;
-      free(Temp);
-      Temp = (Prev)->nextEdge;
+      (prev)->nextEdge = (temp)->nextEdge;
+      free(temp);
+      temp = (prev)->nextEdge;
     } else {
-      Temp = (Temp)->nextEdge;
-      Prev = (Prev)->nextEdge;
+      temp = (temp)->nextEdge;
+      prev = (prev)->nextEdge;
     }
   };
   global_edge_list = add_mod_two_lists(parents, kids);
@@ -999,28 +999,28 @@ void contract(int a, int b) {
  * @see eq_state
  */
 StateList remove_state(State a, StateList v) {
-  StateList Temp, Prev;
-  StateList sList = v;
-  Prev = v;
+  StateList temp, prev;
+  StateList s_list = v;
+  prev = v;
   if (v == NULL)
     return (NULL);
   else if (eq_state(a, v->data)) {
-    Temp = v;
-    sList = v->nextState;
+    temp = v;
+    s_list = v->nextState;
     free(v);
-    return (sList);
+    return (s_list);
   } else {
-    Temp = Prev->nextState;
-    while ((Temp != NULL) && (!eq_state(a, Temp->data))) {
-      Temp = Temp->nextState;
-      Prev = Prev->nextState;
+    temp = prev->nextState;
+    while ((temp != NULL) && (!eq_state(a, temp->data))) {
+      temp = temp->nextState;
+      prev = prev->nextState;
     };
-    if (Temp != NULL) {
-      Prev->nextState = Temp->nextState;
-      free(Temp);
-      return sList;
+    if (temp != NULL) {
+      prev->nextState = temp->nextState;
+      free(temp);
+      return s_list;
     } else
-      return sList;
+      return s_list;
   }
 }
 
@@ -1029,11 +1029,11 @@ StateList remove_state(State a, StateList v) {
  * @see global_edge_list
  */
 void print_edges() {
-  EdgeList Temp;
-  Temp = global_edge_list;
-  while (Temp != NULL) {
-    printf("%d %d\n", Temp->start, Temp->end);
-    Temp = (Temp->nextEdge);
+  EdgeList temp;
+  temp = global_edge_list;
+  while (temp != NULL) {
+    printf("%d %d\n", temp->start, temp->end);
+    temp = (temp->nextEdge);
   };
 }
 
@@ -1042,20 +1042,20 @@ void print_edges() {
  * @see global_edge_list
  */
 void print_math_edges() {
-  EdgeList Temp;
+  EdgeList temp;
   int t;
-  Temp = global_edge_list;
+  temp = global_edge_list;
   printf("{");
   t = 0;
-  while (Temp != NULL) {
-    printf("{%d,%d}", Temp->start, Temp->end);
+  while (temp != NULL) {
+    printf("{%d,%d}", temp->start, temp->end);
     t++;
     if (t == 80) {
-      Temp = NULL;
+      temp = NULL;
       printf("...}\n");
     } else {
-      Temp = (Temp->nextEdge);
-      if (Temp != NULL)
+      temp = (temp->nextEdge);
+      if (temp != NULL)
         printf(",");
     }
   };
@@ -1067,13 +1067,13 @@ void print_math_edges() {
  * @param edges
  */
 void print_math_edges_a(EdgeList edges) {
-  EdgeList Temp;
-  Temp = edges;
+  EdgeList temp;
+  temp = edges;
   printf("{");
-  while (Temp != NULL) {
-    printf("{%d,%d}", Temp->start, Temp->end);
-    Temp = (Temp->nextEdge);
-    if (Temp != NULL)
+  while (temp != NULL) {
+    printf("{%d,%d}", temp->start, temp->end);
+    temp = (temp->nextEdge);
+    if (temp != NULL)
       printf(",");
   };
   printf("}");
@@ -1081,11 +1081,11 @@ void print_math_edges_a(EdgeList edges) {
 
 /**
  * Prints the vertices in VertexList on a single line
- * @param vlist
+ * @param v_list
  */
-void print_vertices(VertexList vlist) {
+void print_vertices(VertexList v_list) {
   VertexList temp;
-  temp = vlist;
+  temp = v_list;
   printf("{");
   while (temp != NULL) {
     printf("%d", (temp)->data);
@@ -1101,12 +1101,12 @@ void print_vertices(VertexList vlist) {
  * @param states
  */
 void free_state_list(StateList states) {
-  StateList Temp;
-  Temp = states;
-  while (Temp != NULL) {
+  StateList temp;
+  temp = states;
+  while (temp != NULL) {
     states = states->nextState;
-    free(Temp);
-    Temp = states;
+    free(temp);
+    temp = states;
   };
 }
 
@@ -1115,13 +1115,13 @@ void free_state_list(StateList states) {
  * @param e
  */
 void free_edge_list(EdgeList e) {
-  EdgeList Temp, nTemp;
-  Temp = e;
-  nTemp = Temp;
-  while (Temp != NULL) {
-    nTemp = Temp;
-    Temp = Temp->nextEdge;
-    free(nTemp);
+  EdgeList temp, ntemp;
+  temp = e;
+  ntemp = temp;
+  while (temp != NULL) {
+    ntemp = temp;
+    temp = temp->nextEdge;
+    free(ntemp);
   };
 }
 
@@ -1139,10 +1139,10 @@ void free_edge_list(EdgeList e) {
  * @see Os
  */
 StateList fixed_wt_rectangles_out_of(int wt, State incoming) {
-  StateList Temp, ans;
+  StateList temp, ans;
   int LL;
   int w, h;
-  int thisweight, i;
+  int this_weight, i;
   ans = NULL;
   LL = 0;
   while (LL < arc_index) {
@@ -1150,24 +1150,24 @@ StateList fixed_wt_rectangles_out_of(int wt, State incoming) {
     h = mod(Os[LL] - incoming[LL]);
     while (w < arc_index && h > 0) {
       if (mod(incoming[mod(LL + w)] - incoming[LL]) <= h) {
-        thisweight = 0;
+        this_weight = 0;
         i = 0;
-        while (i < w && thisweight <= wt + 1) {
+        while (i < w && this_weight <= wt + 1) {
           if (mod(Xs[mod(LL + i)] - incoming[LL]) <
               mod(incoming[mod(LL + w)] - incoming[LL])) {
-            thisweight++;
+            this_weight++;
           };
           i++;
         };
-        if (thisweight == wt) {
-          Temp = swap_cols(LL, mod(LL + w), incoming);
-          if (get_number(Temp->data, ans) != 0) {
-            ans = remove_state(Temp->data, ans);
-            free(Temp);
-            Temp = ans;
+        if (this_weight == wt) {
+          temp = swap_cols(LL, mod(LL + w), incoming);
+          if (get_number(temp->data, ans) != 0) {
+            ans = remove_state(temp->data, ans);
+            free(temp);
+            temp = ans;
           } else {
-            Temp->nextState = ans;
-            ans = Temp;
+            temp->nextState = ans;
+            ans = temp;
           }
         };
         h = mod(incoming[mod(LL + w)] - incoming[LL]);
@@ -1189,126 +1189,126 @@ StateList fixed_wt_rectangles_out_of(int wt, State incoming) {
  * @see arc_index
  */
 int null_homologous_D0Q(State init) {
-  StateList NewIns, NewOuts, LastNewIn, LastNewOut, Temp;
-  StateList PrevIns, PrevOuts;
-  StateList ReallyNewOuts = NULL, ReallyNewIns = NULL;
-  int innumber, ans, previnnumber;
-  int outnumber;
+  StateList new_ins, new_outs, last_new_in, last_new_out, temp;
+  StateList prev_ins, prev_outs;
+  StateList really_new_outs = NULL, really_new_ins = NULL;
+  int in_number, ans, prev_in_number;
+  int out_number;
   int i;
-  int edgecount = 0;
-  int numIns = 0;
-  int numOuts = 0;
-  int numNewIns = 0;
-  int numNewOuts = 0;
-  StateList PresentIn, PresentOut;
+  int edge_count = 0;
+  int num_ins = 0;
+  int num_outs = 0;
+  int num_new_ins = 0;
+  int num_new_outs = 0;
+  StateList present_in, present_out;
   global_edge_list = prepend_edge(0, 1, NULL);
-  PrevOuts = NULL;
-  PrevIns = NULL;
-  NewIns = malloc(sizeof(StateNode_t));
+  prev_outs = NULL;
+  prev_ins = NULL;
+  new_ins = malloc(sizeof(StateNode_t));
   i = 0;
   while (i < arc_index) {
-    NewIns->data[i] = init[i];
+    new_ins->data[i] = init[i];
     i++;
   };
-  NewIns->nextState = NULL;
+  new_ins->nextState = NULL;
   ans = 0;
-  while (NewIns != NULL && !ans) {
-    PresentIn = NewIns;
-    innumber = 0;
-    numNewOuts = 0;
-    NewOuts = NULL;
-    while (PresentIn != NULL) {
-      free_state_list(ReallyNewOuts);
-      innumber++;
-      ReallyNewOuts = new_rectangles_into(PrevOuts, PresentIn->data);
-      while (ReallyNewOuts != NULL) {
-        outnumber = get_number(ReallyNewOuts->data, NewOuts);
-        if (outnumber == 0) {
-          if (numNewOuts == 0) {
-            NewOuts = ReallyNewOuts;
-            ReallyNewOuts = ReallyNewOuts->nextState;
-            NewOuts->nextState = NULL;
-            LastNewOut = NewOuts;
-            numNewOuts++;
-            outnumber = numNewOuts;
+  while (new_ins != NULL && !ans) {
+    present_in = new_ins;
+    in_number = 0;
+    num_new_outs = 0;
+    new_outs = NULL;
+    while (present_in != NULL) {
+      free_state_list(really_new_outs);
+      in_number++;
+      really_new_outs = new_rectangles_into(prev_outs, present_in->data);
+      while (really_new_outs != NULL) {
+        out_number = get_number(really_new_outs->data, new_outs);
+        if (out_number == 0) {
+          if (num_new_outs == 0) {
+            new_outs = really_new_outs;
+            really_new_outs = really_new_outs->nextState;
+            new_outs->nextState = NULL;
+            last_new_out = new_outs;
+            num_new_outs++;
+            out_number = num_new_outs;
           } else {
-            LastNewOut->nextState = ReallyNewOuts;
-            ReallyNewOuts = ReallyNewOuts->nextState;
-            LastNewOut = LastNewOut->nextState;
-            LastNewOut->nextState = NULL;
-            numNewOuts++;
-            outnumber = numNewOuts;
+            last_new_out->nextState = really_new_outs;
+            really_new_outs = really_new_outs->nextState;
+            last_new_out = last_new_out->nextState;
+            last_new_out->nextState = NULL;
+            num_new_outs++;
+            out_number = num_new_outs;
           };
         } else {
-          Temp = ReallyNewOuts;
-          ReallyNewOuts = ReallyNewOuts->nextState;
-          free(Temp);
+          temp = really_new_outs;
+          really_new_outs = really_new_outs->nextState;
+          free(temp);
         }
-        global_edge_list = append_ordered(outnumber + numOuts,
-                                          innumber + numIns, global_edge_list);
-        edgecount++;
+        global_edge_list = append_ordered(
+            out_number + num_outs, in_number + num_ins, global_edge_list);
+        edge_count++;
       }
-      PresentIn = PresentIn->nextState;
+      present_in = present_in->nextState;
     };
-    free_state_list(PrevIns);
-    PrevIns = NewIns;
+    free_state_list(prev_ins);
+    prev_ins = new_ins;
     i = 1;
-    numIns = numIns + innumber;
-    previnnumber = numIns;
-    numNewIns = 0;
-    NewIns = NULL;
-    outnumber = 0;
-    PresentOut = NewOuts;
-    while (PresentOut != NULL) {
-      outnumber++;
-      ReallyNewIns = new_rectangles_out_of(PrevIns, PresentOut->data);
-      while (ReallyNewIns != NULL) {
-        innumber = get_number(ReallyNewIns->data, NewIns);
-        if (innumber == 0) {
-          if (numNewIns == 0) {
-            NewIns = ReallyNewIns;
-            ReallyNewIns = ReallyNewIns->nextState;
-            NewIns->nextState = NULL;
-            LastNewIn = NewIns;
-            numNewIns++;
-            innumber = numNewIns;
+    num_ins = num_ins + in_number;
+    prev_in_number = num_ins;
+    num_new_ins = 0;
+    new_ins = NULL;
+    out_number = 0;
+    present_out = new_outs;
+    while (present_out != NULL) {
+      out_number++;
+      really_new_ins = new_rectangles_out_of(prev_ins, present_out->data);
+      while (really_new_ins != NULL) {
+        in_number = get_number(really_new_ins->data, new_ins);
+        if (in_number == 0) {
+          if (num_new_ins == 0) {
+            new_ins = really_new_ins;
+            really_new_ins = really_new_ins->nextState;
+            new_ins->nextState = NULL;
+            last_new_in = new_ins;
+            num_new_ins++;
+            in_number = num_new_ins;
           } else {
-            LastNewIn->nextState = ReallyNewIns;
-            ReallyNewIns = ReallyNewIns->nextState;
-            LastNewIn = LastNewIn->nextState;
-            LastNewIn->nextState = NULL;
-            numNewIns++;
-            innumber = numNewIns;
+            last_new_in->nextState = really_new_ins;
+            really_new_ins = really_new_ins->nextState;
+            last_new_in = last_new_in->nextState;
+            last_new_in->nextState = NULL;
+            num_new_ins++;
+            in_number = num_new_ins;
           };
         } else {
-          Temp = ReallyNewIns;
-          ReallyNewIns = ReallyNewIns->nextState;
-          free(Temp);
+          temp = really_new_ins;
+          really_new_ins = really_new_ins->nextState;
+          free(temp);
         }
-        global_edge_list = append_ordered(outnumber + numOuts,
-                                          innumber + numIns, global_edge_list);
-        edgecount++;
+        global_edge_list = append_ordered(
+            out_number + num_outs, in_number + num_ins, global_edge_list);
+        edge_count++;
       };
-      PresentOut = PresentOut->nextState;
+      present_out = present_out->nextState;
     };
-    free_state_list(PrevOuts);
-    PrevOuts = NewOuts;
-    NewOuts = NULL;
-    special_homology(0, previnnumber);
+    free_state_list(prev_outs);
+    prev_outs = new_outs;
+    new_outs = NULL;
+    special_homology(0, prev_in_number);
     if ((global_edge_list == NULL) || (global_edge_list->start != 0)) {
       ans = 1;
-      free_state_list(NewIns);
-      free_state_list(NewOuts);
-      NewIns = NULL;
-    } else if (global_edge_list->end <= previnnumber) {
+      free_state_list(new_ins);
+      free_state_list(new_outs);
+      new_ins = NULL;
+    } else if (global_edge_list->end <= prev_in_number) {
       ans = 0;
-      free_state_list(NewIns);
-      free_state_list(NewOuts);
-      NewIns = NULL;
+      free_state_list(new_ins);
+      free_state_list(new_outs);
+      new_ins = NULL;
     } else {
-      numOuts = numOuts + outnumber;
+      num_outs = num_outs + out_number;
       if (verbose) {
-        printf("%d %d %d\n", numIns, numOuts, edgecount);
+        printf("%d %d %d\n", num_ins, num_outs, edge_count);
       }
     };
   };
@@ -1323,137 +1323,137 @@ int null_homologous_D0Q(State init) {
  * @see arc_index
  */
 int null_homologous_D1Q(State init) {
-  StateList NewIns, NewOuts, LastNewIn, LastNewOut, Temp;
-  StateList PrevIns, PrevOuts;
-  StateList ReallyNewOuts = NULL, ReallyNewIns = NULL;
+  StateList new_ins, new_outs, last_new_in, last_new_out, temp;
+  StateList prev_ins, prev_outs;
+  StateList really_new_outs = NULL, really_new_ins = NULL;
   EdgeList LastEdge;
-  int innumber, ans, previnnumber;
-  int outnumber;
+  int in_number, ans, prev_in_number;
+  int out_number;
   int i;
-  int edgecount = 0;
-  int numIns = 0;
-  int numOuts = 0;
-  int numNewIns = 0;
-  int numNewOuts = 0;
-  StateList PresentIn, PresentOut;
+  int edge_count = 0;
+  int num_ins = 0;
+  int num_outs = 0;
+  int num_new_ins = 0;
+  int num_new_outs = 0;
+  StateList present_in, present_out;
   LastEdge = global_edge_list;
-  PrevOuts = NULL;
-  PrevIns = NULL;
-  NewIns = fixed_wt_rectangles_out_of(1, init);
+  prev_outs = NULL;
+  prev_ins = NULL;
+  new_ins = fixed_wt_rectangles_out_of(1, init);
   global_edge_list = prepend_edge(0, 1, NULL);
-  Temp = NewIns;
+  temp = new_ins;
   i = 1;
   LastEdge = NULL;
-  if (Temp != NULL) {
+  if (temp != NULL) {
     i = 1;
     global_edge_list = create_edge(0, 1);
     LastEdge = global_edge_list;
-    Temp = Temp->nextState;
-    while (Temp != NULL) {
+    temp = temp->nextState;
+    while (temp != NULL) {
       i++;
       LastEdge->nextEdge = create_edge(0, i);
       LastEdge = LastEdge->nextEdge;
-      Temp = Temp->nextState;
+      temp = temp->nextState;
     };
   };
   ans = 0;
-  while (NewIns != NULL && !ans) {
-    PresentIn = NewIns;
-    innumber = 0;
-    numNewOuts = 0;
-    NewOuts = NULL;
-    while (PresentIn != NULL) {
-      free_state_list(ReallyNewOuts);
-      innumber++;
-      ReallyNewOuts = new_rectangles_into(PrevOuts, PresentIn->data);
-      while (ReallyNewOuts != NULL) {
-        outnumber = get_number(ReallyNewOuts->data, NewOuts);
-        if (outnumber == 0) {
-          if (numNewOuts == 0) {
-            NewOuts = ReallyNewOuts;
-            ReallyNewOuts = ReallyNewOuts->nextState;
-            NewOuts->nextState = NULL;
-            LastNewOut = NewOuts;
-            numNewOuts++;
-            outnumber = numNewOuts;
+  while (new_ins != NULL && !ans) {
+    present_in = new_ins;
+    in_number = 0;
+    num_new_outs = 0;
+    new_outs = NULL;
+    while (present_in != NULL) {
+      free_state_list(really_new_outs);
+      in_number++;
+      really_new_outs = new_rectangles_into(prev_outs, present_in->data);
+      while (really_new_outs != NULL) {
+        out_number = get_number(really_new_outs->data, new_outs);
+        if (out_number == 0) {
+          if (num_new_outs == 0) {
+            new_outs = really_new_outs;
+            really_new_outs = really_new_outs->nextState;
+            new_outs->nextState = NULL;
+            last_new_out = new_outs;
+            num_new_outs++;
+            out_number = num_new_outs;
           } else {
-            LastNewOut->nextState = ReallyNewOuts;
-            ReallyNewOuts = ReallyNewOuts->nextState;
-            LastNewOut = LastNewOut->nextState;
-            LastNewOut->nextState = NULL;
-            numNewOuts++;
-            outnumber = numNewOuts;
+            last_new_out->nextState = really_new_outs;
+            really_new_outs = really_new_outs->nextState;
+            last_new_out = last_new_out->nextState;
+            last_new_out->nextState = NULL;
+            num_new_outs++;
+            out_number = num_new_outs;
           };
         } else {
-          Temp = ReallyNewOuts;
-          ReallyNewOuts = ReallyNewOuts->nextState;
-          free(Temp);
+          temp = really_new_outs;
+          really_new_outs = really_new_outs->nextState;
+          free(temp);
         }
-        global_edge_list = append_ordered(outnumber + numOuts,
-                                          innumber + numIns, global_edge_list);
-        edgecount++;
+        global_edge_list = append_ordered(
+            out_number + num_outs, in_number + num_ins, global_edge_list);
+        edge_count++;
       }
-      PresentIn = PresentIn->nextState;
+      present_in = present_in->nextState;
     };
-    free_state_list(PrevIns);
-    PrevIns = NewIns;
+    free_state_list(prev_ins);
+    prev_ins = new_ins;
     i = 1;
-    numIns = numIns + innumber;
-    previnnumber = numIns;
-    numNewIns = 0;
-    NewIns = NULL;
-    outnumber = 0;
-    PresentOut = NewOuts;
-    while (PresentOut != NULL) {
-      outnumber++;
-      ReallyNewIns = new_rectangles_out_of(PrevIns, PresentOut->data);
-      while (ReallyNewIns != NULL) {
-        innumber = get_number(ReallyNewIns->data, NewIns);
-        if (innumber == 0) {
-          if (numNewIns == 0) {
-            NewIns = ReallyNewIns;
-            ReallyNewIns = ReallyNewIns->nextState;
-            NewIns->nextState = NULL;
-            LastNewIn = NewIns;
-            numNewIns++;
-            innumber = numNewIns;
+    num_ins = num_ins + in_number;
+    prev_in_number = num_ins;
+    num_new_ins = 0;
+    new_ins = NULL;
+    out_number = 0;
+    present_out = new_outs;
+    while (present_out != NULL) {
+      out_number++;
+      really_new_ins = new_rectangles_out_of(prev_ins, present_out->data);
+      while (really_new_ins != NULL) {
+        in_number = get_number(really_new_ins->data, new_ins);
+        if (in_number == 0) {
+          if (num_new_ins == 0) {
+            new_ins = really_new_ins;
+            really_new_ins = really_new_ins->nextState;
+            new_ins->nextState = NULL;
+            last_new_in = new_ins;
+            num_new_ins++;
+            in_number = num_new_ins;
           } else {
-            LastNewIn->nextState = ReallyNewIns;
-            ReallyNewIns = ReallyNewIns->nextState;
-            LastNewIn = LastNewIn->nextState;
-            LastNewIn->nextState = NULL;
-            numNewIns++;
-            innumber = numNewIns;
+            last_new_in->nextState = really_new_ins;
+            really_new_ins = really_new_ins->nextState;
+            last_new_in = last_new_in->nextState;
+            last_new_in->nextState = NULL;
+            num_new_ins++;
+            in_number = num_new_ins;
           };
         } else {
-          Temp = ReallyNewIns;
-          ReallyNewIns = ReallyNewIns->nextState;
-          free(Temp);
+          temp = really_new_ins;
+          really_new_ins = really_new_ins->nextState;
+          free(temp);
         }
-        global_edge_list = append_ordered(outnumber + numOuts,
-                                          innumber + numIns, global_edge_list);
-        edgecount++;
+        global_edge_list = append_ordered(
+            out_number + num_outs, in_number + num_ins, global_edge_list);
+        edge_count++;
       };
-      PresentOut = PresentOut->nextState;
+      present_out = present_out->nextState;
     };
-    free_state_list(PrevOuts);
-    PrevOuts = NewOuts;
-    NewOuts = NULL;
-    special_homology(0, previnnumber);
+    free_state_list(prev_outs);
+    prev_outs = new_outs;
+    new_outs = NULL;
+    special_homology(0, prev_in_number);
     if ((global_edge_list == NULL) || (global_edge_list->start != 0)) {
       ans = 1;
-      free_state_list(NewIns);
-      free_state_list(NewOuts);
-      NewIns = NULL;
-    } else if (global_edge_list->end <= previnnumber) {
+      free_state_list(new_ins);
+      free_state_list(new_outs);
+      new_ins = NULL;
+    } else if (global_edge_list->end <= prev_in_number) {
       ans = 0;
-      free_state_list(NewIns);
-      free_state_list(NewOuts);
-      NewIns = NULL;
+      free_state_list(new_ins);
+      free_state_list(new_outs);
+      new_ins = NULL;
     } else {
-      numOuts = numOuts + outnumber;
+      num_outs = num_outs + out_number;
       if (verbose) {
-        printf("%d %d %d\n", numIns, numOuts, edgecount);
+        printf("%d %d %d\n", num_ins, num_outs, edge_count);
       }
     };
   };
