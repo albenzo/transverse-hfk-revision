@@ -55,8 +55,8 @@ struct Vertex {
   struct Vertex *nextVertex;
 };
 
-typedef struct Vertex Vertex;
-typedef Vertex *VertexList;
+typedef struct Vertex Vertex_t;
+typedef Vertex_t *VertexList;
 
 struct EdgeNode {
   int start;
@@ -64,12 +64,12 @@ struct EdgeNode {
   struct EdgeNode *nextEdge;
 };
 
-typedef struct EdgeNode EdgeNode;
-typedef EdgeNode *EdgeList;
+typedef struct EdgeNode EdgeNode_t;
+typedef EdgeNode_t *EdgeList;
 EdgeList global_edge_list;
 
-typedef struct StateNode StateNode;
-typedef StateNode *StateList;
+typedef struct StateNode StateNode_t;
+typedef StateNode_t *StateList;
 
 struct StateNode {
   char data[MAX_INDEX];
@@ -525,7 +525,7 @@ StateList SwapCols(int x1, int x2, char *incoming) {
   StateList ans;
   int i;
   i = 0;
-  ans = malloc(sizeof(StateNode));
+  ans = malloc(sizeof(StateNode_t));
   i = 0;
   while (i < arc_index) {
     ans->data[i] = incoming[i];
@@ -686,7 +686,7 @@ int GetNumber(State a, StateList b) {
 StateList CreateStateNode(State state) {
   StateList ans;
   int i;
-  ans = malloc(sizeof(StateNode));
+  ans = malloc(sizeof(StateNode_t));
   ans->nextState = NULL;
   i = 0;
   while (i < arc_index) {
@@ -706,7 +706,7 @@ StateList CreateStateNode(State state) {
 StateList AppendToStateList(State state, StateList rest) {
   StateList NewNode, TTTemp;
   int i;
-  NewNode = malloc(sizeof(StateNode));
+  NewNode = malloc(sizeof(StateNode_t));
   i = 0;
   while (i < arc_index) {
     NewNode->data[i] = state[i];
@@ -837,7 +837,7 @@ EdgeList AppendOrdered(int a, int b, EdgeList edges) {
   Prev = edges;
   if ((edges == NULL) || (edges->start > a) ||
       (edges->start == a && edges->end > b)) {
-    ans = malloc(sizeof(EdgeNode));
+    ans = malloc(sizeof(EdgeNode_t));
     ans->start = a;
     ans->end = b;
     ans->nextEdge = Prev;
@@ -849,7 +849,7 @@ EdgeList AppendOrdered(int a, int b, EdgeList edges) {
       curr = curr->nextEdge;
       Prev = Prev->nextEdge;
     };
-    Temp = malloc(sizeof(EdgeNode));
+    Temp = malloc(sizeof(EdgeNode_t));
     Temp->start = a;
     Temp->end = b;
     Temp->nextEdge = curr;
@@ -867,7 +867,7 @@ EdgeList AppendOrdered(int a, int b, EdgeList edges) {
  */
 EdgeList PrependEdge(int a, int b, EdgeList e) {
   EdgeList newPtr;
-  newPtr = malloc(sizeof(EdgeNode));
+  newPtr = malloc(sizeof(EdgeNode_t));
   newPtr->start = a;
   newPtr->end = b;
   newPtr->nextEdge = e;
@@ -882,7 +882,7 @@ EdgeList PrependEdge(int a, int b, EdgeList e) {
  */
 EdgeList CreateEdge(int a, int b) {
   EdgeList newPtr;
-  newPtr = malloc(sizeof(EdgeNode));
+  newPtr = malloc(sizeof(EdgeNode_t));
   newPtr->start = a;
   newPtr->end = b;
   newPtr->nextEdge = NULL;
@@ -898,7 +898,7 @@ EdgeList CreateEdge(int a, int b) {
  */
 VertexList PrependVertex(int a, VertexList vertices) {
   VertexList newPtr;
-  newPtr = malloc(sizeof(Vertex));
+  newPtr = malloc(sizeof(Vertex_t));
   (newPtr->data) = a;
   (newPtr->nextVertex) = vertices;
   return newPtr;
@@ -1332,7 +1332,7 @@ int NullHomologousD0Q(State init) {
   global_edge_list = PrependEdge(0, 1, NULL);
   PrevOuts = NULL;
   PrevIns = NULL;
-  NewIns = malloc(sizeof(StateNode));
+  NewIns = malloc(sizeof(StateNode_t));
   i = 0;
   while (i < arc_index) {
     NewIns->data[i] = init[i];
