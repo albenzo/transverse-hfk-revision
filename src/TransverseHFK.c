@@ -1106,38 +1106,6 @@ StateList RemoveState(State a, StateList v) {
 }
 
 /**
- * Removes a vertex containing the supplied int from a VertexList
- * @param a an int
- * @param v a VertexList
- * @return a VertexList with the Vertex containing a removed
- */
-VertexList RemoveVertex(int a, VertexList v) {
-  VertexList Temp, Prev;
-  VertexList vList = v;
-  Prev = v;
-  if (v == NULL)
-    return NULL;
-  else if (v->data == a) {
-    Temp = v;
-    vList = v->nextVertex;
-    free(Temp);
-    return (vList);
-  } else {
-    Temp = Prev->nextVertex;
-    while ((Temp != NULL) && (Temp->data) < a) {
-      Temp = Temp->nextVertex;
-      Prev = Prev->nextVertex;
-    };
-    if (Temp != NULL) {
-      Prev->nextVertex = Temp->nextVertex;
-      free(Temp);
-      return vList;
-    } else
-      return vList;
-  };
-}
-
-/**
  * Prints each edge in global_edge_list on a new line
  * @see global_edge_list
  */
