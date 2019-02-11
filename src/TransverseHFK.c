@@ -45,7 +45,7 @@ static error_t parse_opt(int, char *, struct argp_state *);
 static struct argp argp = {options, parse_opt, args_doc, doc, 0, 0, 0};
 
 bool verbose = false;
-int ArcIndex = -1;
+int arc_index = -1;
 int max_time = -1;
 char Xs[MAX_INDEX] = {};
 char Os[MAX_INDEX] = {};
@@ -115,7 +115,7 @@ void timeout(int);
 int perm_len(const char*);
 int is_grid(const int,const char*,const char*);
 int buildPermutation(char*,char*);
-int EqState(State a, State b) { return (!strncmp(a, b, ArcIndex)); }
+int EqState(State a, State b) { return (!strncmp(a, b, arc_index)); }
 
 static error_t parse_opt(int key, char *arg, struct argp_state *state) {
   switch (key) {
@@ -133,9 +133,9 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     }
     break;
   case 'i':
-    ArcIndex = atoi(arg);
-    if (ArcIndex > MAX_INDEX || ArcIndex < 2) {
-      argp_failure(state, 0, 0, "ArcIndex value out of range");
+    arc_index = atoi(arg);
+    if (arc_index > MAX_INDEX || arc_index < 2) {
+      argp_failure(state, 0, 0, "arc_index value out of range");
       exit(1);
     }
     break;
@@ -268,10 +268,10 @@ int is_grid(const int i, const char* Xs, const char* Os)
 int main(int argc, char **argv) {
   argp_parse(&argp, argc, argv, 0, 0, 0);
 
-  char UR[ArcIndex];
+  char UR[arc_index];
   int i;
 
-  if(!is_grid(ArcIndex,Xs,Os)) {
+  if(!is_grid(arc_index,Xs,Os)) {
     printf("Invalid grid\n");
     exit(1);
   }
@@ -297,14 +297,14 @@ int main(int argc, char **argv) {
   if (verbose) {
     printf("\n \nCalculating graph for UR invariant\n");
   }
-  if (Xs[ArcIndex - 1] == ArcIndex) {
+  if (Xs[arc_index - 1] == arc_index) {
     UR[0] = 1;
   } else {
-    UR[0] = (char)Xs[ArcIndex - 1] + 1;
+    UR[0] = (char)Xs[arc_index - 1] + 1;
   };
   i = 1;
-  while (i <= ArcIndex - 1) {
-    if (Xs[i - 1] == ArcIndex) {
+  while (i <= arc_index - 1) {
+    if (Xs[i - 1] == arc_index) {
       UR[i] = 1;
     } else {
       UR[i] = Xs[i - 1] + 1;
@@ -337,14 +337,14 @@ int main(int argc, char **argv) {
     printf("\n \nCalculating graph for D1[UR] invariant\n");
   }
 
-  if (Xs[ArcIndex - 1] == ArcIndex) {
+  if (Xs[arc_index - 1] == arc_index) {
     UR[0] = 1;
   } else {
-    UR[0] = (char)Xs[ArcIndex - 1] + 1;
+    UR[0] = (char)Xs[arc_index - 1] + 1;
   };
   i = 1;
-  while (i <= ArcIndex - 1) {
-    if (Xs[i - 1] == ArcIndex) {
+  while (i <= arc_index - 1) {
+    if (Xs[i - 1] == arc_index) {
       UR[i] = 1;
     } else {
       UR[i] = Xs[i - 1] + 1;
@@ -366,34 +366,34 @@ int main(int argc, char **argv) {
 }
 
 /**
- * Shifts the input towards the interval [0,ArcIndex) by
- * a multiple of ArcIndex
+ * Shifts the input towards the interval [0,arc_index) by
+ * a multiple of arc_index
  * @param a An integer
- * @return a shifted towards the interval [0,ArcIndex)
- * @see ArcIndex
+ * @return a shifted towards the interval [0,arc_index)
+ * @see arc_index
  */
 int Mod(int a) {
-  if (a >= ArcIndex) {
-    return (a - ArcIndex);
+  if (a >= arc_index) {
+    return (a - arc_index);
   } else if (a < 0) {
-    return (a + ArcIndex);
+    return (a + arc_index);
   } else {
     return (a);
   };
 }
 
 /**
- * Shifts the input towards the interval (0,ArcIndex] by
- * a multiple of ArcIndex
+ * Shifts the input towards the interval (0,arc_index] by
+ * a multiple of arc_index
  * @param a An integer
- * @return a shifted towards the interval (0,ArcIndex]
- * @see ArcIndex
+ * @return a shifted towards the interval (0,arc_index]
+ * @see arc_index
  */
 int ModUp(int a) {
-  if (a > ArcIndex) {
-    return (a - ArcIndex);
+  if (a > arc_index) {
+    return (a - arc_index);
   } else if (a <= 0) {
-    return (a + ArcIndex);
+    return (a + arc_index);
   } else {
     return (a);
   };
@@ -414,7 +414,7 @@ int min(int a, int b) {
  * @param incoming the source of rectangles used to generate statelist
  * @return A statelist containing states reached from a rectangle leaving
  * incoming not contained in Prevs.
- * @see ArcIndex
+ * @see arc_index
  */
 StateList NewRectanglesOutOf(StateList Prevs, State incoming) {
   StateList Temp, ans;
@@ -423,15 +423,15 @@ StateList NewRectanglesOutOf(StateList Prevs, State incoming) {
   int w, h, m, n, i;
   ans = NULL;
   i = 0;
-  while (i < ArcIndex) {
+  while (i < arc_index) {
     TempState[i] = incoming[i];
     i++;
   }
   LL = 0;
-  while (LL < ArcIndex) {
+  while (LL < arc_index) {
     w = 1;
     h = min(Mod(Os[LL] - incoming[LL]), Mod(Xs[LL] - incoming[LL]));
-    while (w < ArcIndex && h > 0) {
+    while (w < arc_index && h > 0) {
       if (Mod(incoming[Mod(LL + w)] - incoming[LL]) <= h) {
         TempState[LL] = incoming[Mod(LL + w)];
         TempState[Mod(LL + w)] = incoming[LL];
@@ -465,7 +465,7 @@ StateList NewRectanglesOutOf(StateList Prevs, State incoming) {
  * @param incoming State that is the destination for generated rectangles
  * @param Prevs StateList of excluded states
  * @return StateList containing states with a rectangle to incoming.
- * @see ArcIndex
+ * @see arc_index
  */
 StateList NewRectanglesInto(StateList Prevs, State incoming) {
   StateList ans, Temp;
@@ -475,15 +475,15 @@ StateList NewRectanglesInto(StateList Prevs, State incoming) {
   int i;
   ans = NULL;
   i = 0;
-  while (i < ArcIndex) {
+  while (i < arc_index) {
     TempState[i] = incoming[i];
     i++;
   }
   LL = 0;
-  while (LL < ArcIndex) {
+  while (LL < arc_index) {
     w = 1;
     h = min(ModUp(incoming[LL] - Os[LL]), ModUp(incoming[LL] - Xs[LL]));
-    while (w < ArcIndex && h > 0) {
+    while (w < arc_index && h > 0) {
       if (ModUp(incoming[LL] - incoming[Mod(LL + w)]) < h) {
         TempState[LL] = incoming[Mod(LL + w)];
         TempState[Mod(LL + w)] = incoming[LL];
@@ -519,7 +519,7 @@ StateList NewRectanglesInto(StateList Prevs, State incoming) {
  * @param incoming a permutation
  * @return a single element StateList containing a copy of
  * the permutation incoming with entries x1 and x2 swapped
- * @see ArcIndex
+ * @see arc_index
  */
 StateList SwapCols(int x1, int x2, char *incoming) {
   StateList ans;
@@ -527,7 +527,7 @@ StateList SwapCols(int x1, int x2, char *incoming) {
   i = 0;
   ans = malloc(sizeof(StateNode));
   i = 0;
-  while (i < ArcIndex) {
+  while (i < arc_index) {
     ans->data[i] = incoming[i];
     i++;
   };
@@ -601,17 +601,17 @@ void PrintStates(StateList states) {
  * Prints the permutation of state using one line notation
  * "{_,_,...}"
  * @param state a State
- * @see ArcIndex
+ * @see arc_index
  */
 void PrintStateShort(State state) {
   int i;
   i = 0;
   printf("{");
-  while (i < ArcIndex - 1) {
+  while (i < arc_index - 1) {
     printf("%d,", state[i]);
     i++;
   };
-  printf("%d}", state[ArcIndex - 1]);
+  printf("%d}", state[arc_index - 1]);
 }
 
 /**
@@ -623,10 +623,10 @@ void PrintStateShort(State state) {
  */
 void PrintState(State state) {
   int i, j;
-  j = ArcIndex;
+  j = arc_index;
   while (j > 0) {
     i = 0;
-    while (i < ArcIndex) {
+    while (i < arc_index) {
       if (Xs[i] == j) {
         printf("  X  ");
       } else {
@@ -640,7 +640,7 @@ void PrintState(State state) {
     };
     printf("\n");
     i = 0;
-    while (i < ArcIndex) {
+    while (i < arc_index) {
       if (state[i] == j) {
         printf("*    ");
       } else {
@@ -681,7 +681,7 @@ int GetNumber(State a, StateList b) {
  * Return a single element StateList with data state
  * @param state a state to initialize the list
  * @return a single element StateList containing the data from state.
- * @see ArcIndex
+ * @see arc_index
  */
 StateList CreateStateNode(State state) {
   StateList ans;
@@ -689,7 +689,7 @@ StateList CreateStateNode(State state) {
   ans = malloc(sizeof(StateNode));
   ans->nextState = NULL;
   i = 0;
-  while (i < ArcIndex) {
+  while (i < arc_index) {
     ans->data[i] = state[i];
     i++;
   };
@@ -701,14 +701,14 @@ StateList CreateStateNode(State state) {
  * @param state a State
  * @param rest a StateList
  * @return appends a stateNode containing state to the end of rest
- * @see ArcIndex
+ * @see arc_index
  */
 StateList AppendToStateList(State state, StateList rest) {
   StateList NewNode, TTTemp;
   int i;
   NewNode = malloc(sizeof(StateNode));
   i = 0;
-  while (i < ArcIndex) {
+  while (i < arc_index) {
     NewNode->data[i] = state[i];
     i++;
   };
@@ -1262,7 +1262,7 @@ void FreeVertexList(VertexList vertices) {
  * @param incoming origin state for the rectangles
  * @return a StateList with states that are reached by a rectangle of width
  * wt from incoming.
- * @see ArcIndex
+ * @see arc_index
  * @see Xs
  * @see Os
  */
@@ -1273,10 +1273,10 @@ StateList FixedWtRectanglesOutOf(int wt, State incoming) {
   int thisweight, i;
   ans = NULL;
   LL = 0;
-  while (LL < ArcIndex) {
+  while (LL < arc_index) {
     w = 1;
     h = Mod(Os[LL] - incoming[LL]);
-    while (w < ArcIndex && h > 0) {
+    while (w < arc_index && h > 0) {
       if (Mod(incoming[Mod(LL + w)] - incoming[LL]) <= h) {
         thisweight = 0;
         i = 0;
@@ -1314,7 +1314,7 @@ StateList FixedWtRectanglesOutOf(int wt, State incoming) {
  * @param init a State
  * @return nonzero if nullhomologous and zero otherwise.
  * @see global_edge_list
- * @see ArcIndex
+ * @see arc_index
  */
 int NullHomologousD0Q(State init) {
   StateList NewIns, NewOuts, LastNewIn, LastNewOut, Temp;
@@ -1334,7 +1334,7 @@ int NullHomologousD0Q(State init) {
   PrevIns = NULL;
   NewIns = malloc(sizeof(StateNode));
   i = 0;
-  while (i < ArcIndex) {
+  while (i < arc_index) {
     NewIns->data[i] = init[i];
     i++;
   };
@@ -1448,7 +1448,7 @@ int NullHomologousD0Q(State init) {
  * @param init a State
  * @return nonzero if nullhomologous and zero otherwise
  * @see global_edge_list
- * @see ArcIndex
+ * @see arc_index
  */
 int NullHomologousD1Q(State init) {
   StateList NewIns, NewOuts, LastNewIn, LastNewOut, Temp;
@@ -1598,9 +1598,9 @@ int NullHomologousD1Q(State init) {
 int NESWpO(char *x) {
   int i = 0, j = 0;
   int ans = 0;
-  while (i < ArcIndex) {
+  while (i < arc_index) {
     j = i;
-    while (j < ArcIndex) {
+    while (j < arc_index) {
       if (x[i] <= Os[j]) {
         ans++;
       };
@@ -1621,9 +1621,9 @@ int NESWpO(char *x) {
 int NESWOp(char *x) {
   int i = 0, j = 0;
   int ans = 0;
-  while (i < ArcIndex) {
+  while (i < arc_index) {
     j = i + 1;
-    while (j < ArcIndex) {
+    while (j < arc_index) {
       if (Os[i] < x[j]) {
         ans++;
       };
@@ -1643,9 +1643,9 @@ int NESWOp(char *x) {
 int NESWpp(char *x) {
   int i = 0, j = 0;
   int ans = 0;
-  while (i < ArcIndex) {
+  while (i < arc_index) {
     j = i;
-    while (j < ArcIndex) {
+    while (j < arc_index) {
       if (x[i] < x[j]) {
         ans++;
       };
