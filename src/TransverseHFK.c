@@ -539,40 +539,6 @@ StateList swap_cols(int x1, int x2, char *incoming) {
 }
 
 /**
- * Returns the length of the StateList
- * @param states a StateList
- * @return an int equal to the length of states
- */
-int LengthStateList(StateList states) {
-  int c;
-  StateList Temp;
-  Temp = states;
-  c = 0;
-  while (Temp != NULL) {
-    c++;
-    Temp = Temp->nextState;
-  };
-  return c;
-}
-
-/**
- * Returns the length of a VertexList
- * @param a VertexList
- * @return an int equal to the length of states
- */
-int LengthVertexList(VertexList states) {
-  int c;
-  VertexList Temp;
-  Temp = states;
-  c = 0;
-  while (Temp != NULL) {
-    c++;
-    Temp = Temp->nextVertex;
-  };
-  return c;
-}
-
-/**
  * Prints states in the form "{<state>,...}" up
  * to the first 500,000 states.
  * @param states a StateList
@@ -676,35 +642,6 @@ int get_number(State a, StateList b) {
     count++;
   };
   return 0;
-}
-
-/**
- * Places the given state at the end of the provided StateList
- * @param state a State
- * @param rest a StateList
- * @return appends a StateNode containing state to the end of rest
- * @see arc_index
- */
-StateList AppendToStateList(State state, StateList rest) {
-  StateList NewNode, TTTemp;
-  int i;
-  NewNode = malloc(sizeof(StateNode_t));
-  i = 0;
-  while (i < arc_index) {
-    NewNode->data[i] = state[i];
-    i++;
-  };
-  NewNode->nextState = NULL;
-  if (rest == NULL) {
-    return NewNode;
-  } else {
-    TTTemp = rest;
-    while (TTTemp->nextState != NULL) {
-      TTTemp = TTTemp->nextState;
-    };
-    TTTemp->nextState = NewNode;
-  };
-  return rest;
 }
 
 /**
