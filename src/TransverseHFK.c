@@ -678,25 +678,6 @@ int GetNumber(State a, StateList b) {
 }
 
 /**
- * Return a single element StateList with data state
- * @param state a state to initialize the list
- * @return a single element StateList containing the data from state.
- * @see arc_index
- */
-StateList CreateStateNode(State state) {
-  StateList ans;
-  int i;
-  ans = malloc(sizeof(StateNode_t));
-  ans->nextState = NULL;
-  i = 0;
-  while (i < arc_index) {
-    ans->data[i] = state[i];
-    i++;
-  };
-  return (ans);
-}
-
-/**
  * Places the given state at the end of the provided StateList
  * @param state a State
  * @param rest a StateList
