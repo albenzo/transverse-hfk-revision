@@ -845,22 +845,6 @@ VertexList prepend_vertex(int a, VertexList vertices) {
 }
 
 /**
- * Calculate the homology of Edgelist and storing the result
- * in global_edge_list.
- * @see global_edge_list
- */
-void homology(EdgeList edge_list) {
-  EdgeList temp;
-  temp = edge_list;
-  while (temp != NULL) {
-    if (temp != NULL) {
-      contract(temp->start, temp->end, edge_list);
-      temp = edge_list;
-    };
-  };
-}
-
-/**
  * contracts all edges such that the parents occur after init
  * and the children are before or at final.
  * @param init an int specifying the required start
