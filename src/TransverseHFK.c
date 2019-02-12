@@ -868,7 +868,7 @@ void homology(EdgeList edge_list) {
  * @see global_edge_list
  */
 void special_homology(int init, int final, EdgeList edge_list) {
-  int i, j, t;
+  int i, j;
   EdgeList temp;
   i = 0;
   j = 0;
