@@ -873,14 +873,6 @@ void special_homology(int init, int final, EdgeList edge_list) {
   i = 0;
   j = 0;
   temp = edge_list;
-  /*
-  if ((edge_list == NULL) || (edge_list->start != init)) {
-    printf("FOOO");
-    scanf("%d", &t);
-    free_edge_list(edge_list);
-    edge_list = NULL;
-  };
-  */
   while ((edge_list != NULL) && (temp != NULL)) {
     while ((temp != NULL) && (temp->start == init)) {
       temp = temp->nextEdge;
