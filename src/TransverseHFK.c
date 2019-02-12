@@ -283,9 +283,15 @@ int main(int argc, char **argv) {
   EdgeList edge_list = NULL;
 
   G.arc_index = arc_index;
-  for(i=0; i<G.arc_index; ++i) {
-    G.Xs[i] = Xs[i];
-    G.Os[i] = Os[i];
+  for(i=0; i< MAX_INDEX; ++i) {
+    if(i < G.arc_index) {
+      G.Xs[i] = Xs[i];
+      G.Os[i] = Os[i];
+    }
+    else {
+      G.Xs[i] = 0;
+      G.Os[i] = 0;
+    }
   }
   
   if (!is_grid(&G)) {
