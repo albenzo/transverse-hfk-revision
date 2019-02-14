@@ -237,9 +237,7 @@ int perm_len(const char *p) {
 
 /**
  * Determines whether the grid specified by the parameters is valid
- * @param i the grid size
- * @param Xs a permutation specifying the Xs of the grid
- * @param Os a permutation specifygin the Os of the grid
+ * @param G working grid
  * @return 1 if the grid is valid, 0 otherwise
  */
 int is_grid(const Grid_t* G) {
@@ -391,8 +389,8 @@ int main(int argc, char **argv) {
  * Shifts the input towards the interval [0,arc_index) by
  * a multiple of arc_index
  * @param a An integer
+ * @param G working grid
  * @return a shifted towards the interval [0,arc_index)
- * @see arc_index
  */
 int mod(int a, Grid_t* G) {
   if (a >= G->arc_index) {
@@ -408,8 +406,8 @@ int mod(int a, Grid_t* G) {
  * Shifts the input towards the interval (0,arc_index] by
  * a multiple of arc_index
  * @param a An integer
+ * @param G working grid
  * @return a shifted towards the interval (0,arc_index]
- * @see arc_index
  */
 int mod_up(int a, Grid_t* G) {
   if (a > G->arc_index) {
@@ -434,9 +432,9 @@ int min(int a, int b) {
  * that is not contained in prevs.
  * @param prevs Statelist containing previous states
  * @param incoming the source of rectangles used to generate statelist
+ * @param G working grid
  * @return A statelist containing states reached from a rectangle leaving
  * incoming not contained in prevs.
- * @see arc_index
  */
 StateList new_rectangles_out_of(StateList prevs, State incoming, Grid_t* G) {
   StateList temp, ans;
@@ -486,8 +484,8 @@ StateList new_rectangles_out_of(StateList prevs, State incoming, Grid_t* G) {
  * pointing to the state incoming that do not overlap with prevs
  * @param incoming State that is the destination for generated rectangles
  * @param prevs StateList of excluded states
+ * @param G working grid
  * @return StateList containing states with a rectangle to incoming.
- * @see arc_index
  */
 StateList new_rectangles_into(StateList prevs, State incoming, Grid_t* G) {
   StateList ans, temp;
@@ -539,9 +537,9 @@ StateList new_rectangles_into(StateList prevs, State incoming, Grid_t* G) {
  * @param x1 an integer between 0 and MAX_INDEX
  * @param x2 an integer between 0 and MAX_INDEX
  * @param incoming a permutation
+ * @param G working grid
  * @return a single element StateList containing a copy of
  * the permutation incoming with entries x1 and x2 swapped
- * @see arc_index
  */
 StateList swap_cols(int x1, int x2, char *incoming, Grid_t* G) {
   StateList ans;
@@ -563,6 +561,7 @@ StateList swap_cols(int x1, int x2, char *incoming, Grid_t* G) {
  * Prints states in the form "{<state>,...}" up
  * to the first 500,000 states.
  * @param states a StateList
+ * @param G working grid
  * @see print_state_short
  */
 void print_states(StateList states, Grid_t* G) {
@@ -589,7 +588,7 @@ void print_states(StateList states, Grid_t* G) {
  * Prints the permutation of state using one line notation
  * "{_,_,...}"
  * @param state a State
- * @see arc_index
+ * @param G working grid
  */
 void print_state_short(State state, Grid_t* G) {
   int i;
@@ -606,8 +605,7 @@ void print_state_short(State state, Grid_t* G) {
  * Prints the permutation of state on the grid specified by
  * Xs and Os, as well as 2A=M=SL+1.
  * @param state A state
- * @see Xs
- * @see Os
+ * @param G working grid
  */
 void print_state(State state, Grid_t* G) {
   int i, j;
@@ -849,7 +847,6 @@ VertexList prepend_vertex(int a, VertexList vertices) {
  * and the children are before or at final.
  * @param init an int specifying the required start
  * @param final State to t
- * @see global_edge_list
  */
 void special_homology(int init, int final, EdgeList edge_list) {
   int i, j;
