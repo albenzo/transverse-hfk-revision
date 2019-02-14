@@ -85,19 +85,17 @@ struct StateNode {
 
 typedef char State[MAX_INDEX];
 
-EdgeList add_mod_two_lists(VertexList, VertexList, EdgeList);
+EdgeList* add_mod_two_lists(VertexList, VertexList, EdgeList*);
 VertexList prepend_vertex(int, VertexList);
 EdgeList prepend_edge(int, int, EdgeList);
 StateList fixed_wt_rectangles_out_of(int, State, Grid_t*);
 StateList swap_cols(int, int, State, Grid_t*);
 int get_number(State, StateList);
 void free_state_list(StateList);
-int null_homologous_D0Q(State, Grid_t*, EdgeList);
-int null_homologous_D1Q(State, Grid_t*, EdgeList);
-void homology(EdgeList);
-void special_homology(int, int, EdgeList);
-void contract(int, int, EdgeList);
-VertexList remove_vertex(int, VertexList, Grid_t*, EdgeList);
+int null_homologous_D0Q(State, Grid_t*);
+int null_homologous_D1Q(State, Grid_t*);
+void special_homology(int, int, EdgeList*);
+void contract(int, int, EdgeList*);
 EdgeList create_edge(int, int);
 void free_edge_list(EdgeList);
 StateList remove_state(State, StateList);
@@ -279,7 +277,6 @@ int main(int argc, char **argv) {
   int i;
 
   Grid_t G;
-  EdgeList edge_list = NULL;
 
   G.arc_index = arc_index;
   for(i=0; i< MAX_INDEX; ++i) {
@@ -310,7 +307,7 @@ int main(int argc, char **argv) {
     printf("\n \nCalculating graph for LL invariant\n");
     print_state(G.Xs, &G);
   }
-  if (null_homologous_D0Q(G.Xs, &G, edge_list)) {
+  if (null_homologous_D0Q(G.Xs, &G)) {
     printf("LL is null-homologous\n");
   } else {
     printf("LL is NOT null-homologous\n");
@@ -338,7 +335,7 @@ int main(int argc, char **argv) {
     print_state(UR, &G);
   }
 
-  if (null_homologous_D0Q(UR, &G, edge_list)) {
+  if (null_homologous_D0Q(UR, &G)) {
     printf("UR is null-homologous\n");
   } else {
     printf("UR is NOT null-homologous\n");
@@ -349,7 +346,7 @@ int main(int argc, char **argv) {
     print_state(G.Xs, &G);
   }
 
-  if (null_homologous_D1Q(G.Xs, &G, edge_list)) {
+  if (null_homologous_D1Q(G.Xs, &G)) {
     printf("D1[LL] is null-homologous\n");
   } else {
     printf("D1[LL] is NOT null-homologous\n");
@@ -378,7 +375,7 @@ int main(int argc, char **argv) {
     print_state(UR, &G);
   }
 
-  if (null_homologous_D1Q(UR, &G, edge_list)) {
+  if (null_homologous_D1Q(UR, &G)) {
     printf("D1[UR] is null-homologous\n");
   } else {
     printf("D1[UR] is NOT null-homologous\n");
@@ -674,23 +671,25 @@ int get_number(State a, StateList b) {
  * @return A shortEdges containing the result of adding them mod two.
  * @see global_edge_list
  */
-EdgeList add_mod_two_lists(VertexList parents, VertexList kids, EdgeList edge_list) {
+EdgeList* add_mod_two_lists(VertexList parents, VertexList kids, EdgeList* edge_list) {
   VertexList this_kid, this_parent, temp_vert;
   EdgeList this_edge, temp_edge, prev;
-  EdgeList ans;
+  EdgeList* ans;
   if ((parents == NULL) || (kids == NULL)) {
-    ans = edge_list; // change to return
+    return edge_list;
   } else {
+    ans = malloc(sizeof(EdgeList*));
     this_parent = parents;
     this_kid = kids;
-    ans = NULL;
-    this_edge = edge_list;
+    *ans = NULL;
+    this_edge = *edge_list;
     while (this_parent != NULL && this_edge != NULL &&
            (this_edge->start == this_parent->data &&
             this_edge->end == this_kid->data)) {
-      temp_edge = this_edge; // This may need to be freed
+      temp_edge = this_edge;
       this_edge = this_edge->nextEdge;
       this_kid = this_kid->nextVertex;
+      free(temp_edge);
       if (this_kid == NULL) {
         temp_vert = this_parent;
         this_parent = this_parent->nextVertex;
@@ -702,12 +701,12 @@ EdgeList add_mod_two_lists(VertexList parents, VertexList kids, EdgeList edge_li
         (this_parent == NULL || (this_edge->start < this_parent->data ||
                                  (this_edge->start == this_parent->data &&
                                   this_edge->end < this_kid->data)))) {
-      ans = this_edge;
-      prev = ans;
+      *ans = this_edge;
+      prev = *ans;
       this_edge = this_edge->nextEdge;
     } else if (this_parent != NULL) {
-      ans = create_edge(this_parent->data, this_kid->data);
-      ans->nextEdge = NULL;
+      *ans = create_edge(this_parent->data, this_kid->data);
+      (*ans)->nextEdge = NULL;
       this_kid = this_kid->nextVertex;
       if (this_kid == NULL) {
         temp_vert = this_parent;
@@ -716,9 +715,9 @@ EdgeList add_mod_two_lists(VertexList parents, VertexList kids, EdgeList edge_li
         this_kid = kids;
       };
     } else {
-      ans = NULL;
+      *ans = NULL;
     }
-    prev = ans;
+    prev = *ans;
     while (this_edge != NULL && this_parent != NULL) {
       while (this_edge != NULL && ((this_edge->start < this_parent->data ||
                                     (this_edge->start == this_parent->data &&
@@ -851,12 +850,12 @@ VertexList prepend_vertex(int a, VertexList vertices) {
  * @param final State to t
  * @see global_edge_list
  */
-void special_homology(int init, int final, EdgeList edge_list) {
+void special_homology(int init, int final, EdgeList* edge_list) {
   int i, j;
   EdgeList temp;
   i = 0;
   j = 0;
-  temp = edge_list;
+  temp = *edge_list;
   while ((edge_list != NULL) && (temp != NULL)) {
     while ((temp != NULL) && (temp->start == init)) {
       temp = temp->nextEdge;
@@ -874,7 +873,7 @@ void special_homology(int init, int final, EdgeList edge_list) {
     j++;
     if (temp != NULL) {
       contract(temp->start, temp->end, edge_list);
-      temp = edge_list;
+      temp = *edge_list;
     };
   };
 }
@@ -885,55 +884,55 @@ void special_homology(int init, int final, EdgeList edge_list) {
  * @param b the child vertex of the edge
  * @see global_edge_list
  */
-void contract(int a, int b, EdgeList edge_list) {
+void contract(int a, int b, EdgeList* edge_list) {
   EdgeList temp;
   EdgeList prev;
   VertexList parents, kids, temp_kids, temp_parents;
   VertexList last_parent, last_kid;
-  prev = edge_list; // Multiple equal initializations
+  prev = *edge_list; // Multiple equal initializations
   parents = NULL;
   kids = NULL;
   temp_kids = NULL;
   temp_parents = NULL;
   last_parent = NULL;
   last_kid = NULL;
-  while (edge_list != NULL &&
-         ((edge_list)->end == b || edge_list->start == a)) {
-    if ((edge_list->end == b) && (edge_list->start == a)) {
-      temp = edge_list;
-      edge_list = edge_list->nextEdge;
+  while (*edge_list != NULL &&
+         ((*edge_list)->end == b || (*edge_list)->start == a)) {
+    if (((*edge_list)->end == b) && ((*edge_list)->start == a)) {
+      temp = *edge_list;
+      *edge_list = (*edge_list)->nextEdge;
       free(temp);
     } else {
-      if (edge_list->end == b) {
+      if ((*edge_list)->end == b) {
         if (last_parent == NULL) {
-          parents = prepend_vertex(edge_list->start, NULL);
+          parents = prepend_vertex((*edge_list)->start, NULL);
           last_parent = parents;
         } else {
-          temp_parents = prepend_vertex(edge_list->start, NULL);
+          temp_parents = prepend_vertex((*edge_list)->start, NULL);
           last_parent->nextVertex = temp_parents;
           last_parent = last_parent->nextVertex;
         };
-        temp = edge_list;
-        edge_list = edge_list->nextEdge;
+        temp = *edge_list;
+        *edge_list = (*edge_list)->nextEdge;
         free(temp);
-      } else if (edge_list->start == a) {
+      } else if ((*edge_list)->start == a) {
         if (last_kid == NULL) {
-          kids = prepend_vertex(edge_list->end, kids);
+          kids = prepend_vertex((*edge_list)->end, kids);
           last_kid = kids;
         } else {
-          temp_kids = prepend_vertex(edge_list->end, NULL);
+          temp_kids = prepend_vertex((*edge_list)->end, NULL);
           last_kid->nextVertex = temp_kids;
           last_kid = last_kid->nextVertex;
         };
-        temp = edge_list;
-        edge_list = edge_list->nextEdge;
+        temp = *edge_list;
+        *edge_list = (*edge_list)->nextEdge;
         free(temp);
       };
     };
   };
-  prev = edge_list;
-  if (edge_list != NULL) {
-    temp = (edge_list->nextEdge);
+  prev = *edge_list;
+  if (*edge_list != NULL) {
+    temp = ((*edge_list)->nextEdge);
   } else {
     temp = NULL;
   };
@@ -1188,7 +1187,7 @@ StateList fixed_wt_rectangles_out_of(int wt, State incoming, Grid_t* G) {
  * @see global_edge_list
  * @see arc_index
  */
-int null_homologous_D0Q(State init, Grid_t* G, EdgeList edge_list) {
+int null_homologous_D0Q(State init, Grid_t* G) {
   StateList new_ins, new_outs, last_new_in, last_new_out, temp;
   StateList prev_ins, prev_outs;
   StateList really_new_outs = NULL, really_new_ins = NULL;
@@ -1201,7 +1200,7 @@ int null_homologous_D0Q(State init, Grid_t* G, EdgeList edge_list) {
   int num_new_ins = 0;
   int num_new_outs = 0;
   StateList present_in, present_out;
-  edge_list = prepend_edge(0, 1, NULL);
+  EdgeList edge_list = prepend_edge(0, 1, NULL);
   prev_outs = NULL;
   prev_ins = NULL;
   new_ins = malloc(sizeof(StateNode_t));
@@ -1294,7 +1293,7 @@ int null_homologous_D0Q(State init, Grid_t* G, EdgeList edge_list) {
     free_state_list(prev_outs);
     prev_outs = new_outs;
     new_outs = NULL;
-    special_homology(0, prev_in_number, edge_list);
+    special_homology(0, prev_in_number, &edge_list);
     if ((edge_list == NULL) || (edge_list->start != 0)) {
       ans = 1;
       free_state_list(new_ins);
@@ -1322,7 +1321,7 @@ int null_homologous_D0Q(State init, Grid_t* G, EdgeList edge_list) {
  * @see global_edge_list
  * @see arc_index
  */
-int null_homologous_D1Q(State init, Grid_t* G, EdgeList edge_list) {
+int null_homologous_D1Q(State init, Grid_t* G) {
   StateList new_ins, new_outs, last_new_in, last_new_out, temp;
   StateList prev_ins, prev_outs;
   StateList really_new_outs = NULL, really_new_ins = NULL;
@@ -1336,11 +1335,10 @@ int null_homologous_D1Q(State init, Grid_t* G, EdgeList edge_list) {
   int num_new_ins = 0;
   int num_new_outs = 0;
   StateList present_in, present_out;
-  LastEdge = edge_list;
   prev_outs = NULL;
   prev_ins = NULL;
   new_ins = fixed_wt_rectangles_out_of(1, init, G);
-  edge_list = prepend_edge(0, 1, NULL);
+  EdgeList edge_list = prepend_edge(0, 1, NULL);
   temp = new_ins;
   i = 1;
   LastEdge = NULL;
@@ -1439,7 +1437,7 @@ int null_homologous_D1Q(State init, Grid_t* G, EdgeList edge_list) {
     free_state_list(prev_outs);
     prev_outs = new_outs;
     new_outs = NULL;
-    special_homology(0, prev_in_number, edge_list);
+    special_homology(0, prev_in_number, &edge_list);
     if ((edge_list == NULL) || (edge_list->start != 0)) {
       ans = 1;
       free_state_list(new_ins);
