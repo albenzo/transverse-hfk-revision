@@ -87,7 +87,6 @@ int get_number(State, StateList);
 void free_state_list(StateList);
 int null_homologous_D0Q(State);
 int null_homologous_D1Q(State);
-void homology(void);
 void special_homology(int, int);
 void contract(int, int);
 VertexList remove_vertex(int, VertexList);
@@ -311,7 +310,6 @@ int main(int argc, char **argv) {
     }
     i++;
   }
-
   if (verbose) {
     print_state(UR);
   }
@@ -547,7 +545,7 @@ void print_states(StateList states) {
   StateList temp;
   int c;
   temp = states;
-  printf("{");
+   printf("{");
   c = 0;
   while ((temp != NULL) && c < 500000) {
     print_state_short(temp->data);
@@ -590,31 +588,54 @@ void print_state_short(State state) {
 void print_state(State state) {
   int i, j;
   j = arc_index;
+  i=0;
+  printf("*---");
+  while(i<arc_index-1) {
+    printf("----");
+    i++;
+  }
+  printf("*\n");
   while (j > 0) {
     i = 0;
     while (i < arc_index) {
       if (Xs[i] == j) {
-        printf("  X  ");
+        printf("| X ");
       } else {
         if (Os[i] == j) {
-          printf("  O  ");
+          printf("| O ");
         } else {
-          printf("  -  ");
+            printf("|   ");
         };
       };
       i++;
     };
-    printf("\n");
+    printf("|\n");
     i = 0;
     while (i < arc_index) {
       if (state[i] == j) {
-        printf("*    ");
+        printf("@---");
       } else {
-        printf("     ");
+        if(i==0 && j>1) {
+          printf("|---");
+        } else {
+            if(j>1) {
+              printf("+---");
+            } else {
+                if(i==0){
+                  printf("*---");
+                } else {
+                    printf("----");
+                };
+            };
+        };
       };
       i++;
     };
-    printf("\n");
+    if(j>1) {
+    printf("|\n");
+    } else {
+        printf("*\n");
+    };
     j--;
   };
   printf("\n");
@@ -1016,7 +1037,7 @@ void print_edges() {
   EdgeList temp;
   temp = global_edge_list;
   while (temp != NULL) {
-    printf("%d %d\n", temp->start, temp->end);
+    printf("[%d->%d]\n", temp->start, temp->end);
     temp = (temp->nextEdge);
   };
 }
@@ -1032,18 +1053,18 @@ void print_math_edges() {
   printf("{");
   t = 0;
   while (temp != NULL) {
-    printf("{%d,%d}", temp->start, temp->end);
+    printf("[%d->%d]", temp->start, temp->end);
     t++;
     if (t == 80) {
       temp = NULL;
-      printf("...}\n");
+      printf("...");
     } else {
       temp = (temp->nextEdge);
       if (temp != NULL)
         printf(",");
     }
   };
-  printf("}");
+  printf("}\n");
 }
 
 /**
@@ -1055,7 +1076,7 @@ void print_math_edges_a(EdgeList edges) {
   temp = edges;
   printf("{");
   while (temp != NULL) {
-    printf("{%d,%d}", temp->start, temp->end);
+    printf("[%d->%d]", temp->start, temp->end);
     temp = (temp->nextEdge);
     if (temp != NULL)
       printf(",");
