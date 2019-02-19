@@ -85,7 +85,7 @@ struct StateNode {
 
 typedef char State[MAX_INDEX];
 
-EdgeList* add_mod_two_lists(VertexList, VertexList, EdgeList*);
+EdgeList add_mod_two_lists(VertexList, VertexList, EdgeList*);
 VertexList prepend_vertex(int, VertexList);
 EdgeList prepend_edge(int, int, EdgeList);
 StateList fixed_wt_rectangles_out_of(int, State, Grid_t*);
@@ -671,17 +671,16 @@ int get_number(State a, StateList b) {
  * @return A shortEdges containing the result of adding them mod two.
  * @see global_edge_list
  */
-EdgeList* add_mod_two_lists(VertexList parents, VertexList kids, EdgeList* edge_list) {
+EdgeList add_mod_two_lists(VertexList parents, VertexList kids, EdgeList* edge_list) {
   VertexList this_kid, this_parent, temp_vert;
   EdgeList this_edge, temp_edge, prev;
-  EdgeList* ans;
+  EdgeList ans;
   if ((parents == NULL) || (kids == NULL)) {
-    return edge_list;
+    return *edge_list;
   } else {
-    ans = malloc(sizeof(EdgeList*));
     this_parent = parents;
     this_kid = kids;
-    *ans = NULL;
+    ans = NULL;
     this_edge = *edge_list;
     while (this_parent != NULL && this_edge != NULL &&
            (this_edge->start == this_parent->data &&
@@ -701,12 +700,12 @@ EdgeList* add_mod_two_lists(VertexList parents, VertexList kids, EdgeList* edge_
         (this_parent == NULL || (this_edge->start < this_parent->data ||
                                  (this_edge->start == this_parent->data &&
                                   this_edge->end < this_kid->data)))) {
-      *ans = this_edge;
-      prev = *ans;
+      ans = this_edge;
+      prev = ans;
       this_edge = this_edge->nextEdge;
     } else if (this_parent != NULL) {
-      *ans = create_edge(this_parent->data, this_kid->data);
-      (*ans)->nextEdge = NULL;
+      ans = create_edge(this_parent->data, this_kid->data);
+      ans->nextEdge = NULL;
       this_kid = this_kid->nextVertex;
       if (this_kid == NULL) {
         temp_vert = this_parent;
@@ -715,9 +714,9 @@ EdgeList* add_mod_two_lists(VertexList parents, VertexList kids, EdgeList* edge_
         this_kid = kids;
       };
     } else {
-      *ans = NULL;
+      ans = NULL;
     }
-    prev = *ans;
+    prev = ans;
     while (this_edge != NULL && this_parent != NULL) {
       while (this_edge != NULL && ((this_edge->start < this_parent->data ||
                                     (this_edge->start == this_parent->data &&
@@ -856,7 +855,7 @@ void special_homology(int init, int final, EdgeList* edge_list) {
   i = 0;
   j = 0;
   temp = *edge_list;
-  while ((edge_list != NULL) && (temp != NULL)) {
+  while ((*edge_list != NULL) && (temp != NULL)) {
     while ((temp != NULL) && (temp->start == init)) {
       temp = temp->nextEdge;
     };
@@ -987,7 +986,7 @@ void contract(int a, int b, EdgeList* edge_list) {
       prev = (prev)->nextEdge;
     }
   };
-  edge_list = add_mod_two_lists(parents, kids, edge_list);
+  *edge_list = add_mod_two_lists(parents, kids, edge_list);
 }
 
 /**
