@@ -1325,7 +1325,7 @@ int null_homologous_D1Q(State init, Grid_t* G) {
   StateList new_ins, new_outs, last_new_in, last_new_out, temp;
   StateList prev_ins, prev_outs;
   StateList really_new_outs = NULL, really_new_ins = NULL;
-  EdgeList LastEdge;
+  EdgeList last_edge;
   int in_number, ans, prev_in_number;
   int out_number;
   int i;
@@ -1341,16 +1341,16 @@ int null_homologous_D1Q(State init, Grid_t* G) {
   EdgeList edge_list = prepend_edge(0, 1, NULL);
   temp = new_ins;
   i = 1;
-  LastEdge = NULL;
+  last_edge = NULL;
   if (temp != NULL) {
     i = 1;
     edge_list = create_edge(0, 1);
-    LastEdge = edge_list;
+    last_edge = edge_list;
     temp = temp->nextState;
     while (temp != NULL) {
       i++;
-      LastEdge->nextEdge = create_edge(0, i);
-      LastEdge = LastEdge->nextEdge;
+      last_edge->nextEdge = create_edge(0, i);
+      last_edge = last_edge->nextEdge;
       temp = temp->nextState;
     };
   };
