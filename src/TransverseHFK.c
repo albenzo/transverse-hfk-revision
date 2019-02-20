@@ -85,43 +85,49 @@ struct StateNode {
 
 typedef char State[MAX_INDEX];
 
-EdgeList add_mod_two_lists(const VertexList, const VertexList, const EdgeList* const);
+EdgeList add_mod_two_lists(const VertexList, const VertexList,
+                           const EdgeList *const);
 VertexList prepend_vertex(const int, const VertexList);
 EdgeList prepend_edge(const int, const int, const EdgeList);
-StateList fixed_wt_rectangles_out_of(const int, const State, const Grid_t* const);
-StateList swap_cols(const int, const int, const State, const Grid_t* const);
+StateList fixed_wt_rectangles_out_of(const int, const State,
+                                     const Grid_t *const);
+StateList swap_cols(const int, const int, const State, const Grid_t *const);
 int get_number(const State, const StateList);
 void free_state_list(StateList);
-int null_homologous_D0Q(const State, const Grid_t* const);
-int null_homologous_D1Q(const State, const Grid_t* const);
-void special_homology(const int, const int, EdgeList*);
-void contract(const int, const int, EdgeList*);
+int null_homologous_D0Q(const State, const Grid_t *const);
+int null_homologous_D1Q(const State, const Grid_t *const);
+void special_homology(const int, const int, EdgeList *);
+void contract(const int, const int, EdgeList *);
 EdgeList create_edge(const int, const int);
 void free_edge_list(const EdgeList);
 StateList remove_state(const State, const StateList);
-int mod(const int, const Grid_t* const);
-int mod_up(const int, const Grid_t* const);
-StateList new_rectangles_out_of(const StateList, const State, const Grid_t* const);
-StateList new_rectangles_into(const StateList, const State, const Grid_t* const);
+int mod(const int, const Grid_t *const);
+int mod_up(const int, const Grid_t *const);
+StateList new_rectangles_out_of(const StateList, const State,
+                                const Grid_t *const);
+StateList new_rectangles_into(const StateList, const State,
+                              const Grid_t *const);
 EdgeList append_ordered(const int, const int, const EdgeList);
 
-int NESW_pO(const char* const, const Grid_t* const);
-int NESW_Op(const char* const, const Grid_t* const);
-int NESW_pp(const char* const, const Grid_t* const);
+int NESW_pO(const char *const, const Grid_t *const);
+int NESW_Op(const char *const, const Grid_t *const);
+int NESW_pp(const char *const, const Grid_t *const);
 
-void print_state(const State, const Grid_t* const);
-void print_state_short(const State, const Grid_t* const);
+void print_state(const State, const Grid_t *const);
+void print_state_short(const State, const Grid_t *const);
 void print_edges(const EdgeList);
-void print_states(const StateList, const Grid_t* const);
+void print_states(const StateList, const Grid_t *const);
 void print_math_edges(const EdgeList);
 void print_math_edges_a(const EdgeList);
 void print_vertices(const VertexList);
 
 void timeout(const int);
-int perm_len(const char* const);
-int is_grid(const Grid_t* const);
-int build_permutation(char*, char*);
-int eq_state(const State a, const State b) { return (!strncmp(a, b, arc_index)); }
+int perm_len(const char *const);
+int is_grid(const Grid_t *const);
+int build_permutation(char *, char *);
+int eq_state(const State a, const State b) {
+  return (!strncmp(a, b, arc_index));
+}
 
 static error_t parse_opt(int key, char *arg, struct argp_state *state) {
   switch (key) {
@@ -181,7 +187,7 @@ void timeout(const int sig) {
  * @param Destination for the permutation
  * @return 0 on success, -1 on failure
  */
-int build_permutation(char* perm, char* str) {
+int build_permutation(char *perm, char *str) {
   if (str[0] != '[') {
     return -1;
   }
@@ -222,7 +228,7 @@ int build_permutation(char* perm, char* str) {
  * @return the number of characters before a zero is found. Returns -1 if not
  * found
  */
-int perm_len(const char* const p) {
+int perm_len(const char *const p) {
   for (int i = 0;; ++i) {
     if (0 == p[i]) {
       return i;
@@ -240,8 +246,9 @@ int perm_len(const char* const p) {
  * @param Os a permutation specifygin the Os of the grid
  * @return 1 if the grid is valid, 0 otherwise
  */
-int is_grid(const Grid_t* const G) {
-  if (perm_len(G->Xs) != G->arc_index || perm_len(G->Os) != G->arc_index || 1 >= G->arc_index || MAX_INDEX <= G->arc_index) {
+int is_grid(const Grid_t *const G) {
+  if (perm_len(G->Xs) != G->arc_index || perm_len(G->Os) != G->arc_index ||
+      1 >= G->arc_index || MAX_INDEX <= G->arc_index) {
     return 0;
   }
 
@@ -279,17 +286,16 @@ int main(int argc, char **argv) {
   Grid_t G;
 
   G.arc_index = arc_index;
-  for(i=0; i< MAX_INDEX; ++i) {
-    if(i < G.arc_index) {
+  for (i = 0; i < MAX_INDEX; ++i) {
+    if (i < G.arc_index) {
       G.Xs[i] = Xs[i];
       G.Os[i] = Os[i];
-    }
-    else {
+    } else {
       G.Xs[i] = 0;
       G.Os[i] = 0;
     }
   }
-  
+
   if (!is_grid(&G)) {
     printf("Invalid grid\n");
     exit(1);
@@ -390,7 +396,7 @@ int main(int argc, char **argv) {
  * @return a shifted towards the interval [0,arc_index)
  * @see arc_index
  */
-int mod(const int a, const Grid_t* const G) {
+int mod(const int a, const Grid_t *const G) {
   if (a >= G->arc_index) {
     return (a - G->arc_index);
   } else if (a < 0) {
@@ -407,7 +413,7 @@ int mod(const int a, const Grid_t* const G) {
  * @return a shifted towards the interval (0,arc_index]
  * @see arc_index
  */
-int mod_up(const int a, const Grid_t* const G) {
+int mod_up(const int a, const Grid_t *const G) {
   if (a > G->arc_index) {
     return (a - G->arc_index);
   } else if (a <= 0) {
@@ -434,7 +440,8 @@ int min(const int a, const int b) {
  * incoming not contained in prevs.
  * @see arc_index
  */
-StateList new_rectangles_out_of(const StateList prevs, const State incoming, const Grid_t* const G) {
+StateList new_rectangles_out_of(const StateList prevs, const State incoming,
+                                const Grid_t *const G) {
   StateList temp, ans;
   State temp_state;
   int LL;
@@ -485,7 +492,8 @@ StateList new_rectangles_out_of(const StateList prevs, const State incoming, con
  * @return StateList containing states with a rectangle to incoming.
  * @see arc_index
  */
-StateList new_rectangles_into(const StateList prevs, const State incoming, const Grid_t* const G) {
+StateList new_rectangles_into(const StateList prevs, const State incoming,
+                              const Grid_t *const G) {
   StateList ans, temp;
   State temp_state;
   int LL, m, n;
@@ -500,7 +508,8 @@ StateList new_rectangles_into(const StateList prevs, const State incoming, const
   LL = 0;
   while (LL < G->arc_index) {
     w = 1;
-    h = min(mod_up(incoming[LL] - G->Os[LL], G), mod_up(incoming[LL] - G->Xs[LL], G));
+    h = min(mod_up(incoming[LL] - G->Os[LL], G),
+            mod_up(incoming[LL] - G->Xs[LL], G));
     while (w < G->arc_index && h > 0) {
       if (mod_up(incoming[LL] - incoming[mod(LL + w, G)], G) < h) {
         temp_state[LL] = incoming[mod(LL + w, G)];
@@ -539,7 +548,8 @@ StateList new_rectangles_into(const StateList prevs, const State incoming, const
  * the permutation incoming with entries x1 and x2 swapped
  * @see arc_index
  */
-StateList swap_cols(const int x1, const int x2, const State incoming, const Grid_t* const G) {
+StateList swap_cols(const int x1, const int x2, const State incoming,
+                    const Grid_t *const G) {
   StateList ans;
   int i;
   i = 0;
@@ -561,11 +571,11 @@ StateList swap_cols(const int x1, const int x2, const State incoming, const Grid
  * @param states a StateList
  * @see print_state_short
  */
-void print_states(const StateList states, const Grid_t* const G) {
+void print_states(const StateList states, const Grid_t *const G) {
   StateList temp;
   int c;
   temp = states;
-   printf("{");
+  printf("{");
   c = 0;
   while ((temp != NULL) && c < 500000) {
     print_state_short(temp->data, G);
@@ -587,7 +597,7 @@ void print_states(const StateList states, const Grid_t* const G) {
  * @param state a State
  * @see arc_index
  */
-void print_state_short(const State state, const Grid_t* const G) {
+void print_state_short(const State state, const Grid_t *const G) {
   int i;
   i = 0;
   printf("{");
@@ -605,13 +615,13 @@ void print_state_short(const State state, const Grid_t* const G) {
  * @see Xs
  * @see Os
  */
-void print_state(const State state, const Grid_t* const G) {
+void print_state(const State state, const Grid_t *const G) {
   int i, j;
 
   j = G->arc_index;
-  i=0;
+  i = 0;
   printf("*---");
-  while(i<G->arc_index-1) {
+  while (i < G->arc_index - 1) {
     printf("----");
     i++;
   }
@@ -625,7 +635,7 @@ void print_state(const State state, const Grid_t* const G) {
         if (Os[i] == j) {
           printf("| O ");
         } else {
-            printf("|   ");
+          printf("|   ");
         };
       };
       i++;
@@ -636,32 +646,32 @@ void print_state(const State state, const Grid_t* const G) {
       if (state[i] == j) {
         printf("@---");
       } else {
-        if(i==0 && j>1) {
+        if (i == 0 && j > 1) {
           printf("|---");
         } else {
-            if(j>1) {
-              printf("+---");
+          if (j > 1) {
+            printf("+---");
+          } else {
+            if (i == 0) {
+              printf("*---");
             } else {
-                if(i==0){
-                  printf("*---");
-                } else {
-                    printf("----");
-                };
+              printf("----");
             };
+          };
         };
       };
       i++;
     };
-    if(j>1) {
-    printf("|\n");
+    if (j > 1) {
+      printf("|\n");
     } else {
-        printf("*\n");
+      printf("*\n");
     };
     j--;
   };
   printf("\n");
-  printf("2A=M=SL+1=%d\n",
-         NESW_pp(G->Xs, G) - NESW_pO(G->Xs, G) - NESW_Op(G->Xs, G) + NESW_pp(G->Os, G) + 1);
+  printf("2A=M=SL+1=%d\n", NESW_pp(G->Xs, G) - NESW_pO(G->Xs, G) -
+                               NESW_Op(G->Xs, G) + NESW_pp(G->Os, G) + 1);
 }
 
 /**
@@ -694,7 +704,8 @@ int get_number(const State a, const StateList b) {
  * @return A shortEdges containing the result of adding them mod two.
  * @see global_edge_list
  */
-EdgeList add_mod_two_lists(const VertexList parents, const VertexList kids, const EdgeList* const edge_list) {
+EdgeList add_mod_two_lists(const VertexList parents, const VertexList kids,
+                           const EdgeList *const edge_list) {
   VertexList this_kid, this_parent, temp_vert;
   EdgeList this_edge, temp_edge, prev;
   EdgeList ans;
@@ -872,7 +883,7 @@ VertexList prepend_vertex(const int a, const VertexList vertices) {
  * @param final State to t
  * @see global_edge_list
  */
-void special_homology(const int init, const int final, EdgeList* edge_list) {
+void special_homology(const int init, const int final, EdgeList *edge_list) {
   int i, j;
   EdgeList temp;
   i = 0;
@@ -906,7 +917,7 @@ void special_homology(const int init, const int final, EdgeList* edge_list) {
  * @param b the child vertex of the edge
  * @see global_edge_list
  */
-void contract(const int a, const int b, EdgeList* edge_list) {
+void contract(const int a, const int b, EdgeList *edge_list) {
   EdgeList temp;
   EdgeList prev;
   VertexList parents, kids, temp_kids, temp_parents;
@@ -1159,7 +1170,8 @@ void free_edge_list(const EdgeList e) {
  * @see Xs
  * @see Os
  */
-StateList fixed_wt_rectangles_out_of(const int wt, const State incoming, const Grid_t* const G) {
+StateList fixed_wt_rectangles_out_of(const int wt, const State incoming,
+                                     const Grid_t *const G) {
   StateList temp, ans;
   int LL;
   int w, h;
@@ -1209,7 +1221,7 @@ StateList fixed_wt_rectangles_out_of(const int wt, const State incoming, const G
  * @see global_edge_list
  * @see arc_index
  */
-int null_homologous_D0Q(const State init, const Grid_t* const G) {
+int null_homologous_D0Q(const State init, const Grid_t *const G) {
   StateList new_ins, new_outs, last_new_in, last_new_out, temp;
   StateList prev_ins, prev_outs;
   StateList really_new_outs = NULL, really_new_ins = NULL;
@@ -1265,8 +1277,8 @@ int null_homologous_D0Q(const State init, const Grid_t* const G) {
           really_new_outs = really_new_outs->nextState;
           free(temp);
         }
-        edge_list = append_ordered(
-            out_number + num_outs, in_number + num_ins, edge_list);
+        edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
+                                   edge_list);
         edge_count++;
       }
       present_in = present_in->nextState;
@@ -1306,8 +1318,8 @@ int null_homologous_D0Q(const State init, const Grid_t* const G) {
           really_new_ins = really_new_ins->nextState;
           free(temp);
         }
-        edge_list = append_ordered(
-            out_number + num_outs, in_number + num_ins, edge_list);
+        edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
+                                   edge_list);
         edge_count++;
       };
       present_out = present_out->nextState;
@@ -1343,7 +1355,7 @@ int null_homologous_D0Q(const State init, const Grid_t* const G) {
  * @see global_edge_list
  * @see arc_index
  */
-int null_homologous_D1Q(const State init, const Grid_t* const G) {
+int null_homologous_D1Q(const State init, const Grid_t *const G) {
   StateList new_ins, new_outs, last_new_in, last_new_out, temp;
   StateList prev_ins, prev_outs;
   StateList really_new_outs = NULL, really_new_ins = NULL;
@@ -1409,8 +1421,8 @@ int null_homologous_D1Q(const State init, const Grid_t* const G) {
           really_new_outs = really_new_outs->nextState;
           free(temp);
         }
-        edge_list = append_ordered(
-                                   out_number + num_outs, in_number + num_ins, edge_list);
+        edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
+                                   edge_list);
         edge_count++;
       }
       present_in = present_in->nextState;
@@ -1450,8 +1462,8 @@ int null_homologous_D1Q(const State init, const Grid_t* const G) {
           really_new_ins = really_new_ins->nextState;
           free(temp);
         }
-        edge_list = append_ordered(
-                                   out_number + num_outs, in_number + num_ins, edge_list);
+        edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
+                                   edge_list);
         edge_count++;
       };
       present_out = present_out->nextState;
@@ -1487,7 +1499,7 @@ int null_homologous_D1Q(const State init, const Grid_t* const G) {
  * @return an int containing the quantity described above
  * @see Os
  */
-int NESW_pO(const char* const x, const Grid_t* const G) {
+int NESW_pO(const char *const x, const Grid_t *const G) {
   int i = 0, j = 0;
   int ans = 0;
   while (i < G->arc_index) {
@@ -1510,7 +1522,7 @@ int NESW_pO(const char* const x, const Grid_t* const G) {
  * @return an int containing the quantity described above
  * @see Os
  */
-int NESW_Op(const char* const x, const Grid_t* const G) {
+int NESW_Op(const char *const x, const Grid_t *const G) {
   int i = 0, j = 0;
   int ans = 0;
   while (i < G->arc_index) {
@@ -1532,7 +1544,7 @@ int NESW_Op(const char* const x, const Grid_t* const G) {
  * @param x a permutation
  * @return an int containing the quantity described above
  */
-int NESW_pp(const char* const x, const Grid_t* const G) {
+int NESW_pp(const char *const x, const Grid_t *const G) {
   int i = 0, j = 0;
   int ans = 0;
   while (i < G->arc_index) {
