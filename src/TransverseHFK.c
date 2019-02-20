@@ -43,12 +43,14 @@ static struct argp_option options[] = {
 // Temporary location
 static error_t parse_opt(int, char *, struct argp_state *);
 static struct argp argp = {options, parse_opt, args_doc, doc, 0, 0, 0};
+struct arguments  {
+  int arc_index;
+  char Xs[MAX_INDEX];
+  char Os[MAX_INDEX];
+  int max_time;
+};
 
-bool verbose = false;
-int arc_index = -1;
-int max_time = -1;
-char Xs[MAX_INDEX] = {};
-char Os[MAX_INDEX] = {};
+static bool verbose = false;
 
 struct Grid {
   char Xs[MAX_INDEX];
@@ -90,7 +92,7 @@ VertexList prepend_vertex(int, VertexList);
 EdgeList prepend_edge(int, int, EdgeList);
 StateList fixed_wt_rectangles_out_of(int, State, Grid_t*);
 StateList swap_cols(int, int, State, Grid_t*);
-int get_number(State, StateList);
+int get_number(State, StateList,Grid_t*);
 void free_state_list(StateList);
 int null_homologous_D0Q(State, Grid_t*);
 int null_homologous_D1Q(State, Grid_t*);
@@ -98,7 +100,7 @@ void special_homology(int, int, EdgeList*);
 void contract(int, int, EdgeList*);
 EdgeList create_edge(int, int);
 void free_edge_list(EdgeList);
-StateList remove_state(State, StateList);
+StateList remove_state(State, StateList, Grid_t*);
 int mod(int, Grid_t*);
 int mod_up(int, Grid_t*);
 StateList new_rectangles_out_of(StateList, State, Grid_t*);
@@ -121,9 +123,11 @@ void timeout(int);
 int perm_len(const char *);
 int is_grid(const Grid_t *);
 int build_permutation(char *, char *);
-int eq_state(State a, State b) { return (!strncmp(a, b, arc_index)); }
+int eq_state(State a, State b, Grid_t* G) { return (!strncmp(a, b, G->arc_index)); }
 
 static error_t parse_opt(int key, char *arg, struct argp_state *state) {
+  struct arguments* args = state->input; 
+  
   switch (key) {
   case 'v':
     verbose = true;
@@ -132,27 +136,27 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     verbose = false;
     break;
   case 't':
-    max_time = atoi(arg);
-    if (max_time <= 0) {
+    args->max_time = atoi(arg);
+    if (args->max_time <= 0) {
       argp_failure(state, 0, 0, "Invalid timeout");
       exit(1);
     }
     break;
   case 'i':
-    arc_index = atoi(arg);
-    if (arc_index > MAX_INDEX || arc_index < 2) {
+    args->arc_index = atoi(arg);
+    if (args->arc_index > MAX_INDEX || args->arc_index < 2) {
       argp_failure(state, 0, 0, "ArcIndex value out of range");
       exit(1);
     }
     break;
   case 'X':
-    if (-1 == build_permutation(Xs, arg)) {
+    if (-1 == build_permutation(args->Xs, arg)) {
       argp_failure(state, 0, 0, "Malformatted Xs");
       exit(1);
     }
     break;
   case 'O':
-    if (-1 == build_permutation(Os, arg)) {
+    if (-1 == build_permutation(args->Os, arg)) {
       argp_failure(state, 0, 0, "Malformatted Os");
       exit(1);
     }
@@ -271,18 +275,21 @@ int is_grid(const Grid_t* G) {
 }
 
 int main(int argc, char **argv) {
-  argp_parse(&argp, argc, argv, 0, 0, 0);
+  struct arguments args;
+  args.arc_index = -1;
+  args.max_time = -1;
+  argp_parse(&argp, argc, argv, 0, 0, &args);
 
-  char UR[arc_index];
+  char UR[args.arc_index];
   int i;
 
   Grid_t G;
 
-  G.arc_index = arc_index;
+  G.arc_index = args.arc_index;
   for(i=0; i< MAX_INDEX; ++i) {
     if(i < G.arc_index) {
-      G.Xs[i] = Xs[i];
-      G.Os[i] = Os[i];
+      G.Xs[i] = args.Xs[i];
+      G.Os[i] = args.Os[i];
     }
     else {
       G.Xs[i] = 0;
@@ -295,12 +302,12 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  if (max_time > 0) {
+  if (args.max_time > 0) {
     if (signal(SIGALRM, timeout) == SIG_ERR) {
       perror("An error occured while setting the timer");
       exit(1);
     }
-    alarm(max_time);
+    alarm(args.max_time);
   }
 
   if (verbose) {
@@ -319,11 +326,11 @@ int main(int argc, char **argv) {
   if (G.Xs[G.arc_index - 1] == G.arc_index) {
     UR[0] = 1;
   } else {
-    UR[0] = (char)G.Xs[arc_index - 1] + 1;
+    UR[0] = (char)G.Xs[G.arc_index - 1] + 1;
   };
   i = 1;
   while (i <= G.arc_index - 1) {
-    if (G.Xs[i - 1] == arc_index) {
+    if (G.Xs[i - 1] == G.arc_index) {
       UR[i] = 1;
     } else {
       UR[i] = G.Xs[i - 1] + 1;
@@ -355,14 +362,14 @@ int main(int argc, char **argv) {
     printf("\n \nCalculating graph for D1[UR] invariant\n");
   }
 
-  if (Xs[arc_index - 1] == G.arc_index) {
+  if (G.Xs[G.arc_index - 1] == G.arc_index) {
     UR[0] = 1;
   } else {
     UR[0] = (char)G.Xs[G.arc_index - 1] + 1;
   };
   i = 1;
   while (i <= G.arc_index - 1) {
-    if (Xs[i - 1] == G.arc_index) {
+    if (G.Xs[i - 1] == G.arc_index) {
       UR[i] = 1;
     } else {
       UR[i] = G.Xs[i - 1] + 1;
@@ -453,11 +460,11 @@ StateList new_rectangles_out_of(StateList prevs, State incoming, Grid_t* G) {
       if (mod(incoming[mod(LL + w, G)] - incoming[LL], G) <= h) {
         temp_state[LL] = incoming[mod(LL + w, G)];
         temp_state[mod(LL + w, G)] = incoming[LL];
-        m = get_number(temp_state, prevs);
+        m = get_number(temp_state, prevs, G);
         if (m == 0) {
-          n = get_number(temp_state, ans);
+          n = get_number(temp_state, ans, G);
           if (n != 0) {
-            ans = remove_state(temp_state, ans);
+            ans = remove_state(temp_state, ans, G);
           } else {
             temp = swap_cols(LL, mod(LL + w, G), incoming, G);
             temp->nextState = ans;
@@ -505,11 +512,11 @@ StateList new_rectangles_into(StateList prevs, State incoming, Grid_t* G) {
       if (mod_up(incoming[LL] - incoming[mod(LL + w, G)], G) < h) {
         temp_state[LL] = incoming[mod(LL + w, G)];
         temp_state[mod(LL + w, G)] = incoming[LL];
-        m = get_number(temp_state, prevs);
+        m = get_number(temp_state, prevs, G);
         if (m == 0) {
-          n = get_number(temp_state, ans);
+          n = get_number(temp_state, ans, G);
           if (n != 0) {
-            ans = remove_state(temp_state, ans);
+            ans = remove_state(temp_state, ans, G);
           } else {
             temp = swap_cols(LL, mod(LL + w, G), incoming, G);
             temp->nextState = ans;
@@ -619,10 +626,10 @@ void print_state(State state, Grid_t* G) {
   while (j > 0) {
     i = 0;
     while (i < G->arc_index) {
-      if (Xs[i] == j) {
+      if (G->Xs[i] == j) {
         printf("| X ");
       } else {
-        if (Os[i] == j) {
+        if (G->Os[i] == j) {
           printf("| O ");
         } else {
             printf("|   ");
@@ -671,12 +678,12 @@ void print_state(State state, Grid_t* G) {
  * @param b a StateList
  * @return index of a within b
  */
-int get_number(State a, StateList b) {
+int get_number(State a, StateList b, Grid_t* G) {
   StateList temp;
   int count = 1;
   temp = b;
   while (temp != NULL) {
-    if (eq_state(a, temp->data)) {
+    if (eq_state(a, temp->data, G)) {
       return count;
     };
     temp = temp->nextState;
@@ -1019,20 +1026,20 @@ void contract(int a, int b, EdgeList* edge_list) {
  * @return a StateList removing a from v
  * @see eq_state
  */
-StateList remove_state(State a, StateList v) {
+StateList remove_state(State a, StateList v, Grid_t* G) {
   StateList temp, prev;
   StateList s_list = v;
   prev = v;
   if (v == NULL)
     return (NULL);
-  else if (eq_state(a, v->data)) {
+  else if (eq_state(a, v->data, G)) {
     temp = v;
     s_list = v->nextState;
     free(v);
     return (s_list);
   } else {
     temp = prev->nextState;
-    while ((temp != NULL) && (!eq_state(a, temp->data))) {
+    while ((temp != NULL) && (!eq_state(a, temp->data, G))) {
       temp = temp->nextState;
       prev = prev->nextState;
     };
@@ -1182,8 +1189,8 @@ StateList fixed_wt_rectangles_out_of(int wt, State incoming, Grid_t* G) {
         };
         if (this_weight == wt) {
           temp = swap_cols(LL, mod(LL + w, G), incoming, G);
-          if (get_number(temp->data, ans) != 0) {
-            ans = remove_state(temp->data, ans);
+          if (get_number(temp->data, ans, G) != 0) {
+            ans = remove_state(temp->data, ans, G);
             free(temp);
             temp = ans;
           } else {
@@ -1243,7 +1250,7 @@ int null_homologous_D0Q(State init, Grid_t* G) {
       in_number++;
       really_new_outs = new_rectangles_into(prev_outs, present_in->data, G);
       while (really_new_outs != NULL) {
-        out_number = get_number(really_new_outs->data, new_outs);
+        out_number = get_number(really_new_outs->data, new_outs, G);
         if (out_number == 0) {
           if (num_new_outs == 0) {
             new_outs = really_new_outs;
@@ -1284,7 +1291,7 @@ int null_homologous_D0Q(State init, Grid_t* G) {
       out_number++;
       really_new_ins = new_rectangles_out_of(prev_ins, present_out->data, G);
       while (really_new_ins != NULL) {
-        in_number = get_number(really_new_ins->data, new_ins);
+        in_number = get_number(really_new_ins->data, new_ins, G);
         if (in_number == 0) {
           if (num_new_ins == 0) {
             new_ins = really_new_ins;
@@ -1387,7 +1394,7 @@ int null_homologous_D1Q(State init, Grid_t* G) {
       in_number++;
       really_new_outs = new_rectangles_into(prev_outs, present_in->data, G);
       while (really_new_outs != NULL) {
-        out_number = get_number(really_new_outs->data, new_outs);
+        out_number = get_number(really_new_outs->data, new_outs, G);
         if (out_number == 0) {
           if (num_new_outs == 0) {
             new_outs = really_new_outs;
@@ -1428,7 +1435,7 @@ int null_homologous_D1Q(State init, Grid_t* G) {
       out_number++;
       really_new_ins = new_rectangles_out_of(prev_ins, present_out->data, G);
       while (really_new_ins != NULL) {
-        in_number = get_number(really_new_ins->data, new_ins);
+        in_number = get_number(really_new_ins->data, new_ins, G);
         if (in_number == 0) {
           if (num_new_ins == 0) {
             new_ins = really_new_ins;
