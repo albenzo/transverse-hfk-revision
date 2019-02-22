@@ -39,8 +39,3 @@ static PyObject* null_homologous_D0Q_py(PyObject* self, PyObject* args, PyObject
 static PyObject* null_homologous_D1Q_py(PyObject* self, PyObject* args, PyObject* keywds) {
   return NULL;
 }
-
-// --------------------------------------------------------------------------------
-// Local Variables:
-//     flycheck-clang-include-path: ("/usr/include/Python2.7")
-// End:
