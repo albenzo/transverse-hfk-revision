@@ -245,9 +245,7 @@ int perm_len(const char *const p) {
 
 /**
  * Determines whether the grid specified by the parameters is valid
- * @param i the grid size
- * @param Xs a permutation specifying the Xs of the grid
- * @param Os a permutation specifygin the Os of the grid
+ * @param G working grid
  * @return 1 if the grid is valid, 0 otherwise
  */
 int is_grid(const Grid_t *const G) {
@@ -401,8 +399,8 @@ int main(int argc, char **argv) {
  * Shifts the input towards the interval [0,arc_index) by
  * a multiple of arc_index
  * @param a An integer
+ * @param G working grid
  * @return a shifted towards the interval [0,arc_index)
- * @see arc_index
  */
 int mod(const int a, const Grid_t *const G) {
   if (a >= G->arc_index) {
@@ -418,8 +416,8 @@ int mod(const int a, const Grid_t *const G) {
  * Shifts the input towards the interval (0,arc_index] by
  * a multiple of arc_index
  * @param a An integer
+ * @param G working grid
  * @return a shifted towards the interval (0,arc_index]
- * @see arc_index
  */
 int mod_up(const int a, const Grid_t *const G) {
   if (a > G->arc_index) {
@@ -444,9 +442,9 @@ int min(const int a, const int b) {
  * that is not contained in prevs.
  * @param prevs Statelist containing previous states
  * @param incoming the source of rectangles used to generate statelist
+ * @param G working grid
  * @return A statelist containing states reached from a rectangle leaving
  * incoming not contained in prevs.
- * @see arc_index
  */
 StateList new_rectangles_out_of(const StateList prevs, const State incoming,
                                 const Grid_t *const G) {
@@ -497,8 +495,8 @@ StateList new_rectangles_out_of(const StateList prevs, const State incoming,
  * pointing to the state incoming that do not overlap with prevs
  * @param incoming State that is the destination for generated rectangles
  * @param prevs StateList of excluded states
+ * @param G working grid
  * @return StateList containing states with a rectangle to incoming.
- * @see arc_index
  */
 StateList new_rectangles_into(const StateList prevs, const State incoming,
                               const Grid_t *const G) {
@@ -552,9 +550,9 @@ StateList new_rectangles_into(const StateList prevs, const State incoming,
  * @param x1 an integer between 0 and MAX_INDEX
  * @param x2 an integer between 0 and MAX_INDEX
  * @param incoming a permutation
+ * @param G working grid
  * @return a single element StateList containing a copy of
  * the permutation incoming with entries x1 and x2 swapped
- * @see arc_index
  */
 StateList swap_cols(const int x1, const int x2, const State incoming,
                     const Grid_t *const G) {
@@ -577,6 +575,7 @@ StateList swap_cols(const int x1, const int x2, const State incoming,
  * Prints states in the form "{<state>,...}" up
  * to the first 500,000 states.
  * @param states a StateList
+ * @param G working grid
  * @see print_state_short
  */
 void print_states(const StateList states, const Grid_t *const G) {
@@ -603,7 +602,7 @@ void print_states(const StateList states, const Grid_t *const G) {
  * Prints the permutation of state using one line notation
  * "{_,_,...}"
  * @param state a State
- * @see arc_index
+ * @param G working grid
  */
 void print_state_short(const State state, const Grid_t *const G) {
   int i;
@@ -619,9 +618,8 @@ void print_state_short(const State state, const Grid_t *const G) {
 /**
  * Prints the permutation of state on the grid specified by
  * Xs and Os, as well as 2A=M=SL+1.
- * @param state A state
- * @see Xs
- * @see Os
+ * @param state a State
+ * @param G working grid
  */
 void print_state(const State state, const Grid_t *const G) {
   int i, j;
@@ -709,8 +707,8 @@ int get_number(const State a, const StateList b, const Grid_t *const G) {
  * mod 2
  * @param parents a list of parent vertices
  * @param kids a list of child vertices
+ * @param edge_list list of Edges between vertices
  * @return A shortEdges containing the result of adding them mod two.
- * @see global_edge_list
  */
 EdgeList add_mod_two_lists(const VertexList parents, const VertexList kids,
                            const EdgeList *const edge_list) {
@@ -842,7 +840,7 @@ EdgeList append_ordered(const int a, const int b, const EdgeList edges) {
  * Add a new edge to the start of a EdgeList
  * @param a an int indictating the source of the edge
  * @param b an int indictating the destination of the edge
- * @param e a EdgeList
+ * @param e the EdgeList
  * @return e with the edge (a,b) at the front
  */
 EdgeList prepend_edge(const int a, const int b, const EdgeList e) {
@@ -889,7 +887,7 @@ VertexList prepend_vertex(const int a, const VertexList vertices) {
  * and the children are before or at final.
  * @param init an int specifying the required start
  * @param final State to t
- * @see global_edge_list
+ * @param edge_list the EdgeList
  */
 void special_homology(const int init, const int final, EdgeList *edge_list) {
   int i, j;
@@ -923,7 +921,7 @@ void special_homology(const int init, const int final, EdgeList *edge_list) {
  * contracts the edge specified by the input within global_edge_list
  * @param a the parent vertex of the edge
  * @param b the child vertex of the edge
- * @see global_edge_list
+ * @param edge_list the EdgeList
  */
 void contract(const int a, const int b, EdgeList *edge_list) {
   EdgeList temp;
@@ -1066,7 +1064,7 @@ StateList remove_state(const State a, const StateList v, const Grid_t *const G) 
 
 /**
  * Prints each edge in global_edge_list on a new line
- * @see global_edge_list
+ * @param edge_list an EdgeList
  */
 void print_edges(const EdgeList edge_list) {
   EdgeList temp;
@@ -1079,7 +1077,7 @@ void print_edges(const EdgeList edge_list) {
 
 /**
  * Print the first 80 edges in global_edge_list on the same line
- * @see global_edge_list
+ * @param edge_list an EdgeList
  */
 void print_math_edges(const EdgeList edge_list) {
   EdgeList temp;
@@ -1104,7 +1102,7 @@ void print_math_edges(const EdgeList edge_list) {
 
 /**
  * Prints the edges in edges on a single line
- * @param edges
+ * @param edges an EdgeList
  */
 void print_math_edges_a(const EdgeList edges) {
   EdgeList temp;
@@ -1121,7 +1119,7 @@ void print_math_edges_a(const EdgeList edges) {
 
 /**
  * Prints the vertices in VertexList on a single line
- * @param v_list
+ * @param v_list a VertexList
  */
 void print_vertices(const VertexList v_list) {
   VertexList temp;
@@ -1138,7 +1136,7 @@ void print_vertices(const VertexList v_list) {
 
 /**
  * Frees the supplied StateList
- * @param states
+ * @param states a StateList
  */
 void free_state_list(StateList states) {
   StateList temp;
@@ -1152,7 +1150,7 @@ void free_state_list(StateList states) {
 
 /**
  * Frees the supplied EdgeList
- * @param e
+ * @param e a EdgeList
  */
 void free_edge_list(const EdgeList e) {
   EdgeList temp, ntemp;
@@ -1172,11 +1170,9 @@ void free_edge_list(const EdgeList e) {
  * by a rectangles of a fixed width
  * @param wt an int specifying rectangle width
  * @param incoming origin state for the rectangles
+ * @param G working grid
  * @return a StateList with states that are reached by a rectangle of width
  * wt from incoming.
- * @see arc_index
- * @see Xs
- * @see Os
  */
 StateList fixed_wt_rectangles_out_of(const int wt, const State incoming,
                                      const Grid_t *const G) {
@@ -1225,9 +1221,9 @@ StateList fixed_wt_rectangles_out_of(const int wt, const State incoming,
  * Calculates whether the supplied state is nullhomologous. Uses
  the global variable global_edge_list.
  * @param init a State
+ * @param G working grid
+ * @param edge_list the edge_list
  * @return nonzero if nullhomologous and zero otherwise.
- * @see global_edge_list
- * @see arc_index
  */
 int null_homologous_D0Q(const State init, const Grid_t *const G) {
   StateList new_ins, new_outs, last_new_in, last_new_out, temp;
@@ -1359,9 +1355,9 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
 /**
  * Calculates if D1 of the supplied state is nullhomologous
  * @param init a State
+ * @param G working grid
+ * @param edge_list the EdgeList
  * @return nonzero if nullhomologous and zero otherwise
- * @see global_edge_list
- * @see arc_index
  */
 int null_homologous_D1Q(const State init, const Grid_t *const G) {
   StateList new_ins, new_outs, last_new_in, last_new_out, temp;
@@ -1504,8 +1500,8 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
  * Sum over each point in the permutation count the number of Os
  * that occur to the northeast
  * @param x a permutation
+ * @param G working Grid
  * @return an int containing the quantity described above
- * @see Os
  */
 int NESW_pO(const char *const x, const Grid_t *const G) {
   int i = 0, j = 0;
@@ -1527,8 +1523,8 @@ int NESW_pO(const char *const x, const Grid_t *const G) {
  * Sum over each O in Os count the number of points in the permutation
  * to the northeast
  * @param x a permutation
+ * @param G working Grid
  * @return an int containing the quantity described above
- * @see Os
  */
 int NESW_Op(const char *const x, const Grid_t *const G) {
   int i = 0, j = 0;
@@ -1550,6 +1546,7 @@ int NESW_Op(const char *const x, const Grid_t *const G) {
  * Sum over each point in the permutation count the number of points in
  * the same permutation that occur to the northeast
  * @param x a permutation
+ * @param G working gridn
  * @return an int containing the quantity described above
  */
 int NESW_pp(const char *const x, const Grid_t *const G) {
