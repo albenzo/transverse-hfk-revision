@@ -623,7 +623,6 @@ void print_state_short(const State state, const Grid_t *const G) {
  */
 void print_state(const State state, const Grid_t *const G) {
   int i, j;
-
   j = G->arc_index;
   i = 0;
   printf("*---");
@@ -661,7 +660,11 @@ void print_state(const State state, const Grid_t *const G) {
             if (i == 0) {
               printf("*---");
             } else {
-              printf("----");
+                if(i==0){
+                  printf("----");
+                } else {
+                    printf("----");
+                };
             };
           };
         };
@@ -1226,6 +1229,7 @@ StateList fixed_wt_rectangles_out_of(const int wt, const State incoming,
  * @return nonzero if nullhomologous and zero otherwise.
  */
 int null_homologous_D0Q(const State init, const Grid_t *const G) {
+  //Initialize variables
   StateList new_ins, new_outs, last_new_in, last_new_out, temp;
   StateList prev_ins, prev_outs;
   StateList really_new_outs = NULL, really_new_ins = NULL;
@@ -1238,29 +1242,48 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
   int num_new_ins = 0;
   int num_new_outs = 0;
   StateList present_in, present_out;
+  //Creates first edge for edge list pointing from * to init
   EdgeList edge_list = prepend_edge(0, 1, NULL);
+  //More initialization
   prev_outs = NULL;
   prev_ins = NULL;
   new_ins = malloc(sizeof(StateNode_t));
   i = 0;
   while (i < G->arc_index) {
+  //sets new_ins to be init state  
     new_ins->data[i] = init[i];
     i++;
   };
   new_ins->nextState = NULL;
+  //This loop goes until either new_ins is empty or we have an answer(ans)
+  //new_ins is empty if there is no new rectangles coming from the out states
   ans = 0;
   while (new_ins != NULL && !ans) {
+    //sets the current in states (B_i))
     present_in = new_ins;
+    //resets variables from last loop
     in_number = 0;
     num_new_outs = 0;
     new_outs = NULL;
+    //loop until there are no in rectangles left to look at in present_in (B_i)
+    //this is to make (A_i+1)
     while (present_in != NULL) {
       free_state_list(really_new_outs);
       in_number++;
-      really_new_outs = new_rectangles_into(prev_outs, present_in->data, G);
+      //sets really_new_outs to be the rectangles pointing into present_in 
+      //that is not in prev_outs (this is part of A_i+1 coming from the current 
+      //working state, present_in  
+      really_new_outs = new_rectangles_into(prev_outs, present_in->data,G);
+      //loop through all really_new_outs
       while (really_new_outs != NULL) {
-        out_number = get_number(really_new_outs->data, new_outs, G);
+        //get position of really_new_outs in new_outs (ie position of current 
+        //A_i+1 state in the set of all A_i+1 if it is not in it yet sets
+        //to 0)
+        out_number = get_number(really_new_outs->data, new_outs,G);
+        //if really_new_outs state is not in list this adds to 
+        //the statelist new_outs
         if (out_number == 0) {
+          //creates new_outs if empty
           if (num_new_outs == 0) {
             new_outs = really_new_outs;
             really_new_outs = really_new_outs->nextState;
@@ -1269,6 +1292,7 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
             num_new_outs++;
             out_number = num_new_outs;
           } else {
+            //appends to new_outs if non-empty
             last_new_out->nextState = really_new_outs;
             really_new_outs = really_new_outs->nextState;
             last_new_out = last_new_out->nextState;
@@ -1277,6 +1301,7 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
             out_number = num_new_outs;
           };
         } else {
+          //removing data and skipping state if its already in the list
           temp = really_new_outs;
           really_new_outs = really_new_outs->nextState;
           free(temp);
