@@ -7,21 +7,29 @@ static PyObject* null_homologous_D0Q_py(PyObject* self, PyObject* args, PyObject
   PyObject* py_Xs;
   PyObject* py_Os;
   PyObject* py_state;
-  PyObject* result;
-
+  PyObject* py_verbose;
+  
   Grid_t G;
-  char[MAX_INDEX] state;
+  char state[MAX_INDEX];
 
-  const char** keyword_list = {"state","Xs", "Os", 0};
+  for(int i = 0; i < MAX_INDEX; ++i) {
+    state[i] = 0;
+  }
 
-  if(!(PySequence_Check(py_Xs) && PySequenceCheck(py_Os))) {
+  const char** keyword_list = {"state","Xs", "Os", "verbose", 0};
+
+  if(!(PyArg_ParseTupleAndKeywords(args, keywds, "OOO|i:null_homologous_D0Q", (char**)keyword_list, &py_Xs, &py_Os, &py_state, &py_verbose))) {
+    return NULL;
+  }
+      
+  if(!(PySequence_Check(py_Xs) && PySequence_Check(py_Os))) {
     PyErr_SetString(error, "The Xs and Os must be sequences.");
     return NULL;
   }
 
   G.arc_index = PySequence_Length(py_Xs);
 
-  if(PySequence_Length(py_Os)) {
+  if(PySequence_Length(py_Os) != G.arc_index) {
     PyErr_SetString(error, "The Xs and Os must be the same length");
       return NULL;
   }
@@ -31,11 +39,171 @@ static PyObject* null_homologous_D0Q_py(PyObject* self, PyObject* args, PyObject
     return NULL;
   }
 
+  int failed = 0;
   
-    
-  return NULL;
+  for(int i = 0; i < G.arc_index; ++i) {
+    PyObject *elem = PySequence_GetItem(py_Xs, i);
+
+    if(NULL == elem || !PyInt_Check(elem)) {
+      failed = 1;
+      break;
+    }
+    G.Xs[i] = (int)PyInt_AS_LONG(elem);
+    Py_DECREF(elem);
+
+    elem = PySequence_GetItem(py_Os, i);
+
+    if(NULL == elem || !PyInt_Check(elem)) {
+      failed = 1;
+      break;
+    }
+    G.Os[i] = (int)PyInt_AS_LONG(elem);
+    Py_DECREF(elem);
+
+    elem = PySequence_GetItem(py_state, i);
+
+    if(NULL == elem || !PyInt_Check(elem)) {
+      failed = 1;
+      break;
+    }
+    state[i] = (char)PyInt_AS_LONG(elem);
+    Py_DECREF(elem);    
+  }
+
+  if(failed || !is_grid(&G) || !is_state(&state,&G)) {
+    PyErr_SetString(error, "state, Xs, and Os must be lists containing [0,...,N] exactly once with no matching indices");
+    return NULL;
+  }
+
+  if(NULL == py_verbose) {
+    set_verbosity(false);
+  }
+  else if (!PyBool_Check(py_verbose)) {
+    PyErr_SetString(error, "verbosity must be passed a boolean value");
+    return NULL;
+  }
+  else {
+    set_verbosity((int)PyInt_AS_LONG(py_verbose));
+  }
+
+  if(null_homologous_D0Q(state,&G)) {
+    Py_RETURN_TRUE;
+  }
+  else {
+    Py_RETURN_FALSE;
+  }
 }
 
 static PyObject* null_homologous_D1Q_py(PyObject* self, PyObject* args, PyObject* keywds) {
-  return NULL;
+    PyObject* py_Xs;
+  PyObject* py_Os;
+  PyObject* py_state;
+  PyObject* py_verbose;
+  
+  Grid_t G;
+  char state[MAX_INDEX];
+
+  for(int i = 0; i < MAX_INDEX; ++i) {
+    state[i] = 0;
+  }
+
+  const char** keyword_list = {"state","Xs", "Os", "verbose", 0};
+
+  if(!(PyArg_ParseTupleAndKeywords(args, keywds, "OOO|i:null_homologous_D0Q", (char**)keyword_list, &py_Xs, &py_Os, &py_state, &py_verbose))) {
+    return NULL;
+  }
+      
+  if(!(PySequence_Check(py_Xs) && PySequence_Check(py_Os))) {
+    PyErr_SetString(error, "The Xs and Os must be sequences.");
+    return NULL;
+  }
+
+  G.arc_index = PySequence_Length(py_Xs);
+
+  if(PySequence_Length(py_Os) != G.arc_index) {
+    PyErr_SetString(error, "The Xs and Os must be the same length");
+      return NULL;
+  }
+
+  if(G.arc_index > 30 || G.arc_index < 2) {
+    PyErr_SetString(error, "The grid size must be between 2 and 30");
+    return NULL;
+  }
+
+  int failed = 0;
+  
+  for(int i = 0; i < G.arc_index; ++i) {
+    PyObject *elem = PySequence_GetItem(py_Xs, i);
+
+    if(NULL == elem || !PyInt_Check(elem)) {
+      failed = 1;
+      break;
+    }
+    G.Xs[i] = (int)PyInt_AS_LONG(elem);
+    Py_DECREF(elem);
+
+    elem = PySequence_GetItem(py_Os, i);
+
+    if(NULL == elem || !PyInt_Check(elem)) {
+      failed = 1;
+      break;
+    }
+    G.Os[i] = (int)PyInt_AS_LONG(elem);
+    Py_DECREF(elem);
+
+    elem = PySequence_GetItem(py_state, i);
+
+    if(NULL == elem || !PyInt_Check(elem)) {
+      failed = 1;
+      break;
+    }
+    state[i] = (char)PyInt_AS_LONG(elem);
+    Py_DECREF(elem);    
+  }
+
+  if(failed || !is_grid(&G) || !is_state(&state,&G)) {
+    PyErr_SetString(error, "state, Xs, and Os must be lists containing [0,...,N] exactly once with no matching indices");
+    return NULL;
+  }
+
+  if(NULL == py_verbose) {
+    set_verbosity(false);
+  }
+  else if (!PyBool_Check(py_verbose)) {
+    PyErr_SetString(error, "verbosity must be passed a boolean value");
+    return NULL;
+  }
+  else {
+    set_verbosity((int)PyInt_AS_LONG(py_verbose));
+  }
+
+  if(null_homologous_D0Q(state,&G)) {
+    Py_RETURN_TRUE;
+  }
+  else {
+    Py_RETURN_FALSE;
+  }
+}
+
+static char null_homologous_D0Q_doc[] =
+  "";
+static char null_homologous_D1Q_doc[] =
+  "";
+
+static PyMethodDef _transverseHFK_methods[] = {
+                                               {"null_homologous_D0Q", (PyCFunction)null_homologous_D0Q_py, METH_VARARGS|METH_KEYWORDS, null_homologous_D0Q_doc},
+                                               {"null_homologous_D1Q", (PyCFunction)null_homologous_D1Q_py, METH_VARARGS|METH_KEYWORDS, null_homologous_D1Q_doc},
+                                               {NULL, NULL}
+};
+
+DL_EXPORT(void) init_transverseHFK(void) {
+  PyObject *m, *d;
+  const char *transverseHFK_error_name = "transverseHFK_Error";
+  const char *transverseHFK_dot_error = "transverseHFK.error";
+
+  m = Py_InitModule("_transverseHFK", _transverseHFK_methods);
+
+  d = PyModule_GetDict(m);
+  error = PyErr_NewException((char *) transverseHFK_dot_error, NULL, NULL);
+  PyDict_SetItemString(d, transverseHFK_error_name, error);
 }
