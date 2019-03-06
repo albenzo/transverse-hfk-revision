@@ -123,12 +123,13 @@ void print_math_edges(const EdgeList);
 void print_math_edges_a(const EdgeList);
 void print_vertices(const VertexList);
 
-int is_verbose();
-void set_verbosity(int);
+int is_verbose(void);
+void set_verbosity(const int);
 
 void timeout(const int);
 int perm_len(const char *const);
 int is_grid(const Grid_t *const);
+int is_state(const char *const, const Grid_t *const);
 int build_permutation(char *, char *);
 int eq_state(const State a, const State b, const Grid_t *const G) {
   return (!strncmp(a, b, G->arc_index));
@@ -138,7 +139,7 @@ int is_verbose() {
   return verbose;
 }
 
-void set_verbosity(int val) {
+void set_verbosity(const int val) {
   verbose = val;
 }
 
@@ -289,6 +290,38 @@ int is_grid(const Grid_t *const G) {
     }
   }
 
+  return 1;
+}
+
+/**
+ * Determines whether the supplied state is a valid grid state for the supplied grid
+ * @param state the grid state
+ * @param G the grid
+ * @return 1 if the state is valid, 0 otherwise
+ */
+int is_state(const char *const state, const Grid_t *const G) {
+  if(G->arc_index != perm_len(state)) {
+    return 0;
+  }
+
+  for(int i = 0; i< G->arc_index; ++i) {
+    if(state[i] < 0 || state[i] >= G->arc_index) {
+      return 0;
+    }
+
+    int found_i = 0;
+    
+    for(int j = 0; j < G->arc_index; ++j) {
+      if(state[j] == i) {
+        found_i = 1;
+        break;
+      }
+    }
+
+    if(!found_i) {
+      return 0;
+    }
+  }
   return 1;
 }
 
