@@ -299,7 +299,7 @@ int is_grid(const Grid_t *const G) {
  * @param G the grid
  * @return 1 if the state is valid, 0 otherwise
  */
-int is_state(const char *const state, const Grid_t *const G) {
+int is_state(const State state, const Grid_t *const G) {
   if(G->arc_index != perm_len(state)) {
     return 0;
   }
