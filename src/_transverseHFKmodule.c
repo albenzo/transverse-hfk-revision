@@ -177,7 +177,7 @@ static PyObject* null_homologous_D1Q_py(PyObject* self, PyObject* args, PyObject
     set_verbosity((int)PyInt_AS_LONG(py_verbose));
   }
 
-  if(null_homologous_D0Q(state,&G)) {
+  if(null_homologous_D1Q(state,&G)) {
     Py_RETURN_TRUE;
   }
   else {
