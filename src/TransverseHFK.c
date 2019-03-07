@@ -927,6 +927,7 @@ void special_homology(const int init, const int final, EdgeList *edge_list) {
  * @param edge_list the EdgeList
  */
 void contract(const int a, const int b, EdgeList *edge_list) {
+  //Initialization
   EdgeList temp;
   EdgeList prev;
   VertexList parents, kids, temp_kids, temp_parents;
@@ -938,6 +939,7 @@ void contract(const int a, const int b, EdgeList *edge_list) {
   temp_parents = NULL;
   last_parent = NULL;
   last_kid = NULL;
+  //Loops through edge_list 
   while (*edge_list != NULL &&
          ((*edge_list)->end == b || (*edge_list)->start == a)) {
     if (((*edge_list)->end == b) && ((*edge_list)->start == a)) {
@@ -1221,15 +1223,13 @@ StateList fixed_wt_rectangles_out_of(const int wt, const State incoming,
 }
 
 /**
- * Calculates whether the supplied state is nullhomologous. Uses
- the global variable global_edge_list.
+ * Calculates whether the supplied state is nullhomologous
  * @param init a State
  * @param G working grid
- * @param edge_list the edge_list
  * @return nonzero if nullhomologous and zero otherwise.
  */
 int null_homologous_D0Q(const State init, const Grid_t *const G) {
-  //Initialize variables
+  //Initialization of variables
   StateList new_ins, new_outs, last_new_in, last_new_out, temp;
   StateList prev_ins, prev_outs;
   StateList really_new_outs = NULL, really_new_ins = NULL;
@@ -1242,13 +1242,14 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
   int num_new_ins = 0;
   int num_new_outs = 0;
   StateList present_in, present_out;
-  //Creates first edge for edge list pointing from * to init
+  //Creates first edge for edge list pointing from A_0 to init 
   EdgeList edge_list = prepend_edge(0, 1, NULL);
   //More initialization
   prev_outs = NULL;
   prev_ins = NULL;
   new_ins = malloc(sizeof(StateNode_t));
   i = 0;
+  //sets new_ins to be initial state (IE initialize B_0)  
   while (i < G->arc_index) {
   //sets new_ins to be init state  
     new_ins->data[i] = init[i];
@@ -1256,31 +1257,34 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
   };
   new_ins->nextState = NULL;
   //This loop goes until either new_ins is empty or we have an answer(ans)
-  //new_ins is empty if there is no new rectangles coming from the out states
+  //The ith loop creates the A_i and B_i sets from A_i-1 and B_i-1 and then contracts edges
+  //new_ins is empty implies that there is no more contracting to affect A_0 connected edges
+  //
+  //THIS IS THE ACTUAL ALGORITHM LOOP
   ans = 0;
   while (new_ins != NULL && !ans) {
-    //sets the current in states (B_i))
+    //sets the present_in states to current working states (B_i-1)
     present_in = new_ins;
     //resets variables from last loop
     in_number = 0;
     num_new_outs = 0;
     new_outs = NULL;
-    //loop until there are no in rectangles left to look at in present_in (B_i)
-    //this is to make (A_i+1)
+    //loop until there are no in states left to look at in B_i-1
+    //this is to make (A_i)
     while (present_in != NULL) {
       free_state_list(really_new_outs);
       in_number++;
-      //sets really_new_outs to be the rectangles pointing into present_in 
-      //that is not in prev_outs (this is part of A_i+1 coming from the current 
-      //working state, present_in  
-      really_new_outs = new_rectangles_into(prev_outs, present_in->data,G);
+      //sets really_new_outs to be the states with rectangles pointing into present_in (B_i-1)
+      //that is not in prev_outs (A_i-1) (this is part of A_i coming from the current 
+      //working state, present_in)  
+      really_new_outs = new_rectangles_into(prev_outs, present_in->data, G);
       //loop through all really_new_outs
       while (really_new_outs != NULL) {
         //get position of really_new_outs in new_outs (ie position of current 
-        //A_i+1 state in the set of all A_i+1 if it is not in it yet sets
+        //A_i state in the set of all A_i if it is not in it yet it sets
         //to 0)
-        out_number = get_number(really_new_outs->data, new_outs,G);
-        //if really_new_outs state is not in list this adds to 
+        out_number = get_number(really_new_outs->data, new_outs, G);
+        //if really_new_outs state is not in list this adds it to 
         //the statelist new_outs
         if (out_number == 0) {
           //creates new_outs if empty
@@ -1306,12 +1310,15 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
           really_new_outs = really_new_outs->nextState;
           free(temp);
         }
+        //Appends edge to edge_list and then increments edge count
         edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
                                    edge_list);
         edge_count++;
       }
+      //goes to the next state in B_i-1 to look for rectangles into it
       present_in = present_in->nextState;
     };
+    //Initialize things to calculate B_i from A_i
     free_state_list(prev_ins);
     prev_ins = new_ins;
     i = 1;
@@ -1321,13 +1328,22 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
     new_ins = NULL;
     out_number = 0;
     present_out = new_outs;
+    //loop until there is no states left to look at in A_i to make B_i
     while (present_out != NULL) {
       out_number++;
+      //set really_new_ins to be states with rectangles pointing into them from 
+      //the current state in present_out (ie really_new_ins is the part of B_i
+      //that the current state in A_i has a recangle pointing to)
       really_new_ins = new_rectangles_out_of(prev_ins, present_out->data, G);
+      //loops through really_new_ins
       while (really_new_ins != NULL) {
+        //Checks position of current really_new_ins state in new_ins (B_i), 
+        //initializes to 0 if it is not yet in the set
         in_number = get_number(really_new_ins->data, new_ins, G);
+        //if really_new_ins state is not in new_ins this checks to add it to new_ins (B_i)
         if (in_number == 0) {
           if (num_new_ins == 0) {
+            //creats new_ins if it does not yet exist
             new_ins = really_new_ins;
             really_new_ins = really_new_ins->nextState;
             new_ins->nextState = NULL;
@@ -1335,6 +1351,7 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
             num_new_ins++;
             in_number = num_new_ins;
           } else {
+            //appends really_new_ins state to new_ins (B_i)
             last_new_in->nextState = really_new_ins;
             really_new_ins = really_new_ins->nextState;
             last_new_in = last_new_in->nextState;
@@ -1343,31 +1360,43 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
             in_number = num_new_ins;
           };
         } else {
+          //Frees memory and goes to next state if already in new_ins
           temp = really_new_ins;
           really_new_ins = really_new_ins->nextState;
           free(temp);
         }
+        //appends the edge found btw A_i and B_i to edge_list
         edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
                                    edge_list);
         edge_count++;
       };
+      //Goes to next state in A_i to check for new states that rectangles in A_i
+      //point to
       present_out = present_out->nextState;
     };
+    //Clears memory of unneccary info (A_i-1) and initializes things for next
+    //iteration of the algorithm
     free_state_list(prev_outs);
     prev_outs = new_outs;
     new_outs = NULL;
+    //Contract edges in edge list
     special_homology(0, prev_in_number, &edge_list);
+    //calculates answer (ie if nullhomologous or not) if it can be calculated
     if ((edge_list == NULL) || (edge_list->start != 0)) {
+      //nullhomologous if edge_list is empty or A_0 no longer points to anything
       ans = 1;
       free_state_list(new_ins);
       free_state_list(new_outs);
       new_ins = NULL;
     } else if (edge_list->end <= prev_in_number) {
+      //not nullhomologous if no new_ins after contraction and A_0 still points
+      //This is because no future states found will affect contractions of  A_0 edges
       ans = 0;
       free_state_list(new_ins);
       free_state_list(new_outs);
       new_ins = NULL;
     } else {
+      //set num_out for next loop through algorithm
       num_outs = num_outs + out_number;
       if (verbose) {
         printf("%d %d %d\n", num_ins, num_outs, edge_count);
@@ -1381,10 +1410,10 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
  * Calculates if D1 of the supplied state is nullhomologous
  * @param init a State
  * @param G working grid
- * @param edge_list the EdgeList
  * @return nonzero if nullhomologous and zero otherwise
  */
 int null_homologous_D1Q(const State init, const Grid_t *const G) {
+  //Initialization of variables
   StateList new_ins, new_outs, last_new_in, last_new_out, temp;
   StateList prev_ins, prev_outs;
   StateList really_new_outs = NULL, really_new_ins = NULL;
