@@ -22,15 +22,15 @@ static PyObject* null_homologous_D0Q_py(PyObject* self, PyObject* args, PyObject
     return NULL;
   }
       
-  if(!(PySequence_Check(py_Xs) && PySequence_Check(py_Os))) {
-    PyErr_SetString(error, "The Xs and Os must be sequences.");
+  if(!(PySequence_Check(py_Xs) && PySequence_Check(py_Os) && PySequence_Check(py_state))) {
+    PyErr_SetString(error, "The state, Xs, and Os must be sequences.");
     return NULL;
   }
 
   G.arc_index = PySequence_Length(py_Xs);
 
-  if(PySequence_Length(py_Os) != G.arc_index) {
-    PyErr_SetString(error, "The Xs and Os must be the same length");
+  if(PySequence_Length(py_Os) != G.arc_index || PySequence_Length(py_state) != G.arc_index) {
+    PyErr_SetString(error, "The state, Xs, and Os must be the same length");
       return NULL;
   }
 
@@ -95,7 +95,7 @@ static PyObject* null_homologous_D0Q_py(PyObject* self, PyObject* args, PyObject
 }
 
 static PyObject* null_homologous_D1Q_py(PyObject* self, PyObject* args, PyObject* keywds) {
-    PyObject* py_Xs;
+  PyObject* py_Xs;
   PyObject* py_Os;
   PyObject* py_state;
   PyObject* py_verbose;
@@ -113,15 +113,15 @@ static PyObject* null_homologous_D1Q_py(PyObject* self, PyObject* args, PyObject
     return NULL;
   }
       
-  if(!(PySequence_Check(py_Xs) && PySequence_Check(py_Os))) {
-    PyErr_SetString(error, "The Xs and Os must be sequences.");
+  if(!(PySequence_Check(py_Xs) && PySequence_Check(py_Os) && PySequence_Check(py_state))) {
+    PyErr_SetString(error, "The state, Xs, and Os must be sequences.");
     return NULL;
   }
 
   G.arc_index = PySequence_Length(py_Xs);
 
-  if(PySequence_Length(py_Os) != G.arc_index) {
-    PyErr_SetString(error, "The Xs and Os must be the same length");
+  if(PySequence_Length(py_Os) != G.arc_index || PySequence_Length(py_state) != G.arc_index) {
+    PyErr_SetString(error, "The state, Xs, and Os must be the same length");
       return NULL;
   }
 
@@ -177,7 +177,7 @@ static PyObject* null_homologous_D1Q_py(PyObject* self, PyObject* args, PyObject
     set_verbosity((int)PyInt_AS_LONG(py_verbose));
   }
 
-  if(null_homologous_D1Q(state,&G)) {
+  if(null_homologous_D0Q(state,&G)) {
     Py_RETURN_TRUE;
   }
   else {
