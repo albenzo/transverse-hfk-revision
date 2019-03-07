@@ -16,12 +16,22 @@ class tHFK:
         self.name = name
 
     def x_plus(self):
-        return self.Xs
-
+        UR = [None]*len(self.Xs)
+        for i in range(len(self.Xs)):
+            if(self.Xs[len(self.Xs)-1] == len(self.Xs)):
+                UR[0] = 1
+            else:
+                UR[i] = (self.Xs[i-1]+1) % len(self.Xs)
+        return [i+1 for i in UR]
+    
     def x_minus(self):
-        return [i-1 % len(self.Xs) for i in self.Xs]
+        return self.Xs
     
     def lambda_plus(self):
+        print self.Xs
+        print self.Os
+        print self.x_plus()
+        print self.x_minus()
         return _tHFK.null_homologous_D0Q(self.x_plus(), self.Xs, self.Os)
 
     def lambda_minus(self):

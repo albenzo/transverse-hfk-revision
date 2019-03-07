@@ -71,7 +71,7 @@ static PyObject* null_homologous_D0Q_py(PyObject* self, PyObject* args, PyObject
   }
 
   if(failed || !is_grid(&G) || !is_state(state,&G)) {
-    PyErr_SetString(error, "state, Xs, and Os must be lists containing [0,...,N] exactly once with no matching indices");
+    PyErr_SetString(error, "state, Xs, and Os must be lists containing [1,...,N] exactly once with no matching indices");
     return NULL;
   }
 
@@ -162,7 +162,7 @@ static PyObject* null_homologous_D1Q_py(PyObject* self, PyObject* args, PyObject
   }
 
   if(failed || !is_grid(&G) || !is_state(state,&G)) {
-    PyErr_SetString(error, "state, Xs, and Os must be lists containing [0,...,N] exactly once with no matching indices");
+    PyErr_SetString(error, "state, Xs, and Os must be lists containing [1,...,N] exactly once with no matching indices");
     return NULL;
   }
 
