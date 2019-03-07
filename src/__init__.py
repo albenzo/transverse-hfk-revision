@@ -47,12 +47,12 @@ class Tk_tHFK(tHFK):
         else:
             self.window.title("transverseHFK")
 
-        self.l_plus_btn = Button(self.window, text=u"\u03BB^+", command=None)
-        self.l_minus_btn = Button(self.window, text=u"\u03BB^-", command=None)
-        self.dl_plus_btn = Button(self.window, text=u"\u03B4_1 \u03BB^+", command=None)
-        self.dl_minus_btn = Button(self.window, text=u"\u03B4_1 \u03BB^-", command=None)
-        self.theta_n_btn = Button(self.window, text=u"\u03B8_n", command=None)
-        self.abort_btn = Button(self.window, text="Abort", command=None)
+        self.l_plus_btn = Button(self.window, text=u"\u03BB^+", command=l_plus_btn_cmd)
+        self.l_minus_btn = Button(self.window, text=u"\u03BB^-", command=l_minus_btn_cmd)
+        self.dl_plus_btn = Button(self.window, text=u"\u03B4_1 \u03BB^+", command=dl_plus_btn_cmd)
+        self.dl_minus_btn = Button(self.window, text=u"\u03B4_1 \u03BB^-", command=dl_minus_btn_cmd)
+        self.theta_n_btn = Button(self.window, text=u"\u03B8_n", command=theta_n_btn_cmd)
+        self.abort_btn = Button(self.window, text="Abort", command=abort_btn_cmd)
         self.n_lbl = Label(self.window,text="n=")
         self.n_var = StringVar()
         self.n_var.set("1")
@@ -61,6 +61,7 @@ class Tk_tHFK(tHFK):
         self.verbose_var.set(False)
         self.verbosity_checkbox = Checkbutton(self.window, text="Verbose?", var=self.verbose_var)
         self.output_area = ScrolledText.ScrolledText(self.window,width=60,height=30)
+        self.output_area.config(state=DISABLED)
 
         self.l_plus_btn.grid(column=0,row=0)
         self.l_minus_btn.grid(column=1,row=0)
@@ -74,3 +75,39 @@ class Tk_tHFK(tHFK):
         self.output_area.grid(column=0,row=2, columnspan=7)
 
         self.window.mainloop()
+
+    def _writeln_output(s):
+        self.output_area.config(state=NORMAL)
+        self.output_area.insert(END,'\n')
+        self.output_area.insert(END,s)
+        self.output_area.config(state=DISABLED)
+        
+    def l_plus_btn_cmd():
+        if self.lambda_plus():
+            _writeln_output(u"\u03BB^+ is null-homologous")
+        else:
+            _writeln_output(u"\u03BB^+ is NOT null-homologous")
+
+    def l_minus_btn_cmd():
+        if self.lambda_plus():
+            _writeln_output(u"\u03BB^+ is null-homologous")
+        else:
+            _writeln_output(u"\u03BB^+ is NOT null-homologous")
+
+    def dl_plus_btn_cmd():
+        if self.lambda_plus():
+            _writeln_output(u"\u03BB^+ is null-homologous")
+        else:
+            _writeln_output(u"\u03BB^+ is NOT null-homologous")
+
+    def dl_minus_btn_cmd():
+        if self.lambda_plus():
+            _writeln_output(u"\u03BB^+ is null-homologous")
+        else:
+            _writeln_output(u"\u03BB^+ is NOT null-homologous")
+
+    def theta_n_btn_cmd():
+        if self.lambda_plus():
+            _writeln_output(u"\u03BB^+ is null-homologous")
+        else:
+            _writeln_output(u"\u03BB^+ is NOT null-homologous")
