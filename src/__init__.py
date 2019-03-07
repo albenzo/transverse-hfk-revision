@@ -16,22 +16,22 @@ class tHFK:
         self.name = name
 
     def x_plus(self):
-        return copy(self.Xs)
+        return self.Xs
 
     def x_minus(self):
         return [i-1 % len(self.Xs) for i in self.Xs]
     
     def lambda_plus(self):
-        return _tHFK.null_homologous_D0Q(self.x_plus())
+        return _tHFK.null_homologous_D0Q(self.x_plus(), self.Xs, self.Os)
 
     def lambda_minus(self):
-        return _tHFK.null_homologous_D0Q(self.x_minus())
+        return _tHFK.null_homologous_D0Q(self.x_minus(), self.Xs, self.Os)
 
     def d_lambda_plus(self):
-        return _tHFK.null_homologous_D1Q(self.x_plus())
+        return _tHFK.null_homologous_D1Q(self.x_plus(), self.Xs, self.Os)
 
     def d_lambda_minus(self):
-        return _tHFK.null_homologous_D1Q(self.x_minus())
+        return _tHFK.null_homologous_D1Q(self.x_minus(), self.Xs, self.Os)
 
     def theta_n(self, n):
         raise NotImplementedError
@@ -40,19 +40,19 @@ class Tk_tHFK(tHFK):
     """
     """
     def __init__(self,Xs,Os,name=None):
-        transverseHFK.__init__(self, Xs ,Os, name)
+        tHFK.__init__(self, Xs ,Os, name)
         self.window = Tk()
         if self.name:
             self.window.title(self.name)
         else:
             self.window.title("transverseHFK")
 
-        self.l_plus_btn = Button(self.window, text=u"\u03BB^+", command=l_plus_btn_cmd)
-        self.l_minus_btn = Button(self.window, text=u"\u03BB^-", command=l_minus_btn_cmd)
-        self.dl_plus_btn = Button(self.window, text=u"\u03B4_1 \u03BB^+", command=dl_plus_btn_cmd)
-        self.dl_minus_btn = Button(self.window, text=u"\u03B4_1 \u03BB^-", command=dl_minus_btn_cmd)
-        self.theta_n_btn = Button(self.window, text=u"\u03B8_n", command=theta_n_btn_cmd)
-        self.abort_btn = Button(self.window, text="Abort", command=abort_btn_cmd)
+        self.l_plus_btn = Button(self.window, text=u"\u03BB^+", command=self.l_plus_btn_cmd)
+        self.l_minus_btn = Button(self.window, text=u"\u03BB^-", command=self.l_minus_btn_cmd)
+        self.dl_plus_btn = Button(self.window, text=u"\u03B4_1 \u03BB^+", command=self.dl_plus_btn_cmd)
+        self.dl_minus_btn = Button(self.window, text=u"\u03B4_1 \u03BB^-", command=self.dl_minus_btn_cmd)
+        self.theta_n_btn = Button(self.window, text=u"\u03B8_n", command=self.theta_n_btn_cmd)
+        self.abort_btn = Button(self.window, text="Abort", command=self.abort_btn_cmd)
         self.n_lbl = Label(self.window,text="n=")
         self.n_var = StringVar()
         self.n_var.set("1")
@@ -76,38 +76,47 @@ class Tk_tHFK(tHFK):
 
         self.window.mainloop()
 
-    def _writeln_output(s):
+    def _writeln_output(self,s):
         self.output_area.config(state=NORMAL)
         self.output_area.insert(END,'\n')
         self.output_area.insert(END,s)
         self.output_area.config(state=DISABLED)
         
-    def l_plus_btn_cmd():
+    def l_plus_btn_cmd(self):
         if self.lambda_plus():
-            _writeln_output(u"\u03BB^+ is null-homologous")
+            self._writeln_output(u"\u03BB^+ is null-homologous")
         else:
-            _writeln_output(u"\u03BB^+ is NOT null-homologous")
+            self._writeln_output(u"\u03BB^+ is NOT null-homologous")
 
-    def l_minus_btn_cmd():
-        if self.lambda_plus():
-            _writeln_output(u"\u03BB^+ is null-homologous")
+    def l_minus_btn_cmd(self):
+        if self.lambda_minus():
+            self._writeln_output(u"\u03BB^+ is null-homologous")
         else:
-            _writeln_output(u"\u03BB^+ is NOT null-homologous")
+            self._writeln_output(u"\u03BB^+ is NOT null-homologous")
 
-    def dl_plus_btn_cmd():
-        if self.lambda_plus():
-            _writeln_output(u"\u03BB^+ is null-homologous")
+    def dl_plus_btn_cmd(self):
+        if self.d_lambda_plus():
+            self._writeln_output(u"\u03BB^+ is null-homologous")
         else:
-            _writeln_output(u"\u03BB^+ is NOT null-homologous")
+            self._writeln_output(u"\u03BB^+ is NOT null-homologous")
 
-    def dl_minus_btn_cmd():
-        if self.lambda_plus():
-            _writeln_output(u"\u03BB^+ is null-homologous")
+    def dl_minus_btn_cmd(self):
+        if self.d_lambda_minus():
+            self._writeln_output(u"\u03BB^+ is null-homologous")
         else:
-            _writeln_output(u"\u03BB^+ is NOT null-homologous")
+            self._writeln_output(u"\u03BB^+ is NOT null-homologous")
 
-    def theta_n_btn_cmd():
-        if self.lambda_plus():
-            _writeln_output(u"\u03BB^+ is null-homologous")
+    def theta_n_btn_cmd(self):
+        try:
+            n = int(self.n_entry.get())
+        except ValueError:
+            self._writeln_output("Error: n must be an integer")
+            return
+        
+        if self.theta_n(n):
+            self._writeln_output(u"\u03BB^+ is null-homologous")
         else:
-            _writeln_output(u"\u03BB^+ is NOT null-homologous")
+            self._writeln_output(u"\u03BB^+ is NOT null-homologous")
+
+    def abort_btn_cmd(self):
+        raise NotImplementedError
