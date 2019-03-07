@@ -16,7 +16,7 @@ static PyObject* null_homologous_D0Q_py(PyObject* self, PyObject* args, PyObject
     state[i] = 0;
   }
 
-  const char** keyword_list = {"state","Xs", "Os", "verbose", 0};
+  const char* keyword_list[] = {"state","Xs", "Os", "verbose", 0};
 
   if(!(PyArg_ParseTupleAndKeywords(args, keywds, "OOO|i:null_homologous_D0Q", (char**)keyword_list, &py_Xs, &py_Os, &py_state, &py_verbose))) {
     return NULL;
@@ -70,7 +70,7 @@ static PyObject* null_homologous_D0Q_py(PyObject* self, PyObject* args, PyObject
     Py_DECREF(elem);    
   }
 
-  if(failed || !is_grid(&G) || !is_state(&state,&G)) {
+  if(failed || !is_grid(&G) || !is_state(state,&G)) {
     PyErr_SetString(error, "state, Xs, and Os must be lists containing [0,...,N] exactly once with no matching indices");
     return NULL;
   }
@@ -107,7 +107,7 @@ static PyObject* null_homologous_D1Q_py(PyObject* self, PyObject* args, PyObject
     state[i] = 0;
   }
 
-  const char** keyword_list = {"state","Xs", "Os", "verbose", 0};
+  const char* keyword_list[] = {"state","Xs", "Os", "verbose", 0};
 
   if(!(PyArg_ParseTupleAndKeywords(args, keywds, "OOO|i:null_homologous_D0Q", (char**)keyword_list, &py_Xs, &py_Os, &py_state, &py_verbose))) {
     return NULL;
@@ -161,7 +161,7 @@ static PyObject* null_homologous_D1Q_py(PyObject* self, PyObject* args, PyObject
     Py_DECREF(elem);    
   }
 
-  if(failed || !is_grid(&G) || !is_state(&state,&G)) {
+  if(failed || !is_grid(&G) || !is_state(state,&G)) {
     PyErr_SetString(error, "state, Xs, and Os must be lists containing [0,...,N] exactly once with no matching indices");
     return NULL;
   }
@@ -190,20 +190,20 @@ static char null_homologous_D0Q_doc[] =
 static char null_homologous_D1Q_doc[] =
   "";
 
-static PyMethodDef _transverseHFK_methods[] = {
+static PyMethodDef _tHFK_methods[] = {
                                                {"null_homologous_D0Q", (PyCFunction)null_homologous_D0Q_py, METH_VARARGS|METH_KEYWORDS, null_homologous_D0Q_doc},
                                                {"null_homologous_D1Q", (PyCFunction)null_homologous_D1Q_py, METH_VARARGS|METH_KEYWORDS, null_homologous_D1Q_doc},
                                                {NULL, NULL}
 };
 
-DL_EXPORT(void) init_transverseHFK(void) {
+PyMODINIT_FUNC init_tHFK(void) {
   PyObject *m, *d;
-  const char *transverseHFK_error_name = "transverseHFK_Error";
-  const char *transverseHFK_dot_error = "transverseHFK.error";
+  const char *tHFK_error_name = "tHFK_Error";
+  const char *tHFK_dot_error = "tHFK.error";
 
-  m = Py_InitModule("_transverseHFK", _transverseHFK_methods);
+  m = Py_InitModule("_tHFK", _tHFK_methods);
 
   d = PyModule_GetDict(m);
-  error = PyErr_NewException((char *) transverseHFK_dot_error, NULL, NULL);
-  PyDict_SetItemString(d, transverseHFK_error_name, error);
+  error = PyErr_NewException((char *) tHFK_dot_error, NULL, NULL);
+  PyDict_SetItemString(d, tHFK_error_name, error);
 }

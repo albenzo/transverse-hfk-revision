@@ -1,10 +1,10 @@
-import transverseHFK._transverseHFK as _tHFK
+import tHFK._tHFK as _tHFK
 from Tkinter import *
 import ScrolledText
 
-__all__ = ['transverseHFK', 'Tk_transverseHFK']
+__all__ = ['tHFK', 'Tk_tHFK']
 
-class transverseHFK:
+class tHFK:
     """
     """
 
@@ -15,13 +15,28 @@ class transverseHFK:
         self.Os = Os
         self.name = name
 
-    def null_homologous_D0Q(self,state):
-        raise NotImplementedError
+    def x_plus(self):
+        return copy(self.Xs)
 
-    def null_homologous_D1Q(self,state):
-        raise NotImplementedError
+    def x_minus(self):
+        return [i-1 % len(self.Xs) for i in self.Xs]
+    
+    def lambda_plus(self):
+        return _tHFK.null_homologous_D0Q(self.x_plus())
 
-class Tk_transverseHFK(transverseHFK):
+    def lambda_minus(self):
+        return _tHFK.null_homologous_D0Q(self.x_minus())
+
+    def d_lambda_plus(self):
+        return _tHFK.null_homologous_D1Q(self.x_plus())
+
+    def d_lambda_minus(self):
+        return _tHFK.null_homologous_D1Q(self.x_minus())
+
+    def theta_n(self, n):
+        raise NotImplementedError
+    
+class Tk_tHFK(tHFK):
     """
     """
     def __init__(self,Xs,Os,name=None):

@@ -1,11 +1,11 @@
 from distutils.core import setup, Extension
 
-_transverseHFK_module = Extension('transverseHFK._transverseHFK',
-                                  sources = ['_transverseHFK_module'],
-                                  include_dirs = ['.'])
+_transverseHFK_module = Extension('tHFK._tHFK',
+                                  sources = ['src/_transverseHFKmodule.c'],
+                                  include_dirs = ['./src'])
 
-setup(name = '_transverseHFK',
+setup(name = '_tHFK',
       version = '1.0',
       description = 'Computes transverse knot invariants',
-      packages = ['transverseHFK'],
+      packages = ['tHFK'],
       ext_modules = [_transverseHFK_module])
