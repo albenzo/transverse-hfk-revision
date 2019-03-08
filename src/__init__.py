@@ -133,7 +133,7 @@ class Tk_tHFK(tHFK):
         """
         tHFK.__init__(self, Xs ,Os)
         self.window = Tk()
-        if self.name:
+        if name:
             self.window.title(self.name)
         else:
             self.window.title("transverseHFK")
@@ -143,7 +143,7 @@ class Tk_tHFK(tHFK):
         self.d_plus_btn = Button(self.window, text=u"\u03B4_1 \u03BB^+", command=self.d_plus_btn_cmd)
         self.d_minus_btn = Button(self.window, text=u"\u03B4_1 \u03BB^-", command=self.d_minus_btn_cmd)
         self.theta_n_btn = Button(self.window, text=u"\u03B8_n", command=self.theta_n_btn_cmd)
-        self.abort_btn = Button(self.window, text="Abort", command=self.abort_btn_cmd)
+        self.abort_btn = Button(self.window, text="Abort", command=self.abort_btn_cmd, state=DISABLED)
         self.n_lbl = Label(self.window,text="n=")
         self.n_var = StringVar()
         self.n_var.set("1")
@@ -178,31 +178,47 @@ class Tk_tHFK(tHFK):
         self.output_area.insert(END,'\n')
         self.output_area.insert(END,s)
         self.output_area.config(state=DISABLED)
+
+    def _with_abort(self,f,*args):
+        """
+        Calls f with arguments args such that the abort button is active.
+        
+        Parameters
+        ----------
+        f: fun
+            The function that should have abort functionality
+        args:
+            List containing arguments for the function f
+        """
+        self.abort_btn.config(state=NORMAL)
+        result = f(*args)
+        self.abort_btn.config(state=DISABLED)
+        return result
         
     def l_plus_btn_cmd(self):
         """Calls lambda_plus and prints the result to the output area."""
-        if self.lambda_plus():
+        if self._with_abort(self.lambda_plus):
             self._writeln_output(u"\u03BB^+ is null-homologous")
         else:
             self._writeln_output(u"\u03BB^+ is NOT null-homologous")
 
     def l_minus_btn_cmd(self):
         """Calls lambda_minus and prints the result to the output area."""
-        if self.lambda_minus():
+        if self._with_abort(self.lambda_minus):
             self._writeln_output(u"\u03BB^- is null-homologous")
         else:
             self._writeln_output(u"\u03BB^- is NOT null-homologous")
 
     def d_plus_btn_cmd(self):
         """Calls d_lambda_plus and prints the result to the output area."""
-        if self.d_lambda_plus():
+        if self._with_abort(self.d_lambda_plus):
             self._writeln_output(u"\u03B4_1 \u03BB^+ is null-homologous")
         else:
             self._writeln_output(u"\u03B4_1 \u03BB^+ is NOT null-homologous")
 
     def d_minus_btn_cmd(self):
         """Calls d_lambda_minus and prints the result to the output area."""
-        if self.d_lambda_minus():
+        if self._with_abort(self.d_lambda_minus):
             self._writeln_output(u"\u03B4_1 \u03BB^- is null-homologous")
         else:
             self._writeln_output(u"\u03B4_1 \u03BB^- is NOT null-homologous")
@@ -218,7 +234,7 @@ class Tk_tHFK(tHFK):
             self._writeln_output("Error: n must be an integer")
             return
         
-        if self.theta_n(n):
+        if self._with_abort(self.theta_n,n):
             self._writeln_output(u"\u03B8_n is null-homologous")
         else:
             self._writeln_output(u"\u03B8_n is NOT null-homologous")
