@@ -7,7 +7,6 @@ static PyObject* null_homologous_D0Q_py(PyObject* self, PyObject* args, PyObject
   PyObject* py_Xs;
   PyObject* py_Os;
   PyObject* py_state;
-  PyObject* py_verbose;
   
   Grid_t G;
   char state[MAX_INDEX];
@@ -19,9 +18,9 @@ static PyObject* null_homologous_D0Q_py(PyObject* self, PyObject* args, PyObject
     G.Os[i] = 0;
   }
 
-  const char* keyword_list[] = {"state","Xs", "Os", "verbose", 0};
+  const char* keyword_list[] = {"state","Xs", "Os", 0};
 
-  if(!(PyArg_ParseTupleAndKeywords(args, keywds, "OOO|i:null_homologous_D0Q", (char**)keyword_list, &py_state, &py_Xs, &py_Os, &py_verbose))) {
+  if(!(PyArg_ParseTupleAndKeywords(args, keywds, "OOO|i:null_homologous_D0Q", (char**)keyword_list, &py_state, &py_Xs, &py_Os))) {
     return NULL;
   }
       
@@ -77,7 +76,7 @@ static PyObject* null_homologous_D0Q_py(PyObject* self, PyObject* args, PyObject
     PyErr_SetString(error, "state, Xs, and Os must be lists containing [1,...,N] exactly once with no matching indices between Xs and Os");
     return NULL;
   }
-
+  /*
   if(NULL == py_verbose) {
     set_verbosity(false);
   }
@@ -88,7 +87,7 @@ static PyObject* null_homologous_D0Q_py(PyObject* self, PyObject* args, PyObject
   else {
     set_verbosity((int)PyInt_AS_LONG(py_verbose));
   }
-
+  */
   if(null_homologous_D0Q(state,&G)) {
     Py_RETURN_TRUE;
   }
@@ -101,18 +100,20 @@ static PyObject* null_homologous_D1Q_py(PyObject* self, PyObject* args, PyObject
   PyObject* py_Xs;
   PyObject* py_Os;
   PyObject* py_state;
-  PyObject* py_verbose;
   
   Grid_t G;
   char state[MAX_INDEX];
 
+  G.arc_index = 0;
   for(int i = 0; i < MAX_INDEX; ++i) {
     state[i] = 0;
+    G.Xs[i] = 0;
+    G.Os[i] = 0;
   }
 
-  const char* keyword_list[] = {"state","Xs", "Os", "verbose", 0};
+  const char* keyword_list[] = {"state","Xs", "Os", 0};
 
-  if(!(PyArg_ParseTupleAndKeywords(args, keywds, "OOO|i:null_homologous_D0Q", (char**)keyword_list, &py_state, &py_Xs, &py_Os, &py_verbose))) {
+  if(!(PyArg_ParseTupleAndKeywords(args, keywds, "OOO|i:null_homologous_D0Q", (char**)keyword_list, &py_state, &py_Xs, &py_Os))) {
     return NULL;
   }
       
@@ -168,7 +169,7 @@ static PyObject* null_homologous_D1Q_py(PyObject* self, PyObject* args, PyObject
     PyErr_SetString(error, "state, Xs, and Os must be lists containing [1,...,N] exactly once with no matching indices between Xs and Os");
     return NULL;
   }
-
+  /*
   if(NULL == py_verbose) {
     set_verbosity(false);
   }
@@ -179,8 +180,8 @@ static PyObject* null_homologous_D1Q_py(PyObject* self, PyObject* args, PyObject
   else {
     set_verbosity((int)PyInt_AS_LONG(py_verbose));
   }
-
-  if(null_homologous_D0Q(state,&G)) {
+  */
+  if(null_homologous_D1Q(state,&G)) {
     Py_RETURN_TRUE;
   }
   else {
