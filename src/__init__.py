@@ -6,7 +6,7 @@ __all__ = ['tHFK', 'Tk_tHFK']
 
 class tHFK:
     """
-    Class the contains the X,O data of for a knot and
+    Class the contains the X,O code of a knot and
     provides methods for the transverseHFK invariants of
     the knot.
 

@@ -190,9 +190,34 @@ static PyObject* null_homologous_D1Q_py(PyObject* self, PyObject* args, PyObject
 }
 
 static char null_homologous_D0Q_doc[] =
-  "";
+  "Returns true if the supplied state is null-homologous for the\
+corresponding grid.\
+\
+Parameters\
+----------\
+state: [int]\
+    a grid state that represents a homology class\
+Xs: [int]\
+    int list specifying the Xs of the grid\
+Os: [int]\
+    int list specifying the Os of the grid\
+Note: Xs, Os, and state must be permutations {1,..,N}\
+where Xs and Os have no overlapping values.";
 static char null_homologous_D1Q_doc[] =
-  "";
+  "Returns true if the supplied state is null-homologous after\
+the d_1 map is applied for the corresponding grid.\
+\
+Parameters\
+----------\
+state: [int]\
+    a grid state that represents a homology class\
+Xs: [int]\
+    int list specifying the Xs of the grid\
+Os: [int]\
+    int list specifying the Os of the grid\
+Note: Xs, Os, and state must be permutations {1,..,N}\
+where Xs and Os have no overlapping values.";
+
 
 static PyMethodDef _tHFK_methods[] = {
                                                {"null_homologous_D0Q", (PyCFunction)null_homologous_D0Q_py, METH_VARARGS|METH_KEYWORDS, null_homologous_D0Q_doc},
