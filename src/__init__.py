@@ -35,10 +35,6 @@ class tHFK:
         return self.Xs
     
     def lambda_plus(self):
-        print self.Xs
-        print self.Os
-        print self.x_plus()
-        print self.x_minus()
         return _tHFK.null_homologous_D0Q(self.x_plus(), self.Xs, self.Os)
 
     def lambda_minus(self):
@@ -107,21 +103,21 @@ class Tk_tHFK(tHFK):
 
     def l_minus_btn_cmd(self):
         if self.lambda_minus():
-            self._writeln_output(u"\u03BB^+ is null-homologous")
+            self._writeln_output(u"\u03BB^- is null-homologous")
         else:
-            self._writeln_output(u"\u03BB^+ is NOT null-homologous")
+            self._writeln_output(u"\u03BB^- is NOT null-homologous")
 
     def dl_plus_btn_cmd(self):
         if self.d_lambda_plus():
-            self._writeln_output(u"\u03BB^+ is null-homologous")
+            self._writeln_output(u"\u03B4_1 \u03BB^+ is null-homologous")
         else:
-            self._writeln_output(u"\u03BB^+ is NOT null-homologous")
+            self._writeln_output(u"\u03B4_1 \u03BB^+ is NOT null-homologous")
 
     def dl_minus_btn_cmd(self):
         if self.d_lambda_minus():
-            self._writeln_output(u"\u03BB^+ is null-homologous")
+            self._writeln_output(u"\u03B4_1 \u03BB^- is null-homologous")
         else:
-            self._writeln_output(u"\u03BB^+ is NOT null-homologous")
+            self._writeln_output(u"\u03B4_1 \u03BB^- is NOT null-homologous")
 
     def theta_n_btn_cmd(self):
         try:
@@ -131,9 +127,9 @@ class Tk_tHFK(tHFK):
             return
         
         if self.theta_n(n):
-            self._writeln_output(u"\u03BB^+ is null-homologous")
+            self._writeln_output(u"\u03B8_n is null-homologous")
         else:
-            self._writeln_output(u"\u03BB^+ is NOT null-homologous")
+            self._writeln_output(u"\u03B8_n is NOT null-homologous")
 
     def abort_btn_cmd(self):
         raise NotImplementedError
