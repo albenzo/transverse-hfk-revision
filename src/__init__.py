@@ -15,15 +15,22 @@ class tHFK:
         self.Os = Os
         self.name = name
 
+    def arc_index(self):
+        return len(self.Xs)
+
     def x_plus(self):
-        UR = [None]*len(self.Xs)
-        for i in range(len(self.Xs)):
-            if(self.Xs[len(self.Xs)-1] == len(self.Xs)):
-                UR[0] = 1
+        UR = [None]*self.arc_index()
+        if self.Xs[self.arc_index()-1] == self.arc_index():
+            UR[0] = 1
+        else:
+            UR[0] = self.Xs[self.arc_index()-1]+1
+        for i in range(1,self.arc_index()):
+            if self.Xs[i-1] == self.arc_index():
+                UR[i] = 1
             else:
-                UR[i] = (self.Xs[i-1]+1) % len(self.Xs)
-        return [i+1 for i in UR]
-    
+                UR[i] = self.Xs[i-1]+1
+        return UR
+                
     def x_minus(self):
         return self.Xs
     

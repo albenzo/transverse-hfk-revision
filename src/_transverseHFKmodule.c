@@ -12,13 +12,16 @@ static PyObject* null_homologous_D0Q_py(PyObject* self, PyObject* args, PyObject
   Grid_t G;
   char state[MAX_INDEX];
 
+  G.arc_index = 0;
   for(int i = 0; i < MAX_INDEX; ++i) {
     state[i] = 0;
+    G.Xs[i] = 0;
+    G.Os[i] = 0;
   }
 
   const char* keyword_list[] = {"state","Xs", "Os", "verbose", 0};
 
-  if(!(PyArg_ParseTupleAndKeywords(args, keywds, "OOO|i:null_homologous_D0Q", (char**)keyword_list, &py_Xs, &py_Os, &py_state, &py_verbose))) {
+  if(!(PyArg_ParseTupleAndKeywords(args, keywds, "OOO|i:null_homologous_D0Q", (char**)keyword_list, &py_state, &py_Xs, &py_Os, &py_verbose))) {
     return NULL;
   }
       
@@ -71,7 +74,7 @@ static PyObject* null_homologous_D0Q_py(PyObject* self, PyObject* args, PyObject
   }
 
   if(failed || !is_grid(&G) || !is_state(state,&G)) {
-    PyErr_SetString(error, "state, Xs, and Os must be lists containing [1,...,N] exactly once with no matching indices");
+    PyErr_SetString(error, "state, Xs, and Os must be lists containing [1,...,N] exactly once with no matching indices between Xs and Os");
     return NULL;
   }
 
@@ -109,7 +112,7 @@ static PyObject* null_homologous_D1Q_py(PyObject* self, PyObject* args, PyObject
 
   const char* keyword_list[] = {"state","Xs", "Os", "verbose", 0};
 
-  if(!(PyArg_ParseTupleAndKeywords(args, keywds, "OOO|i:null_homologous_D0Q", (char**)keyword_list, &py_Xs, &py_Os, &py_state, &py_verbose))) {
+  if(!(PyArg_ParseTupleAndKeywords(args, keywds, "OOO|i:null_homologous_D0Q", (char**)keyword_list, &py_state, &py_Xs, &py_Os, &py_verbose))) {
     return NULL;
   }
       
@@ -162,7 +165,7 @@ static PyObject* null_homologous_D1Q_py(PyObject* self, PyObject* args, PyObject
   }
 
   if(failed || !is_grid(&G) || !is_state(state,&G)) {
-    PyErr_SetString(error, "state, Xs, and Os must be lists containing [1,...,N] exactly once with no matching indices");
+    PyErr_SetString(error, "state, Xs, and Os must be lists containing [1,...,N] exactly once with no matching indices between Xs and Os");
     return NULL;
   }
 

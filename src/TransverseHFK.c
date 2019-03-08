@@ -305,14 +305,14 @@ int is_state(const State state, const Grid_t *const G) {
   }
 
   for(int i = 0; i< G->arc_index; ++i) {
-    if(state[i] < 0 || state[i] >= G->arc_index) {
+    if(state[i] <= 0 || state[i] > G->arc_index) {
       return 0;
     }
 
     int found_i = 0;
     
     for(int j = 0; j < G->arc_index; ++j) {
-      if(state[j] == i) {
+      if(state[j] == i+1) {
         found_i = 1;
         break;
       }
@@ -335,7 +335,7 @@ int main(int argc, char **argv) {
   int i;
 
   Grid_t G;
-
+  
   G.arc_index = args.arc_index;
   for(i=0; i< MAX_INDEX; ++i) {
     if(i < G.arc_index) {
@@ -380,16 +380,23 @@ int main(int argc, char **argv) {
     UR[0] = (char)G.Xs[G.arc_index - 1] + 1;
   };
   i = 1;
-  while (i <= G.arc_index - 1) {
-    if (G.Xs[i - 1] == G.arc_index) {
-      UR[i] = 1;
-    } else {
-      UR[i] = G.Xs[i - 1] + 1;
+  while (i < MAX_INDEX) {
+    if(i < G.arc_index) {
+      if (G.Xs[i - 1] == G.arc_index) {
+        UR[i] = 1;
+      } else {
+        UR[i] = G.Xs[i - 1] + 1;
+      }
     }
-    i++;
+    else {
+      UR[i] = 0;
+    }
+    ++i;
   }
+  
   if (is_verbose()) {
     print_state(UR, &G);
+    print_state_short(UR, &G);
   }
 
   if (null_homologous_D0Q(UR, &G)) {
