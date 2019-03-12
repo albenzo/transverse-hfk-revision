@@ -7,5 +7,11 @@ _transverseHFK_module = Extension('tHFK._tHFK',
 setup(name = '_tHFK',
       version = '1.0',
       description = 'Computes transverse knot invariants',
+      author = "Lucas Meyers",
+      author_email = "lmeye22@lsu.edu",
+      url = "https://github.com/albenzo/transverse-hfk-revision",
       packages = ['tHFK'],
-      ext_modules = [_transverseHFK_module])
+      ext_modules = [_transverseHFK_module],
+      long_description =
+      """
+      """)
