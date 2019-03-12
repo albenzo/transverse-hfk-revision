@@ -123,12 +123,24 @@ void print_math_edges(const EdgeList);
 void print_math_edges_a(const EdgeList);
 void print_vertices(const VertexList);
 
+int is_verbose(void);
+void set_verbosity(const int);
+
 void timeout(const int);
 int perm_len(const char *const);
 int is_grid(const Grid_t *const);
+int is_state(const char *const, const Grid_t *const);
 int build_permutation(char *, char *);
 int eq_state(const State a, const State b, const Grid_t *const G) {
   return (!strncmp(a, b, G->arc_index));
+}
+
+int is_verbose() {
+  return verbose;
+}
+
+void set_verbosity(const int val) {
+  verbose = val;
 }
 
 static error_t parse_opt(int key, char *arg, struct argp_state *state) {
@@ -136,10 +148,10 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
   
   switch (key) {
   case 'v':
-    verbose = true;
+    set_verbosity(true);
     break;
   case 'q':
-    verbose = false;
+    set_verbosity(false);
     break;
   case 't':
     args->max_time = atoi(arg);
@@ -279,6 +291,38 @@ int is_grid(const Grid_t *const G) {
   return 1;
 }
 
+/**
+ * Determines whether the supplied state is a valid grid state for the supplied grid
+ * @param state the grid state
+ * @param G the grid
+ * @return 1 if the state is valid, 0 otherwise
+ */
+int is_state(const State state, const Grid_t *const G) {
+  if(G->arc_index != perm_len(state)) {
+    return 0;
+  }
+
+  for(int i = 0; i< G->arc_index; ++i) {
+    if(state[i] <= 0 || state[i] > G->arc_index) {
+      return 0;
+    }
+
+    int found_i = 0;
+    
+    for(int j = 0; j < G->arc_index; ++j) {
+      if(state[j] == i+1) {
+        found_i = 1;
+        break;
+      }
+    }
+
+    if(!found_i) {
+      return 0;
+    }
+  }
+  return 1;
+}
+
 int main(int argc, char **argv) {
   struct arguments args;
   args.arc_index = -1;
@@ -289,7 +333,7 @@ int main(int argc, char **argv) {
   int i;
 
   Grid_t G;
-
+  
   G.arc_index = args.arc_index;
   for(i=0; i< MAX_INDEX; ++i) {
     if(i < G.arc_index) {
@@ -315,7 +359,7 @@ int main(int argc, char **argv) {
     alarm(args.max_time);
   }
 
-  if (verbose) {
+  if (is_verbose()) {
     printf("\n \nCalculating graph for LL invariant\n");
     print_state(G.Xs, &G);
   }
@@ -325,7 +369,7 @@ int main(int argc, char **argv) {
     printf("LL is NOT null-homologous\n");
   }
 
-  if (verbose) {
+  if (is_verbose()) {
     printf("\n \nCalculating graph for UR invariant\n");
   }
   if (G.Xs[G.arc_index - 1] == G.arc_index) {
@@ -334,16 +378,23 @@ int main(int argc, char **argv) {
     UR[0] = (char)G.Xs[G.arc_index - 1] + 1;
   };
   i = 1;
-  while (i <= G.arc_index - 1) {
-    if (G.Xs[i - 1] == G.arc_index) {
-      UR[i] = 1;
-    } else {
-      UR[i] = G.Xs[i - 1] + 1;
+  while (i < MAX_INDEX) {
+    if(i < G.arc_index) {
+      if (G.Xs[i - 1] == G.arc_index) {
+        UR[i] = 1;
+      } else {
+        UR[i] = G.Xs[i - 1] + 1;
+      }
     }
-    i++;
+    else {
+      UR[i] = 0;
+    }
+    ++i;
   }
-  if (verbose) {
+  
+  if (is_verbose()) {
     print_state(UR, &G);
+    print_state_short(UR, &G);
   }
 
   if (null_homologous_D0Q(UR, &G)) {
@@ -352,7 +403,7 @@ int main(int argc, char **argv) {
     printf("UR is NOT null-homologous\n");
   };
 
-  if (verbose) {
+  if (is_verbose()) {
     printf("\n \nCalculating graph for D1[LL] invariant\n");
     print_state(G.Xs, &G);
   }
@@ -363,7 +414,7 @@ int main(int argc, char **argv) {
     printf("D1[LL] is NOT null-homologous\n");
   }
 
-  if (verbose) {
+  if (is_verbose()) {
     printf("\n \nCalculating graph for D1[UR] invariant\n");
   }
 
@@ -382,7 +433,7 @@ int main(int argc, char **argv) {
     i++;
   }
 
-  if (verbose) {
+  if (is_verbose()) {
     print_state(UR, &G);
   }
 
@@ -902,7 +953,7 @@ void special_homology(const int init, const int final, EdgeList *edge_list) {
     while ((temp != NULL) && (temp->end > final)) {
       temp = temp->nextEdge;
     };
-    if (verbose && j == 100) {
+    if (is_verbose() && j == 100) {
       j = 0;
       if (temp != NULL)
         printf("Iteration number %d; contracting edge starting at (%d,%d)\n", i,
@@ -1344,7 +1395,7 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
       new_ins = NULL;
     } else {
       num_outs = num_outs + out_number;
-      if (verbose) {
+      if (is_verbose()) {
         printf("%d %d %d\n", num_ins, num_outs, edge_count);
       }
     };
@@ -1488,7 +1539,7 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
       new_ins = NULL;
     } else {
       num_outs = num_outs + out_number;
-      if (verbose) {
+      if (is_verbose()) {
         printf("%d %d %d\n", num_ins, num_outs, edge_count);
       }
     };
