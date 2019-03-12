@@ -1,4 +1,4 @@
-import tHFK._tHFK as _tHFK
+from tHFK import _tHFK
 from Tkinter import *
 import ScrolledText
 

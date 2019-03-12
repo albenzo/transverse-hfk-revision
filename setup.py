@@ -1,7 +1,7 @@
 from distutils.core import setup, Extension
 
 _transverseHFK_module = Extension('tHFK._tHFK',
-                                  sources = ['src/_transverseHFKmodule.c'],
+                                  sources = ['./tHFK/_transverseHFKmodule.c'],
                                   include_dirs = ['./src'])
 
 setup(name = '_tHFK',
