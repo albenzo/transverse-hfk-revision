@@ -1099,7 +1099,7 @@ StateList remove_state(const State a, const StateList v, const Grid_t *const G) 
 }
 
 /**
- * Prints each edge in global_edge_list on a new line
+ * Prints each edge in the passed EdgeList
  * @param edge_list an EdgeList
  */
 void print_edges(const EdgeList edge_list) {
@@ -1112,7 +1112,7 @@ void print_edges(const EdgeList edge_list) {
 }
 
 /**
- * Print the first 80 edges in global_edge_list on the same line
+ * Print the first 80 edges edge_list on the same line
  * @param edge_list an EdgeList
  */
 void print_math_edges(const EdgeList edge_list) {
