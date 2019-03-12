@@ -23,10 +23,12 @@ transverseHFK: src/TransverseHFK.c
 
 clean:
 	rm -f transverseHFK
+clean-python:
+	python setup.py clean
 
 test: $(ALL_TESTS)
 
 %.test: transverseHFK $(TEST_DIR)/%.in $(TEST_DIR)/%.out
 	./transverseHFK `cat $(TEST_DIR)/$*.in` 2>&1 | diff -q $(TEST_DIR)/$*.out - > /dev/null || (echo "Target $@ failed" && exit 1)
 
-.PHONY: clean test %.test python-install
+.PHONY: clean test %.test python-install clean-python
