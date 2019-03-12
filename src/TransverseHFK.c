@@ -1137,7 +1137,7 @@ void print_math_edges(const EdgeList edge_list) {
 }
 
 /**
- * Prints the edges in edges on a single line
+ * Prints the edges in a single line
  * @param edges an EdgeList
  */
 void print_math_edges_a(const EdgeList edges) {
