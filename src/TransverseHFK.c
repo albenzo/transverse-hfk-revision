@@ -401,7 +401,6 @@ int main(int argc, char **argv) {
   
   if (VERBOSE == get_verbosity()) {
     print_state(UR, &G);
-    print_state_short(UR, &G);
   }
 
   if (null_homologous_D0Q(UR, &G)) {
