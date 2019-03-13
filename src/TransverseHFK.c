@@ -12,7 +12,6 @@
 #include <limits.h>
 #include <math.h>
 #include <signal.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,7 +32,8 @@ static const char args_doc[] = "-i [ArcIndex] -X [Xs] -O [Os]";
 
 static struct argp_option options[] = {
     {"verbose", 'v', 0, 0, "Produce verbose output", 0},
-    {"quiet", 'q', 0, 0, "Don't produce extraneous output", 0},
+    {"quiet" , 'v' , 0, 0, "Produce some extraneous output", 0},
+    {"silent", 's', 0, 0, "Don't produce any extraneous output", 0},
     {"index", 'i', "ArcIndex", 0, "ArcIndex of the grid", 0},
     {"Xs", 'X', "[...]", 0, "List of Xs", 0},
     {"Os", 'O', "[...]", 0, "List of Os", 0},
@@ -50,7 +50,11 @@ struct arguments  {
   int max_time;
 };
 
-static bool verbose = false;
+#define SILENT 0
+#define QUIET 1
+#define VERBOSE 2
+
+static int verbosity = SILENT;
 
 struct Grid {
   char Xs[MAX_INDEX];
@@ -123,7 +127,7 @@ void print_math_edges(const EdgeList);
 void print_math_edges_a(const EdgeList);
 void print_vertices(const VertexList);
 
-int is_verbose(void);
+int get_verbosity(void);
 void set_verbosity(const int);
 
 void timeout(const int);
@@ -135,12 +139,12 @@ int eq_state(const State a, const State b, const Grid_t *const G) {
   return (!strncmp(a, b, G->arc_index));
 }
 
-int is_verbose() {
-  return verbose;
+int get_verbosity() {
+  return verbosity;
 }
 
 void set_verbosity(const int val) {
-  verbose = val;
+  verbosity = val;
 }
 
 static error_t parse_opt(int key, char *arg, struct argp_state *state) {
@@ -148,10 +152,13 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
   
   switch (key) {
   case 'v':
-    set_verbosity(true);
+    set_verbosity(VERBOSE);
     break;
   case 'q':
-    set_verbosity(false);
+    set_verbosity(QUIET);
+    break;
+  case 's':
+    set_verbosity(SILENT);
     break;
   case 't':
     args->max_time = atoi(arg);
@@ -359,7 +366,7 @@ int main(int argc, char **argv) {
     alarm(args.max_time);
   }
 
-  if (is_verbose()) {
+  if (VERBOSE == get_verbosity()) {
     printf("\n \nCalculating graph for LL invariant\n");
     print_state(G.Xs, &G);
   }
@@ -369,7 +376,7 @@ int main(int argc, char **argv) {
     printf("LL is NOT null-homologous\n");
   }
 
-  if (is_verbose()) {
+  if (VERBOSE == get_verbosity()) {
     printf("\n \nCalculating graph for UR invariant\n");
   }
   if (G.Xs[G.arc_index - 1] == G.arc_index) {
@@ -392,9 +399,8 @@ int main(int argc, char **argv) {
     ++i;
   }
   
-  if (is_verbose()) {
+  if (VERBOSE == get_verbosity()) {
     print_state(UR, &G);
-    print_state_short(UR, &G);
   }
 
   if (null_homologous_D0Q(UR, &G)) {
@@ -403,7 +409,7 @@ int main(int argc, char **argv) {
     printf("UR is NOT null-homologous\n");
   };
 
-  if (is_verbose()) {
+  if (VERBOSE == get_verbosity()) {
     printf("\n \nCalculating graph for D1[LL] invariant\n");
     print_state(G.Xs, &G);
   }
@@ -414,7 +420,7 @@ int main(int argc, char **argv) {
     printf("D1[LL] is NOT null-homologous\n");
   }
 
-  if (is_verbose()) {
+  if (VERBOSE == get_verbosity()) {
     printf("\n \nCalculating graph for D1[UR] invariant\n");
   }
 
@@ -433,7 +439,7 @@ int main(int argc, char **argv) {
     i++;
   }
 
-  if (is_verbose()) {
+  if (VERBOSE == get_verbosity()) {
     print_state(UR, &G);
   }
 
@@ -953,7 +959,7 @@ void special_homology(const int init, const int final, EdgeList *edge_list) {
     while ((temp != NULL) && (temp->end > final)) {
       temp = temp->nextEdge;
     };
-    if (is_verbose() && j == 100) {
+    if (VERBOSE == get_verbosity() && j == 100) {
       j = 0;
       if (temp != NULL)
         printf("Iteration number %d; contracting edge starting at (%d,%d)\n", i,
@@ -1395,7 +1401,7 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
       new_ins = NULL;
     } else {
       num_outs = num_outs + out_number;
-      if (is_verbose()) {
+      if (VERBOSE == get_verbosity()) {
         printf("%d %d %d\n", num_ins, num_outs, edge_count);
       }
     };
@@ -1539,7 +1545,7 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
       new_ins = NULL;
     } else {
       num_outs = num_outs + out_number;
-      if (is_verbose()) {
+      if (VERBOSE == get_verbosity()) {
         printf("%d %d %d\n", num_ins, num_outs, edge_count);
       }
     };
