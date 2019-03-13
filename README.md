@@ -46,5 +46,41 @@ or
 make python-install
 ```
 
+### Gridlink
+To integrate tHFK with gridlink add the following lines to
+the file `gridlink/gridlink.py` in the package
+
+1. Add these lines to the list of imports
+
+```
+try:
+    from tHFK import *
+    Tk_tHFK=tHFK.Tk_tHFK
+except:
+    Tk_tHFK=None
+```
+
+2. Add this line within the __init__ method 
+```
+if (Tk_tHFK):
+    invariantmenu.add_command(label="transverseHFK", command=self.tHFK)
+```
+
+3. Add the following method to the gridlink class
+```
+def tHFK(self):
+    if self.components > 1:
+        showwarning('Knots only',
+                    'Sorry, I can only compute transverseHFK invariants for knots')
+        return
+    Xlist, Olist = self.get_XOlists()
+    t_hfk_object = Tk_tHFK([x+1 for x in Xlist], [o+1 for o in Olist], name=self.window.title())
+
+```
+
+Now after installing gridlink via setup.py and installing the tHFK python
+library there will be a menu that allows you to run the transverseHFK 
+invariants.
+
 ## Platform specific notes
 Building on mac requires argp-standalone to be installed
