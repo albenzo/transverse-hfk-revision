@@ -37,14 +37,24 @@ $ transverseHFK -i 10 -X [10,5,8,6,3,7,2,4,9,1] -O [7,9,3,4,5,1,6,10,2,8]
 ```
 
 ## tHFK
+### Usage
 To build and install the python library run
 ```
-python setup.py install
+$ python setup.py install
 ```
 or
 ```
-make python-install
+$ make python-install
 ```
+
+Then it can be used by
+```
+$ python
+>>> from tHFK import *
+```
+which exposes the `tHFK` and `Tk_tHFK` classes as well as
+the `null_homologous_D0Q` and `null_homologous_D1Q` methods.
+Usage information can be found via `help(<class or method name>)`
 
 ### Gridlink
 To integrate tHFK with gridlink add the following lines to
@@ -55,7 +65,6 @@ the file `gridlink/gridlink.py` in the package
 ```
 try:
     from tHFK import *
-    Tk_tHFK=tHFK.Tk_tHFK
 except:
     Tk_tHFK=None
 ```

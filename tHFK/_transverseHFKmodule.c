@@ -190,32 +190,32 @@ static PyObject* null_homologous_D1Q_py(PyObject* self, PyObject* args, PyObject
 }
 
 static char null_homologous_D0Q_doc[] =
-  "Returns true if the supplied state is null-homologous for the\
-corresponding grid.\
-\
-Parameters\
-----------\
-state: [int]\
-    a grid state that represents a homology class\
-Xs: [int]\
-    int list specifying the Xs of the grid\
-Os: [int]\
-    int list specifying the Os of the grid\
-Note: Xs, Os, and state must be permutations {1,..,N}\
+  "Returns true if the supplied state is null-homologous for the \
+corresponding grid.\n\
+\n\
+Parameters\n\
+----------\n\
+state: [int]\n\
+    a grid state that represents a homology class\n\
+Xs: [int]\n\
+    int list specifying the Xs of the grid\n\
+Os: [int]\n\
+    int list specifying the Os of the grid\n\
+Note: Xs, Os, and state must be permutations {1,..,N}\n\
 where Xs and Os have no overlapping values.";
 static char null_homologous_D1Q_doc[] =
-  "Returns true if the supplied state is null-homologous after\
-the d_1 map is applied for the corresponding grid.\
-\
-Parameters\
-----------\
-state: [int]\
-    a grid state that represents a homology class\
-Xs: [int]\
-    int list specifying the Xs of the grid\
-Os: [int]\
-    int list specifying the Os of the grid\
-Note: Xs, Os, and state must be permutations {1,..,N}\
+  "Returns true if the supplied state is null-homologous after\n\
+the d_1 map is applied for the corresponding grid.\n\
+\n\
+Parameters\n\
+----------\n\
+state: [int]\n\
+    a grid state that represents a homology class\n\
+Xs: [int]\n\
+    int list specifying the Xs of the grid\n\
+Os: [int]\n\
+    int list specifying the Os of the grid\n\
+Note: Xs, Os, and state must be permutations {1,..,N}\n\
 where Xs and Os have no overlapping values.";
 
 
