@@ -1,1 +1,2 @@
-__all__ = ['tHFK','_tHFK']
+from tHFK import *
+from _tHFK import *
