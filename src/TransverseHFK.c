@@ -336,7 +336,7 @@ int main(int argc, char **argv) {
   args.max_time = -1;
   argp_parse(&argp, argc, argv, 0, 0, &args);
 
-  char UR[args.arc_index];
+  char UR[MAX_INDEX];
   int i;
 
   Grid_t G;
