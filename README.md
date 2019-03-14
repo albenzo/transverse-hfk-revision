@@ -13,19 +13,32 @@ invariants directly in a Tk window.
 ### Usage
 To compile transverseHFK program run
 ```
-make
+$ make
 ```
 The program will calculate whether or not x^-, x^+, delta_1(x^-), and delta_1(x^+) 
 are null-homologous for the supplied knot. 
 
 The program usage is
 ```
-transverseHFK -i <ArcIndex> -X <List of Xs> -O <List of Os>
+$ transverseHFK -i <ArcIndex> -X <List of Xs> -O <List of Os>
 ```
 where the three parameters specify a knot via its grid diagram. Currently the
 two lists must be input in the form `[0,1,2,3,4,5,6,7,8,9]` with no spaces.
 
 For a full list of options run `transverseHFK --help`
+
+### Installation and removal
+To install the program type 
+```
+$ make install
+```
+To remove type 
+```
+$ make uninstall
+```
+Which will copy and remove `transverseHFK` to `/usr/bin` respectively.
+If you do not wish to (or cannot) install to this location you can 
+install by copying the executable to somewhere on your `$PATH`.
 
 ### Sample Output
 ```
