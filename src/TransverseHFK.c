@@ -32,7 +32,7 @@ static const char args_doc[] = "-i [ArcIndex] -X [Xs] -O [Os]";
 
 static struct argp_option options[] = {
     {"verbose", 'v', 0, 0, "Produce verbose output", 0},
-    {"quiet" , 'v' , 0, 0, "Produce some extraneous output", 0},
+    {"quiet" , 'q' , 0, 0, "Produce some extraneous output", 0},
     {"silent", 's', 0, 0, "Don't produce any extraneous output", 0},
     {"index", 'i', "ArcIndex", 0, "ArcIndex of the grid", 0},
     {"Xs", 'X', "[...]", 0, "List of Xs", 0},
@@ -366,7 +366,7 @@ int main(int argc, char **argv) {
     alarm(args.max_time);
   }
 
-  if (VERBOSE == get_verbosity()) {
+  if (QUIET <= get_verbosity()) {
     printf("\n \nCalculating graph for LL invariant\n");
     print_state(G.Xs, &G);
   }
@@ -376,7 +376,7 @@ int main(int argc, char **argv) {
     printf("LL is NOT null-homologous\n");
   }
 
-  if (VERBOSE == get_verbosity()) {
+  if (QUIET <= get_verbosity()) {
     printf("\n \nCalculating graph for UR invariant\n");
   }
   if (G.Xs[G.arc_index - 1] == G.arc_index) {
@@ -399,7 +399,7 @@ int main(int argc, char **argv) {
     ++i;
   }
   
-  if (VERBOSE == get_verbosity()) {
+  if (QUIET <= get_verbosity()) {
     print_state(UR, &G);
   }
 
@@ -409,7 +409,7 @@ int main(int argc, char **argv) {
     printf("UR is NOT null-homologous\n");
   };
 
-  if (VERBOSE == get_verbosity()) {
+  if (QUIET <= get_verbosity()) {
     printf("\n \nCalculating graph for D1[LL] invariant\n");
     print_state(G.Xs, &G);
   }
@@ -420,7 +420,7 @@ int main(int argc, char **argv) {
     printf("D1[LL] is NOT null-homologous\n");
   }
 
-  if (VERBOSE == get_verbosity()) {
+  if (QUIET <= get_verbosity()) {
     printf("\n \nCalculating graph for D1[UR] invariant\n");
   }
 
@@ -439,7 +439,7 @@ int main(int argc, char **argv) {
     i++;
   }
 
-  if (VERBOSE == get_verbosity()) {
+  if (QUIET <= get_verbosity()) {
     print_state(UR, &G);
   }
 
