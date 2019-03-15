@@ -1,5 +1,6 @@
 from Tkinter import *
 import ScrolledText
+import multiprocessing as mp
 import _tHFK
 
 class tHFK:
@@ -132,26 +133,30 @@ class Tk_tHFK(tHFK):
         tHFK.__init__(self, Xs ,Os)
         self.window = Tk()
         if name:
+            self.name = name
             self.window.title(name)
         else:
+            self.name = "transverseHFK"
             self.window.title("transverseHFK")
 
-        self.l_plus_btn = Button(self.window, text=u"\u03BB^+", command=self.l_plus_btn_cmd)
-        self.l_minus_btn = Button(self.window, text=u"\u03BB^-", command=self.l_minus_btn_cmd)
-        self.d_plus_btn = Button(self.window, text=u"\u03B4_1 \u03BB^+", command=self.d_plus_btn_cmd)
-        self.d_minus_btn = Button(self.window, text=u"\u03B4_1 \u03BB^-", command=self.d_minus_btn_cmd)
-        self.theta_n_btn = Button(self.window, text=u"\u03B8_n", command=self.theta_n_btn_cmd)
-        self.abort_btn = Button(self.window, text="Abort", command=self.abort_btn_cmd, state=DISABLED)
+        self._write_lock = mp.Lock()
+        self._process_list = []
+        self.output_area = ScrolledText.ScrolledText(self.window,width=60,height=30)
+        self.output_area.config(state=DISABLED)
+        self.l_plus_btn = Button(self.window, text=u"\u03BB^+", command=self._with_process(self.l_plus_btn_cmd))
+        self.l_minus_btn = Button(self.window, text=u"\u03BB^-", command=self._with_process(self.l_minus_btn_cmd))
+        self.d_plus_btn = Button(self.window, text=u"\u03B4_1 \u03BB^+", command=self._with_process(self.d_plus_btn_cmd))
+        self.d_minus_btn = Button(self.window, text=u"\u03B4_1 \u03BB^-", command=self._with_process(self.d_minus_btn_cmd))
         self.n_lbl = Label(self.window,text="n=")
         self.n_var = StringVar()
         self.n_var.set("1")
         self.n_entry = Entry(self.window, width=3, text="n=")
+        self.theta_n_btn = Button(self.window, text=u"\u03B8_n", command=self._with_process(self.theta_n_btn_cmd))
+        self.abort_btn = Button(self.window, text="Abort", command=self.abort_btn_cmd)
         self.verbose_var = BooleanVar()
         self.verbose_var.set(False)
         self.verbosity_checkbox = Checkbutton(self.window, text="Verbose?", var=self.verbose_var)
-        self.output_area = ScrolledText.ScrolledText(self.window,width=60,height=30)
-        self.output_area.config(state=DISABLED)
-
+                
         self.l_plus_btn.grid(column=0,row=0)
         self.l_minus_btn.grid(column=1,row=0)
         self.d_plus_btn.grid(column=2,row=0)
@@ -165,61 +170,56 @@ class Tk_tHFK(tHFK):
 
         self.window.mainloop()
 
-    def _writeln_output(self,s):
+    def write(self,s):
         """
-        Writes the string s to the output area.
+        Writes the string s to the output area. Can only be written by
+        a single process at once.
+        
         Parameters
         ----------
         s : str
         """
+        self._write_lock.acquire()
         self.output_area.config(state=NORMAL)
-        self.output_area.insert(END,'\n')
         self.output_area.insert(END,s)
+        self.output_area.insert(END,'\n')
         self.output_area.config(state=DISABLED)
+        self._write_lock.release()
 
-    def _with_abort(self,f,*args):
-        """
-        Calls f with arguments args such that the abort button is active.
-        
-        Parameters
-        ----------
-        f: fun
-            The function that should have abort functionality
-        args:
-            List containing arguments for the function f
-        """
-        self.abort_btn.config(state=NORMAL)
-        result = f(*args)
-        self.abort_btn.config(state=DISABLED)
-        return result
-        
+    def _with_process(self,f):
+        def p_f():
+            p = mp.Process(target=f)
+            self._process_list.append(p)
+            p.run()
+        return p_f
+    
     def l_plus_btn_cmd(self):
         """Calls lambda_plus and prints the result to the output area."""
-        if self._with_abort(self.lambda_plus):
-            self._writeln_output(u"\u03BB^+ is null-homologous")
+        if self.lambda_plus():
+            self.write(u"\u03BB^+ is null-homologous")
         else:
-            self._writeln_output(u"\u03BB^+ is NOT null-homologous")
+            self.write(u"\u03BB^+ is NOT null-homologous")
 
     def l_minus_btn_cmd(self):
         """Calls lambda_minus and prints the result to the output area."""
-        if self._with_abort(self.lambda_minus):
-            self._writeln_output(u"\u03BB^- is null-homologous")
+        if self.lambda_minus():
+            self.write(u"\u03BB^- is null-homologous")
         else:
-            self._writeln_output(u"\u03BB^- is NOT null-homologous")
+            self.write(u"\u03BB^- is NOT null-homologous")
 
     def d_plus_btn_cmd(self):
         """Calls d_lambda_plus and prints the result to the output area."""
-        if self._with_abort(self.d_lambda_plus):
-            self._writeln_output(u"\u03B4_1 \u03BB^+ is null-homologous")
+        if self.d_lambda_plus():
+            self.write(u"\u03B4_1 \u03BB^+ is null-homologous")
         else:
-            self._writeln_output(u"\u03B4_1 \u03BB^+ is NOT null-homologous")
+            self.write(u"\u03B4_1 \u03BB^+ is NOT null-homologous")
 
     def d_minus_btn_cmd(self):
         """Calls d_lambda_minus and prints the result to the output area."""
-        if self._with_abort(self.d_lambda_minus):
-            self._writeln_output(u"\u03B4_1 \u03BB^- is null-homologous")
+        if self.d_lambda_minus():
+            self.write(u"\u03B4_1 \u03BB^- is null-homologous")
         else:
-            self._writeln_output(u"\u03B4_1 \u03BB^- is NOT null-homologous")
+            self.write(u"\u03B4_1 \u03BB^- is NOT null-homologous")
 
     def theta_n_btn_cmd(self):
         """
@@ -229,14 +229,16 @@ class Tk_tHFK(tHFK):
         try:
             n = int(self.n_entry.get())
         except ValueError:
-            self._writeln_output("Error: n must be an integer")
+            self.write("Error: n must be an integer")
             return
         
-        if self._with_abort(self.theta_n,n):
-            self._writeln_output(u"\u03B8_n is null-homologous")
+        if self.theta_n(n):
+            self.write(u"\u03B8_n is null-homologous")
         else:
-            self._writeln_output(u"\u03B8_n is NOT null-homologous")
+            self.write(u"\u03B8_n is NOT null-homologous")
 
     def abort_btn_cmd(self):
-        """Halts the currently running execution"""
-        raise NotImplementedError
+        for p in self._process_list:
+            if p.is_alive():
+                p.terminate()
+        self._process_list = []
