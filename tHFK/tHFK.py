@@ -139,8 +139,9 @@ class Tk_tHFK(tHFK):
             self.name = "transverseHFK"
             self.window.title("transverseHFK")
 
-        self._write_lock = mp.Lock()
         self._process_list = []
+        self._write_queue = mp.Queue()
+        
         self.output_area = ScrolledText.ScrolledText(self.window,width=60,height=30)
         self.output_area.config(state=DISABLED)
         self.l_plus_btn = Button(self.window, text=u"\u03BB^+", command=self._with_process(self.l_plus_btn_cmd))
@@ -168,8 +169,14 @@ class Tk_tHFK(tHFK):
         self.verbosity_checkbox.grid(column=0,row=1)
         self.output_area.grid(column=0,row=2, columnspan=7)
 
+        self._callback_id = self.window.after(0,self._queue_check)
+        self.window.protocol("WM_DELETE_WINDOW", self._clean_and_destroy)
         self.window.mainloop()
 
+    def _clean_and_destroy(self):
+        self.window.after_cancel(self._callback_id)
+        self.window.destroy()
+        
     def write(self,s):
         """
         Writes the string s to the output area. Can only be written by
@@ -179,47 +186,72 @@ class Tk_tHFK(tHFK):
         ----------
         s : str
         """
-        self._write_lock.acquire()
+        self._write_queue.put(s)
+
+    def _write_output_area(self,s):
         self.output_area.config(state=NORMAL)
         self.output_area.insert(END,s)
-        self.output_area.insert(END,'\n')
         self.output_area.config(state=DISABLED)
-        self._write_lock.release()
+
 
     def _with_process(self,f):
         def p_f():
             p = mp.Process(target=f)
             self._process_list.append(p)
-            p.run()
+            p.daemon = True
+            p.start()
         return p_f
+
+    def _queue_check(self):
+        while True:
+            try:
+                s = self._write_queue.get_nowait()
+            except mp.queues.Empty:
+                break
+            else:
+                #self._write_output_area(s)
+                self.window.after_idle(self._write_output_area, s)
+        self._callback_id = self.window.after(500,self._queue_check)
     
     def l_plus_btn_cmd(self):
         """Calls lambda_plus and prints the result to the output area."""
-        if self.lambda_plus():
-            self.write(u"\u03BB^+ is null-homologous")
-        else:
-            self.write(u"\u03BB^+ is NOT null-homologous")
+        try:
+            if self.lambda_plus():
+                self.write(u"\u03BB^+ is null-homologous\n")
+            else:
+                self.write(u"\u03BB^+ is NOT null-homologous\n")
+        except:
+            self.write("Error: " + sys.exec_info()[0] + "\n")
 
     def l_minus_btn_cmd(self):
         """Calls lambda_minus and prints the result to the output area."""
-        if self.lambda_minus():
-            self.write(u"\u03BB^- is null-homologous")
-        else:
-            self.write(u"\u03BB^- is NOT null-homologous")
+        try:
+            if self.lambda_minus():
+                self.write(u"\u03BB^- is null-homologous\n")
+            else:
+                self.write(u"\u03BB^- is NOT null-homologous\n")
+        except:
+            self.write("Error: " + sys.exec_info()[0] + "\n")
 
     def d_plus_btn_cmd(self):
         """Calls d_lambda_plus and prints the result to the output area."""
-        if self.d_lambda_plus():
-            self.write(u"\u03B4_1 \u03BB^+ is null-homologous")
-        else:
-            self.write(u"\u03B4_1 \u03BB^+ is NOT null-homologous")
+        try:
+            if self.d_lambda_plus():
+                self.write(u"\u03B4_1 \u03BB^+ is null-homologous\n")
+            else:
+                self.write(u"\u03B4_1 \u03BB^+ is NOT null-homologous\n")
+        except:
+            self.write("Error: " + sys.exec_info()[0] + "\n")
 
     def d_minus_btn_cmd(self):
         """Calls d_lambda_minus and prints the result to the output area."""
-        if self.d_lambda_minus():
-            self.write(u"\u03B4_1 \u03BB^- is null-homologous")
-        else:
-            self.write(u"\u03B4_1 \u03BB^- is NOT null-homologous")
+        try:
+            if self.d_lambda_minus():
+                self.write(u"\u03B4_1 \u03BB^- is null-homologous\n")
+            else:
+                self.write(u"\u03B4_1 \u03BB^- is NOT null-homologous\n")
+        except:
+            self.write("Error: " + sys.exec_info()[0] + "\n")
 
     def theta_n_btn_cmd(self):
         """
@@ -229,16 +261,20 @@ class Tk_tHFK(tHFK):
         try:
             n = int(self.n_entry.get())
         except ValueError:
-            self.write("Error: n must be an integer")
+            self.write("Error: n must be an integer\n")
             return
         
-        if self.theta_n(n):
-            self.write(u"\u03B8_n is null-homologous")
-        else:
-            self.write(u"\u03B8_n is NOT null-homologous")
+        try:
+            if self.theta_n(n):
+                self.write(u"\u03B8_" + str(n) + " is null-homologous\n")
+            else:
+                self.write(u"\u03B8_" + str(n) + " is NOT null-homologous\n")
+        except:
+            self.write("Error: " + sys.exec_info()[0] + "\n")
 
     def abort_btn_cmd(self):
         for p in self._process_list:
             if p.is_alive():
                 p.terminate()
         self._process_list = []
+        self._write_queue = mp.Queue()
