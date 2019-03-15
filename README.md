@@ -91,6 +91,7 @@ if (TkHFK):
 ```
 to this
 ```
+invariantmenu = Menu(menubar, tearoff=0)
 if (TkHFK):
     invariantmenu.add_command(label='HFK^', command=self.HFKhat)
 if (Tk_tHFK):
