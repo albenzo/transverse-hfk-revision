@@ -152,7 +152,7 @@ class Tk_tHFK(tHFK):
         self.n_var = StringVar()
         self.n_var.set("1")
         self.n_entry = Entry(self.window, width=3, text="n=")
-        self.theta_n_btn = Button(self.window, text=u"\u03B8_n", command=self._with_process(self.theta_n_btn_cmd))
+        self.theta_n_btn = Button(self.window, text=u"\u03B8_n", command=self._with_process(self.theta_n_btn_cmd), state=DISABLED)
         self.abort_btn = Button(self.window, text="Abort", command=self.abort_btn_cmd)
         self.verbose_var = BooleanVar()
         self.verbose_var.set(False)
@@ -174,13 +174,14 @@ class Tk_tHFK(tHFK):
         self.window.mainloop()
 
     def _clean_and_destroy(self):
+        """Ends _write_queue polling and destroys the window"""
         self.window.after_cancel(self._callback_id)
         self.window.destroy()
         
     def write(self,s):
         """
-        Writes the string s to the output area. Can only be written by
-        a single process at once.
+        Sends the string s to _write_queue where it will be processed
+        and written to output_area by the event loop.
         
         Parameters
         ----------
@@ -189,12 +190,27 @@ class Tk_tHFK(tHFK):
         self._write_queue.put(s)
 
     def _write_output_area(self,s):
+        """
+        Writes the string s to the output_area.
+
+        Parameters
+        ----------
+        s : str
+        """
         self.output_area.config(state=NORMAL)
         self.output_area.insert(END,s)
         self.output_area.config(state=DISABLED)
 
 
     def _with_process(self,f):
+        """
+        Takes in a no parameter function f and returns a closure
+        that runs f in a new daemon.
+
+        Parameters
+        ----------
+        f : fun: () -> ()
+        """
         def p_f():
             p = mp.Process(target=f)
             self._process_list.append(p)
@@ -203,6 +219,10 @@ class Tk_tHFK(tHFK):
         return p_f
 
     def _queue_check(self):
+        """
+        Polls _write_queue without blocking and schedules any strings
+        to be written.
+        """
         while True:
             try:
                 s = self._write_queue.get_nowait()
@@ -211,7 +231,7 @@ class Tk_tHFK(tHFK):
             else:
                 #self._write_output_area(s)
                 self.window.after_idle(self._write_output_area, s)
-        self._callback_id = self.window.after(500,self._queue_check)
+        self._callback_id = self.window.after(100, self._queue_check)
     
     def l_plus_btn_cmd(self):
         """Calls lambda_plus and prints the result to the output area."""
@@ -220,8 +240,8 @@ class Tk_tHFK(tHFK):
                 self.write(u"\u03BB^+ is null-homologous\n")
             else:
                 self.write(u"\u03BB^+ is NOT null-homologous\n")
-        except:
-            self.write("Error: " + sys.exec_info()[0] + "\n")
+        except Exception as e:
+            self.write(str(e))
 
     def l_minus_btn_cmd(self):
         """Calls lambda_minus and prints the result to the output area."""
@@ -230,8 +250,8 @@ class Tk_tHFK(tHFK):
                 self.write(u"\u03BB^- is null-homologous\n")
             else:
                 self.write(u"\u03BB^- is NOT null-homologous\n")
-        except:
-            self.write("Error: " + sys.exec_info()[0] + "\n")
+        except Exception as e:
+            self.write(str(e))
 
     def d_plus_btn_cmd(self):
         """Calls d_lambda_plus and prints the result to the output area."""
@@ -240,8 +260,8 @@ class Tk_tHFK(tHFK):
                 self.write(u"\u03B4_1 \u03BB^+ is null-homologous\n")
             else:
                 self.write(u"\u03B4_1 \u03BB^+ is NOT null-homologous\n")
-        except:
-            self.write("Error: " + sys.exec_info()[0] + "\n")
+        except Exception as e:
+            self.write(str(e))
 
     def d_minus_btn_cmd(self):
         """Calls d_lambda_minus and prints the result to the output area."""
@@ -250,8 +270,8 @@ class Tk_tHFK(tHFK):
                 self.write(u"\u03B4_1 \u03BB^- is null-homologous\n")
             else:
                 self.write(u"\u03B4_1 \u03BB^- is NOT null-homologous\n")
-        except:
-            self.write("Error: " + sys.exec_info()[0] + "\n")
+        except Exception as e:
+            self.write(str(e))
 
     def theta_n_btn_cmd(self):
         """
@@ -269,10 +289,14 @@ class Tk_tHFK(tHFK):
                 self.write(u"\u03B8_" + str(n) + " is null-homologous\n")
             else:
                 self.write(u"\u03B8_" + str(n) + " is NOT null-homologous\n")
-        except:
-            self.write("Error: " + sys.exec_info()[0] + "\n")
+        except Exception as e:
+            self.write(str(e))
 
     def abort_btn_cmd(self):
+        """
+        Sends SIGTERM to any processes spawned by the window. Then
+        creates a new _write_queue.
+        """
         for p in self._process_list:
             if p.is_alive():
                 p.terminate()

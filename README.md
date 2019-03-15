@@ -82,10 +82,20 @@ except:
     Tk_tHFK=None
 ```
 
-2. Add this line within the __init__ method 
+2. Within the `__init__` method for the class Gridlink change this
 ```
+if (TkHFK):
+    invariantmenu = Menu(menubar, tearoff=0)
+    invariantmenu.add_command(label='HFK^', command=self.HFKhat)
+    menubar.add_cascade(label='Invariants', menu=invariantmenu)
+```
+to this
+```
+if (TkHFK):
+    invariantmenu.add_command(label='HFK^', command=self.HFKhat)
 if (Tk_tHFK):
     invariantmenu.add_command(label="transverseHFK", command=self.tHFK)
+menubar.add_cascade(label='Invariants', menu=invariantmenu)
 ```
 
 3. Add the following method to the gridlink class
@@ -97,7 +107,6 @@ def tHFK(self):
         return
     Xlist, Olist = self.get_XOlists()
     t_hfk_object = Tk_tHFK([x+1 for x in Xlist], [o+1 for o in Olist], name=self.window.title())
-
 ```
 
 Now after installing gridlink via setup.py and installing the tHFK python
