@@ -50,11 +50,13 @@ struct arguments  {
   int max_time;
 };
 
+typedef int (*printf_t) (const char * format, ...);
 #define SILENT 0
 #define QUIET 1
 #define VERBOSE 2
 
 static int verbosity = SILENT;
+printf_t print_ptr = printf;
 
 struct Grid {
   char Xs[MAX_INDEX];
@@ -198,7 +200,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
  */
 void timeout(const int sig) {
   if (SIGALRM == sig) {
-    printf("Timeout reached. Terminating\n");
+    (*print_ptr)("Timeout reached. Terminating\n");
     exit(0);
   }
 }
@@ -354,7 +356,7 @@ int main(int argc, char **argv) {
   }
 
   if (!is_grid(&G)) {
-    printf("Invalid grid\n");
+    (*print_ptr)("Invalid grid\n");
     exit(1);
   }
 
@@ -367,17 +369,17 @@ int main(int argc, char **argv) {
   }
 
   if (QUIET <= get_verbosity()) {
-    printf("\n \nCalculating graph for LL invariant\n");
+    (*print_ptr)("\n \nCalculating graph for LL invariant\n");
     print_state(G.Xs, &G);
   }
   if (null_homologous_D0Q(G.Xs, &G)) {
-    printf("LL is null-homologous\n");
+    (*print_ptr)("LL is null-homologous\n");
   } else {
-    printf("LL is NOT null-homologous\n");
+    (*print_ptr)("LL is NOT null-homologous\n");
   }
 
   if (QUIET <= get_verbosity()) {
-    printf("\n \nCalculating graph for UR invariant\n");
+    (*print_ptr)("\n \nCalculating graph for UR invariant\n");
   }
   if (G.Xs[G.arc_index - 1] == G.arc_index) {
     UR[0] = 1;
@@ -404,24 +406,24 @@ int main(int argc, char **argv) {
   }
 
   if (null_homologous_D0Q(UR, &G)) {
-    printf("UR is null-homologous\n");
+    (*print_ptr)("UR is null-homologous\n");
   } else {
-    printf("UR is NOT null-homologous\n");
+    (*print_ptr)("UR is NOT null-homologous\n");
   };
 
   if (QUIET <= get_verbosity()) {
-    printf("\n \nCalculating graph for D1[LL] invariant\n");
+    (*print_ptr)("\n \nCalculating graph for D1[LL] invariant\n");
     print_state(G.Xs, &G);
   }
 
   if (null_homologous_D1Q(G.Xs, &G)) {
-    printf("D1[LL] is null-homologous\n");
+    (*print_ptr)("D1[LL] is null-homologous\n");
   } else {
-    printf("D1[LL] is NOT null-homologous\n");
+    (*print_ptr)("D1[LL] is NOT null-homologous\n");
   }
 
   if (QUIET <= get_verbosity()) {
-    printf("\n \nCalculating graph for D1[UR] invariant\n");
+    (*print_ptr)("\n \nCalculating graph for D1[UR] invariant\n");
   }
 
   if (G.Xs[G.arc_index - 1] == G.arc_index) {
@@ -444,9 +446,9 @@ int main(int argc, char **argv) {
   }
 
   if (null_homologous_D1Q(UR, &G)) {
-    printf("D1[UR] is null-homologous\n");
+    (*print_ptr)("D1[UR] is null-homologous\n");
   } else {
-    printf("D1[UR] is NOT null-homologous\n");
+    (*print_ptr)("D1[UR] is NOT null-homologous\n");
   };
 
   return 0;
@@ -639,20 +641,20 @@ void print_states(const StateList states, const Grid_t *const G) {
   StateList temp;
   int c;
   temp = states;
-  printf("{");
+  (*print_ptr)("{");
   c = 0;
   while ((temp != NULL) && c < 500000) {
     print_state_short(temp->data, G);
     temp = temp->nextState;
     if (temp != NULL) {
-      printf(",");
+      (*print_ptr)(",");
     };
     c++;
   };
   if (c == 500000) {
-    printf("...");
+    (*print_ptr)("...");
   };
-  printf("}");
+  (*print_ptr)("}");
 }
 
 /**
@@ -664,12 +666,12 @@ void print_states(const StateList states, const Grid_t *const G) {
 void print_state_short(const State state, const Grid_t *const G) {
   int i;
   i = 0;
-  printf("{");
+  (*print_ptr)("{");
   while (i < G->arc_index - 1) {
-    printf("%d,", state[i]);
+    (*print_ptr)("%d,", state[i]);
     i++;
   };
-  printf("%d}", state[G->arc_index - 1]);
+  (*print_ptr)("%d}", state[G->arc_index - 1]);
 }
 
 /**
@@ -683,42 +685,42 @@ void print_state(const State state, const Grid_t *const G) {
 
   j = G->arc_index;
   i = 0;
-  printf("*---");
+  (*print_ptr)("*---");
   while (i < G->arc_index - 1) {
-    printf("----");
+    (*print_ptr)("----");
     i++;
   }
-  printf("*\n");
+  (*print_ptr)("*\n");
   while (j > 0) {
     i = 0;
     while (i < G->arc_index) {
       if (G->Xs[i] == j) {
-        printf("| X ");
+        (*print_ptr)("| X ");
       } else {
         if (G->Os[i] == j) {
-          printf("| O ");
+          (*print_ptr)("| O ");
         } else {
-          printf("|   ");
+          (*print_ptr)("|   ");
         };
       };
       i++;
     };
-    printf("|\n");
+    (*print_ptr)("|\n");
     i = 0;
     while (i < G->arc_index) {
       if (state[i] == j) {
-        printf("@---");
+        (*print_ptr)("@---");
       } else {
         if (i == 0 && j > 1) {
-          printf("|---");
+          (*print_ptr)("|---");
         } else {
           if (j > 1) {
-            printf("+---");
+            (*print_ptr)("+---");
           } else {
             if (i == 0) {
-              printf("*---");
+              (*print_ptr)("*---");
             } else {
-              printf("----");
+              (*print_ptr)("----");
             };
           };
         };
@@ -726,14 +728,14 @@ void print_state(const State state, const Grid_t *const G) {
       i++;
     };
     if (j > 1) {
-      printf("|\n");
+      (*print_ptr)("|\n");
     } else {
-      printf("*\n");
+      (*print_ptr)("*\n");
     };
     j--;
   };
-  printf("\n");
-  printf("2A=M=SL+1=%d\n", NESW_pp(G->Xs, G) - NESW_pO(G->Xs, G) -
+  (*print_ptr)("\n");
+  (*print_ptr)("2A=M=SL+1=%d\n", NESW_pp(G->Xs, G) - NESW_pO(G->Xs, G) -
                                NESW_Op(G->Xs, G) + NESW_pp(G->Os, G) + 1);
 }
 
@@ -962,7 +964,7 @@ void special_homology(const int init, const int final, EdgeList *edge_list) {
     if (VERBOSE == get_verbosity() && j == 100) {
       j = 0;
       if (temp != NULL)
-        printf("Iteration number %d; contracting edge starting at (%d,%d)\n", i,
+        (*print_ptr)("Iteration number %d; contracting edge starting at (%d,%d)\n", i,
                temp->start, temp->end);
     };
     i++;
@@ -1127,7 +1129,7 @@ void print_edges(const EdgeList edge_list) {
   EdgeList temp;
   temp = edge_list;
   while (temp != NULL) {
-    printf("[%d->%d]\n", temp->start, temp->end);
+    (*print_ptr)("[%d->%d]\n", temp->start, temp->end);
     temp = (temp->nextEdge);
   };
 }
@@ -1140,21 +1142,21 @@ void print_math_edges(const EdgeList edge_list) {
   EdgeList temp;
   int t;
   temp = edge_list;
-  printf("{");
+  (*print_ptr)("{");
   t = 0;
   while (temp != NULL) {
-    printf("[%d->%d]", temp->start, temp->end);
+    (*print_ptr)("[%d->%d]", temp->start, temp->end);
     t++;
     if (t == 80) {
       temp = NULL;
-      printf("...");
+      (*print_ptr)("...");
     } else {
       temp = (temp->nextEdge);
       if (temp != NULL)
-        printf(",");
+        (*print_ptr)(",");
     }
   };
-  printf("}\n");
+  (*print_ptr)("}\n");
 }
 
 /**
@@ -1164,14 +1166,14 @@ void print_math_edges(const EdgeList edge_list) {
 void print_math_edges_a(const EdgeList edges) {
   EdgeList temp;
   temp = edges;
-  printf("{");
+  (*print_ptr)("{");
   while (temp != NULL) {
-    printf("[%d->%d]", temp->start, temp->end);
+    (*print_ptr)("[%d->%d]", temp->start, temp->end);
     temp = (temp->nextEdge);
     if (temp != NULL)
-      printf(",");
+      (*print_ptr)(",");
   };
-  printf("}");
+  (*print_ptr)("}");
 }
 
 /**
@@ -1181,14 +1183,14 @@ void print_math_edges_a(const EdgeList edges) {
 void print_vertices(const VertexList v_list) {
   VertexList temp;
   temp = v_list;
-  printf("{");
+  (*print_ptr)("{");
   while (temp != NULL) {
-    printf("%d", (temp)->data);
+    (*print_ptr)("%d", (temp)->data);
     temp = (temp)->nextVertex;
     if (temp != NULL)
-      printf(",");
+      (*print_ptr)(",");
   };
-  printf("}");
+  (*print_ptr)("}");
 }
 
 /**
@@ -1402,7 +1404,7 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
     } else {
       num_outs = num_outs + out_number;
       if (VERBOSE == get_verbosity()) {
-        printf("%d %d %d\n", num_ins, num_outs, edge_count);
+        (*print_ptr)("%d %d %d\n", num_ins, num_outs, edge_count);
       }
     };
   };
@@ -1546,7 +1548,7 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
     } else {
       num_outs = num_outs + out_number;
       if (VERBOSE == get_verbosity()) {
-        printf("%d %d %d\n", num_ins, num_outs, edge_count);
+        (*print_ptr)("%d %d %d\n", num_ins, num_outs, edge_count);
       }
     };
   };
