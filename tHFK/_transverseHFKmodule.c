@@ -13,7 +13,7 @@ int print_py(const char * format, ...) {
   char* s = malloc(201*sizeof(char));
   va_list args;
   va_start(args, format);
-  snprintf(s, 200, format, args);
+  vsnprintf(s, 200, format, args);
 
   PyObject_CallMethod(out_stream, "write", "(s)", s);
 
