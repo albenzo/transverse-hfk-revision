@@ -23,7 +23,7 @@ class tHFK:
     verbosity : int
         An integer specifying the verbosity of the methods. Must
         be 0, 1, or 2. 0 will print no information and 2 will print
-        the most.
+        the most. Defaults to 0.
 
     Note: For the methods to work the Xs and Os must be
     permutations {1,...,N} with nonoverlapping values.

@@ -40,7 +40,7 @@ static PyObject* null_homologous_D0Q_py(PyObject* self, PyObject* args, PyObject
     G.Os[i] = 0;
   }
 
-  const char* keyword_list[] = {"state","Xs", "Os", "verbosity", "out_stream", 0};
+  const char* keyword_list[] = {"state","Xs", "Os", "out_stream", "verbosity", 0};
 
   if(!(PyArg_ParseTupleAndKeywords(args, keywds, "OOOOi:null_homologous_D0Q", (char**)keyword_list, &py_state, &py_Xs, &py_Os, &py_out_stream, &py_verbosity))) {
     return NULL;
@@ -143,7 +143,7 @@ static PyObject* null_homologous_D1Q_py(PyObject* self, PyObject* args, PyObject
     G.Os[i] = 0;
   }
 
-  const char* keyword_list[] = {"state","Xs", "Os", "verbosity", "out_stream", 0};
+  const char* keyword_list[] = {"state","Xs", "Os", "out_stream", "verbosity", 0};
 
   if(!(PyArg_ParseTupleAndKeywords(args, keywds, "OOOOi:null_homologous_D1Q", (char**)keyword_list, &py_state, &py_Xs, &py_Os, &py_out_stream, &py_verbosity))) {
     return NULL;
@@ -241,6 +241,14 @@ Xs: [int]\n\
     int list specifying the Xs of the grid\n\
 Os: [int]\n\
     int list specifying the Os of the grid\n\
+out_stream : stream\n\
+    An object with a .write method that is used for inner\n\
+    printing by the methods. Does nothing if verbosity is 0.\n\
+verbosity : int\n\
+    An integer specifying the verbosity of the methods. Must\n\
+    be 0, 1, or 2. 0 will print no information and 2 will print\n\
+    the most. Defaults to 0.\n\n\
+\
 Note: Xs, Os, and state must be permutations {1,..,N}\n\
 where Xs and Os have no overlapping values.";
 static char null_homologous_D1Q_doc[] =
@@ -255,6 +263,14 @@ Xs: [int]\n\
     int list specifying the Xs of the grid\n\
 Os: [int]\n\
     int list specifying the Os of the grid\n\
+out_stream : stream\n\
+    An object with a .write method that is used for inner\n\
+    printing by the methods. Does nothing if verbosity is 0.\n\
+verbosity : int\n\
+    An integer specifying the verbosity of the methods. Must\n\
+    be 0, 1, or 2. 0 will print no information and 2 will print\n\
+    the most. Defaults to 0.\n\n\
+\
 Note: Xs, Os, and state must be permutations {1,..,N}\n\
 where Xs and Os have no overlapping values.";
 
