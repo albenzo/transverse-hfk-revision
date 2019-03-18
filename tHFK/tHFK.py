@@ -16,6 +16,14 @@ class tHFK:
         A list of integers.
     Os : [int]
         A list of integers.
+    out_stream : stream
+        An object with a .write method that is used for inner
+        printing by the methods. Does nothing if verbosity is 0.
+        Defaults to sys.stdout.
+    verbosity : int
+        An integer specifying the verbosity of the methods. Must
+        be 0, 1, or 2. 0 will print no information and 2 will print
+        the most.
 
     Note: For the methods to work the Xs and Os must be
     permutations {1,...,N} with nonoverlapping values.
@@ -49,6 +57,16 @@ class tHFK:
            List of integers
         Os : [int]
            List of integers
+
+        out_stream : stream
+            An object with a .write method that is used for inner
+            printing by the methods. Does nothing if verbosity is 0.
+            Defaults to sys.stdout.
+        verbosity : int
+            An integer specifying the verbosity of the methods. Must
+            be 0, 1, or 2. 0 will print no information and 2 will print
+            the most.
+
         Note: For the methods to work the Xs and Os must be
         permutations {1,...,N} with nonoverlapping values.
         """
@@ -183,6 +201,7 @@ class Tk_tHFK(tHFK):
         self.window.destroy()
 
     def _sync_verbosity(self, *args):
+        """Callback function to set self.verbosity when the menu option is changed."""
         self.verbosity = ['silent','quiet','verbose'].index(self.verbosity_var.get())
         
     def write(self,s):
@@ -235,7 +254,6 @@ class Tk_tHFK(tHFK):
             except mp.queues.Empty:
                 break
             else:
-                #self._write_output_area(s)
                 self.window.after_idle(self._write_output_area, s)
         self._callback_id = self.window.after(100, self._queue_check)
     
@@ -311,6 +329,7 @@ class Tk_tHFK(tHFK):
         self._write_queue = mp.Queue()
 
     def clear_btn_cmd(self):
+        """Clears output_area."""
         self.output_area.config(state=NORMAL)
         self.output_area.delete(1.0,END)
         self.output_area.config(state=DISABLED)
