@@ -155,6 +155,7 @@ class Tk_tHFK(tHFK):
         self.n_entry = Spinbox(self.window, width=3, text="n=", from_=1, to=100)
         self.theta_n_btn = Button(self.window, text=u"\u03B8_n", command=self._with_process(self.theta_n_btn_cmd), state=DISABLED)
         self.abort_btn = Button(self.window, text="Abort", command=self.abort_btn_cmd)
+        self.clear_btn = Button(self.window, text="Clear", command=self.clear_btn_cmd)
         self.verbosity_var = StringVar()
         self.verbosity_var.trace("w", self._sync_verbosity)
         self.verbosity_var.set('silent')
@@ -166,6 +167,7 @@ class Tk_tHFK(tHFK):
         self.d_minus_btn.grid(column=3,row=0)
         self.theta_n_btn.grid(column=4,row=0)
         self.abort_btn.grid(column=2,row=3)
+        self.clear_btn.grid(column=3,row=3)
         self.n_lbl.grid(column=5,row=0)
         self.n_entry.grid(column=6,row=0)
         self.verbosity_list.grid(column=0,row=1)
@@ -205,7 +207,6 @@ class Tk_tHFK(tHFK):
         self.output_area.config(state=NORMAL)
         self.output_area.insert(END,s)
         self.output_area.config(state=DISABLED)
-
 
     def _with_process(self,f):
         """
@@ -308,3 +309,8 @@ class Tk_tHFK(tHFK):
                 p.terminate()
         self._process_list = []
         self._write_queue = mp.Queue()
+
+    def clear_btn_cmd(self):
+        self.output_area.config(state=NORMAL)
+        self.output_area.delete(1.0,END)
+        self.output_area.config(state=DISABLED)
