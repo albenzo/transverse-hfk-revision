@@ -118,7 +118,7 @@ class Tk_tHFK(tHFK):
     Note: For the methods to work the Xs and Os must be
     permutations {1,...,N} with nonoverlapping values.
     """
-    def __init__(self,Xs,Os,out_stream=stdout,verbosity=0,name=None):
+    def __init__(self,Xs,Os,name=None):
         """
         Initializes the Tkinter window.
         Parameters
@@ -133,7 +133,7 @@ class Tk_tHFK(tHFK):
         Note: For the methods to work the Xs and Os must be
         permutations {1,...,N} with nonoverlapping values.
         """
-        tHFK.__init__(self, Xs ,Os, verbosity, out_stream)
+        tHFK.__init__(self, Xs ,Os, self, 0)
         self.window = Tk()
         if name:
             self.name = name
@@ -156,6 +156,7 @@ class Tk_tHFK(tHFK):
         self.theta_n_btn = Button(self.window, text=u"\u03B8_n", command=self._with_process(self.theta_n_btn_cmd), state=DISABLED)
         self.abort_btn = Button(self.window, text="Abort", command=self.abort_btn_cmd)
         self.verbosity_var = StringVar()
+        self.verbosity_var.trace("w", self._sync_verbosity)
         self.verbosity_var.set('silent')
         self.verbosity_list = OptionMenu(self.window, self.verbosity_var, 'silent', 'quiet', 'verbose')
                 
@@ -178,6 +179,9 @@ class Tk_tHFK(tHFK):
         """Ends _write_queue polling and destroys the window"""
         self.window.after_cancel(self._callback_id)
         self.window.destroy()
+
+    def _sync_verbosity(self, *args):
+        self.verbosity = ['silent','quiet','verbose'].index(self.verbosity_var.get())
         
     def write(self,s):
         """
