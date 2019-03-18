@@ -1,5 +1,6 @@
 from Tkinter import *
 import ScrolledText
+from sys import stdout
 import multiprocessing as mp
 import _tHFK
 
@@ -15,6 +16,14 @@ class tHFK:
         A list of integers.
     Os : [int]
         A list of integers.
+    out_stream : stream
+        An object with a .write method that is used for inner
+        printing by the methods. Does nothing if verbosity is 0.
+        Defaults to sys.stdout.
+    verbosity : int
+        An integer specifying the verbosity of the methods. Must
+        be 0, 1, or 2. 0 will print no information and 2 will print
+        the most. Defaults to 0.
 
     Note: For the methods to work the Xs and Os must be
     permutations {1,...,N} with nonoverlapping values.
@@ -40,7 +49,7 @@ class tHFK:
         is null-homologous. False otherwise.
     """
 
-    def __init__(self, Xs, Os):
+    def __init__(self, Xs, Os, out_stream=stdout, verbosity=0):
         """
         Parameters
         ----------
@@ -48,11 +57,23 @@ class tHFK:
            List of integers
         Os : [int]
            List of integers
+
+        out_stream : stream
+            An object with a .write method that is used for inner
+            printing by the methods. Does nothing if verbosity is 0.
+            Defaults to sys.stdout.
+        verbosity : int
+            An integer specifying the verbosity of the methods. Must
+            be 0, 1, or 2. 0 will print no information and 2 will print
+            the most.
+
         Note: For the methods to work the Xs and Os must be
         permutations {1,...,N} with nonoverlapping values.
         """
         self.Xs = Xs
         self.Os = Os
+        self.out_stream = out_stream
+        self.verbosity = verbosity
 
     def arc_index(self):
         """Returns the size of the grid specified by the Xs and Os."""
@@ -78,19 +99,19 @@ class tHFK:
     
     def lambda_plus(self):
         """Returns True if x+ is null-homologous. False otherwise."""
-        return _tHFK.null_homologous_D0Q(self.x_plus(), self.Xs, self.Os)
+        return _tHFK.null_homologous_D0Q(self.x_plus(), self.Xs, self.Os, self.out_stream, self.verbosity)
 
     def lambda_minus(self):
         """Returns True if x- is null-homologous. False otherwise."""
-        return _tHFK.null_homologous_D0Q(self.x_minus(), self.Xs, self.Os)
+        return _tHFK.null_homologous_D0Q(self.x_minus(), self.Xs, self.Os, self.out_stream, self.verbosity)
 
     def d_lambda_plus(self):
         """Returns True if d_1 x+ is null-homologous. False otherwise."""
-        return _tHFK.null_homologous_D1Q(self.x_plus(), self.Xs, self.Os)
+        return _tHFK.null_homologous_D1Q(self.x_plus(), self.Xs, self.Os, self.out_stream, self.verbosity)
 
     def d_lambda_minus(self):
         """Returns True if d_1 x- is null-homologous. False otherwise."""
-        return _tHFK.null_homologous_D1Q(self.x_minus(), self.Xs, self.Os)
+        return _tHFK.null_homologous_D1Q(self.x_minus(), self.Xs, self.Os, self.out_stream, self.verbosity)
 
     def theta_n(self, n):
         """
@@ -130,7 +151,7 @@ class Tk_tHFK(tHFK):
         Note: For the methods to work the Xs and Os must be
         permutations {1,...,N} with nonoverlapping values.
         """
-        tHFK.__init__(self, Xs ,Os)
+        tHFK.__init__(self, Xs ,Os, self, 0)
         self.window = Tk()
         if name:
             self.name = name
@@ -149,14 +170,14 @@ class Tk_tHFK(tHFK):
         self.d_plus_btn = Button(self.window, text=u"\u03B4_1 \u03BB^+", command=self._with_process(self.d_plus_btn_cmd))
         self.d_minus_btn = Button(self.window, text=u"\u03B4_1 \u03BB^-", command=self._with_process(self.d_minus_btn_cmd))
         self.n_lbl = Label(self.window,text="n=")
-        self.n_var = StringVar()
-        self.n_var.set("1")
-        self.n_entry = Entry(self.window, width=3, text="n=")
+        self.n_entry = Spinbox(self.window, width=3, text="n=", from_=1, to=100)
         self.theta_n_btn = Button(self.window, text=u"\u03B8_n", command=self._with_process(self.theta_n_btn_cmd), state=DISABLED)
         self.abort_btn = Button(self.window, text="Abort", command=self.abort_btn_cmd)
-        self.verbose_var = BooleanVar()
-        self.verbose_var.set(False)
-        self.verbosity_checkbox = Checkbutton(self.window, text="Verbose?", var=self.verbose_var)
+        self.clear_btn = Button(self.window, text="Clear", command=self.clear_btn_cmd)
+        self.verbosity_var = StringVar()
+        self.verbosity_var.trace("w", self._sync_verbosity)
+        self.verbosity_var.set('silent')
+        self.verbosity_list = OptionMenu(self.window, self.verbosity_var, 'silent', 'quiet', 'verbose')
                 
         self.l_plus_btn.grid(column=0,row=0)
         self.l_minus_btn.grid(column=1,row=0)
@@ -164,9 +185,10 @@ class Tk_tHFK(tHFK):
         self.d_minus_btn.grid(column=3,row=0)
         self.theta_n_btn.grid(column=4,row=0)
         self.abort_btn.grid(column=2,row=3)
+        self.clear_btn.grid(column=3,row=3)
         self.n_lbl.grid(column=5,row=0)
         self.n_entry.grid(column=6,row=0)
-        self.verbosity_checkbox.grid(column=0,row=1)
+        self.verbosity_list.grid(column=0,row=1)
         self.output_area.grid(column=0,row=2, columnspan=7)
 
         self._callback_id = self.window.after(0,self._queue_check)
@@ -177,6 +199,10 @@ class Tk_tHFK(tHFK):
         """Ends _write_queue polling and destroys the window"""
         self.window.after_cancel(self._callback_id)
         self.window.destroy()
+
+    def _sync_verbosity(self, *args):
+        """Callback function to set self.verbosity when the menu option is changed."""
+        self.verbosity = ['silent','quiet','verbose'].index(self.verbosity_var.get())
         
     def write(self,s):
         """
@@ -200,7 +226,6 @@ class Tk_tHFK(tHFK):
         self.output_area.config(state=NORMAL)
         self.output_area.insert(END,s)
         self.output_area.config(state=DISABLED)
-
 
     def _with_process(self,f):
         """
@@ -229,7 +254,6 @@ class Tk_tHFK(tHFK):
             except mp.queues.Empty:
                 break
             else:
-                #self._write_output_area(s)
                 self.window.after_idle(self._write_output_area, s)
         self._callback_id = self.window.after(100, self._queue_check)
     
@@ -297,8 +321,15 @@ class Tk_tHFK(tHFK):
         Sends SIGTERM to any processes spawned by the window. Then
         creates a new _write_queue.
         """
+        self.write("Aborting...\n")
         for p in self._process_list:
             if p.is_alive():
                 p.terminate()
         self._process_list = []
         self._write_queue = mp.Queue()
+
+    def clear_btn_cmd(self):
+        """Clears output_area."""
+        self.output_area.config(state=NORMAL)
+        self.output_area.delete(1.0,END)
+        self.output_area.config(state=DISABLED)
