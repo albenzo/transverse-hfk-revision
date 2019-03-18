@@ -127,9 +127,11 @@ static PyObject* null_homologous_D0Q_py(PyObject* self, PyObject* args, PyObject
 }
 
 static PyObject* null_homologous_D1Q_py(PyObject* self, PyObject* args, PyObject* keywds) {
-  PyObject* py_Xs;
-  PyObject* py_Os;
-  PyObject* py_state;
+  PyObject* py_Xs = NULL;
+  PyObject* py_Os = NULL;
+  PyObject* py_state = NULL;
+  int py_verbosity = 0;
+  PyObject* py_out_stream = NULL;
   
   Grid_t G;
   char state[MAX_INDEX];
@@ -141,9 +143,9 @@ static PyObject* null_homologous_D1Q_py(PyObject* self, PyObject* args, PyObject
     G.Os[i] = 0;
   }
 
-  const char* keyword_list[] = {"state","Xs", "Os", 0};
+  const char* keyword_list[] = {"state","Xs", "Os", "verbosity", "out_stream", 0};
 
-  if(!(PyArg_ParseTupleAndKeywords(args, keywds, "OOO|i:null_homologous_D0Q", (char**)keyword_list, &py_state, &py_Xs, &py_Os))) {
+  if(!(PyArg_ParseTupleAndKeywords(args, keywds, "OOOOi:null_homologous_D1Q", (char**)keyword_list, &py_state, &py_Xs, &py_Os, &py_out_stream, &py_verbosity))) {
     return NULL;
   }
       
@@ -199,18 +201,26 @@ static PyObject* null_homologous_D1Q_py(PyObject* self, PyObject* args, PyObject
     PyErr_SetString(error, "state, Xs, and Os must be lists containing [1,...,N] exactly once with no matching indices between Xs and Os");
     return NULL;
   }
-  /*
-  if(NULL == py_verbose) {
-    set_verbosity(false);
-  }
-  else if (!PyBool_Check(py_verbose)) {
-    PyErr_SetString(error, "verbosity must be passed a boolean value");
+  else if (verbosity < 0 || 2 < verbosity) {
+    PyErr_SetString(error, "verbosity must be passed an integer 0, 1, or 2.");
     return NULL;
   }
   else {
-    set_verbosity((int)PyInt_AS_LONG(py_verbose));
+    set_verbosity(py_verbosity);
   }
-  */
+
+  if(NULL == py_out_stream) {
+    PyErr_SetString(error, "An out stream must be specified.");
+    return NULL;
+  }
+  else if (!PyObject_HasAttrString(py_out_stream, "write")){
+    PyErr_SetString(error, "The out stream must implement the write method.");
+    return NULL;
+  }
+  else {
+    out_stream = py_out_stream;
+  }
+  
   if(null_homologous_D1Q(state,&G)) {
     Py_RETURN_TRUE;
   }
