@@ -321,7 +321,7 @@ class Tk_tHFK(tHFK):
         Sends SIGTERM to any processes spawned by the window. Then
         creates a new _write_queue.
         """
-        self.write("Aborting...\n")
+        self._write_output_area("Aborting...\n")
         for p in self._process_list:
             if p.is_alive():
                 p.terminate()
