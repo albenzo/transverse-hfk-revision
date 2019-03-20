@@ -679,7 +679,7 @@ void print_state(const State state, const Grid_t *const G) {
     j--;
   };
   printf("\n");
-  printf("2A=M=SL+1=%d\n", NESW_pp(G->Xs, G) - NESW_pO(G->Xs, G) -
+  printf("2A=M=SL+1=%d\n\n", NESW_pp(G->Xs, G) - NESW_pO(G->Xs, G) -
                                NESW_Op(G->Xs, G) + NESW_pp(G->Os, G) + 1);
 }
 
@@ -1106,7 +1106,7 @@ void print_edges(const EdgeList edge_list) {
   EdgeList temp;
   temp = edge_list;
   while (temp != NULL) {
-    printf("[%d->%d]\n", temp->start, temp->end);
+    printf("[%d -> %d]\n", temp->start, temp->end);
     temp = (temp->nextEdge);
   };
 }
@@ -1122,7 +1122,7 @@ void print_math_edges(const EdgeList edge_list) {
   printf("{");
   t = 0;
   while (temp != NULL) {
-    printf("[%d->%d]", temp->start, temp->end);
+    printf("[%d -> %d]", temp->start, temp->end);
     t++;
     if (t == 80) {
       temp = NULL;
@@ -1293,6 +1293,7 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
   //
   //THIS IS THE ACTUAL ALGORITHM LOOP
   ans = 0;
+  int current_pos=1;
   while (new_ins != NULL && !ans) {
     //sets the present_in states to current working states (B_i-1)
     present_in = new_ins;
@@ -1302,6 +1303,7 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
     new_outs = NULL;
     //loop until there are no in states left to look at in B_i-1
     //this is to make (A_i)
+    if(verbose) printf("Gathering A_%d:\n",current_pos);
     while (present_in != NULL) {
       free_state_list(really_new_outs);
       in_number++;
@@ -1344,11 +1346,16 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
         //Appends edge to edge_list and then increments edge count
         edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
                                    edge_list);
+
         edge_count++;
       }
       //goes to the next state in B_i-1 to look for rectangles into it
       present_in = present_in->nextState;
     };
+    if(verbose) {
+       print_edges(edge_list);
+       printf("\n");
+    }
     //Initialize things to calculate B_i from A_i
     free_state_list(prev_ins);
     prev_ins = new_ins;
@@ -1360,6 +1367,7 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
     out_number = 0;
     present_out = new_outs;
     //loop until there is no states left to look at in A_i to make B_i
+    if(verbose) printf("Gathering B_%d:\n",current_pos);
     while (present_out != NULL) {
       out_number++;
       //set really_new_ins to be states with rectangles pointing into them from 
@@ -1405,24 +1413,34 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
       //point to
       present_out = present_out->nextState;
     };
+    if(verbose) {
+        print_edges(edge_list);
+        printf("\n");
+    }
     //Clears memory of unneccary info (A_i-1) and initializes things for next
     //iteration of the algorithm
     free_state_list(prev_outs);
     prev_outs = new_outs;
     new_outs = NULL;
     //Contract edges in edge list
+    if(verbose) printf("Contracting edges from 0 to %d:\n",prev_in_number);
     special_homology(0, prev_in_number, &edge_list);
+    if(verbose) {
+        print_edges(edge_list);
+        printf("\n");
+    }
     //calculates answer (ie if nullhomologous or not) if it can be calculated
     if ((edge_list == NULL) || (edge_list->start != 0)) {
       //nullhomologous if edge_list is empty or A_0 no longer points to anything
       ans = 1;
+      printf("No edges pointing out of A_0!\n");
       free_state_list(new_ins);
       free_state_list(new_outs);
       new_ins = NULL;
     } else if (edge_list->end <= prev_in_number) {
-      //not nullhomologous if no new_ins after contraction and A_0 still points
-      //This is because no future states found will affect contractions of  A_0 edges
+      //not nullhomologous if edge still pointing from A_0 to B_i-1
       ans = 0;
+      printf("There exist edges pointing from A_0 to B_%d! No future contractions will remove this edge!\n",current_pos-1);
       free_state_list(new_ins);
       free_state_list(new_outs);
       new_ins = NULL;
@@ -1430,9 +1448,14 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
       //set num_out for next loop through algorithm
       num_outs = num_outs + out_number;
       if (verbose) {
-        printf("%d %d %d\n", num_ins, num_outs, edge_count);
+        printf("Total number of states in B_i up to B_%d (before any contraction): %d \n",current_pos-1,prev_in_number);
+        printf("Total number of states in A_i up to A_%d (before any contraction): %d \n",current_pos,num_outs);
+        printf("Total number of states in B_i up to B_%d (before any contraction): %d \n",current_pos, num_ins+in_number);
+        printf("Total number of edges  up to A_%d and B_%d (before any contraction): %d \n",current_pos,current_pos, edge_count);
+        printf("\n");
       }
     };
+    current_pos++;
   };
   return (ans);
 }
