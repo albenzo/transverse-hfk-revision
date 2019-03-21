@@ -3,4 +3,5 @@ transverseHFK
 build/
 *.pyc
 *.swp
+*.swo
 *dSYM
