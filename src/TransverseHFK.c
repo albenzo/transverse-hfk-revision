@@ -120,6 +120,8 @@ EdgeList append_ordered(const int, const int, const EdgeList);
 int NESW_pO(const char *const, const Grid_t *const);
 int NESW_Op(const char *const, const Grid_t *const);
 int NESW_pp(const char *const, const Grid_t *const);
+int writhe(const Grid_t *const);
+void cusps(int *, const Grid_t *const);
 
 void print_state(const State, const Grid_t *const);
 void print_state_short(const State, const Grid_t *const);
@@ -128,6 +130,7 @@ void print_states(const StateList, const Grid_t *const);
 void print_math_edges(const EdgeList);
 void print_math_edges_a(const EdgeList);
 void print_vertices(const VertexList);
+void print_grid_perm(const Grid_t *const G);
 
 int get_verbosity(void);
 void set_verbosity(const int);
@@ -340,6 +343,10 @@ int main(int argc, char **argv) {
 
   char UR[MAX_INDEX];
   int i;
+  int Writhe = 0;
+  int up_down_cusps[2] = {0,0};
+  int tb;
+  int r;
 
   Grid_t G;
   
@@ -367,10 +374,23 @@ int main(int argc, char **argv) {
     }
     alarm(args.max_time);
   }
+  
+  if(QUIET <= get_verbosity()) {
+    Writhe = writhe(&G);
+    cusps(up_down_cusps,&G);
+  }
 
   if (QUIET <= get_verbosity()) {
     (*print_ptr)("\n \nCalculating graph for LL invariant\n");
     print_state(G.Xs, &G);
+    (*print_ptr)("Writhe = %d\n",Writhe);
+    (*print_ptr)("Up Cusps: %d\nDown Cusps: %d\n",up_down_cusps[0],up_down_cusps[1]);
+    tb = Writhe- .5 * (up_down_cusps[0]+up_down_cusps[1]);
+    r = .5 * (up_down_cusps[1] - up_down_cusps[0]);
+    (*print_ptr)("tb(G) = %d\n",tb);
+    (*print_ptr)("r(G) = %d\n",r);
+    (*print_ptr)("2A(x+) = M(x+) = sl(x+)+1 = %d\n",tb - r + 1);
+    (*print_ptr)("2A(x-) = M(x-) = sl(x-)+1 = %d\n\n",tb + r + 1);
   }
   if (null_homologous_D0Q(G.Xs, &G)) {
     (*print_ptr)("LL is null-homologous\n");
@@ -400,9 +420,14 @@ int main(int argc, char **argv) {
     }
     ++i;
   }
-  
   if (QUIET <= get_verbosity()) {
     print_state(UR, &G);
+    (*print_ptr)("Writhe = %d\n",Writhe);
+    (*print_ptr)("Up Cusps: %d\nDown Cusps: %d\n",up_down_cusps[0],up_down_cusps[1]);
+    (*print_ptr)("tb(G) = %d\n",tb);
+    (*print_ptr)("r(G) = %d\n",r);
+    (*print_ptr)("2A(x+) = M(x+) = sl(x+)+1 = %d\n",tb - r + 1);
+    (*print_ptr)("2A(x-) = M(x-) = sl(x-)+1 = %d\n\n",tb + r + 1);
   }
 
   if (null_homologous_D0Q(UR, &G)) {
@@ -414,6 +439,12 @@ int main(int argc, char **argv) {
   if (QUIET <= get_verbosity()) {
     (*print_ptr)("\n \nCalculating graph for D1[LL] invariant\n");
     print_state(G.Xs, &G);
+    (*print_ptr)("Writhe = %d\n",Writhe);
+    (*print_ptr)("Up Cusps: %d\nDown Cusps: %d\n",up_down_cusps[0],up_down_cusps[1]);
+    (*print_ptr)("tb(G) = %d\n",tb);
+    (*print_ptr)("r(G) = %d\n",r);
+    (*print_ptr)("2A(x+) = M(x+) = sl(x+)+1 = %d\n",tb - r + 1);
+    (*print_ptr)("2A(x-) = M(x-) = sl(x-)+1 = %d\n\n",tb + r + 1);
   }
 
   if (null_homologous_D1Q(G.Xs, &G)) {
@@ -443,6 +474,12 @@ int main(int argc, char **argv) {
 
   if (QUIET <= get_verbosity()) {
     print_state(UR, &G);
+    (*print_ptr)("Writhe = %d\n",Writhe);
+    (*print_ptr)("Up Cusps: %d\nDown Cusps: %d\n",up_down_cusps[0],up_down_cusps[1]);
+    (*print_ptr)("tb(G) = %d\n",tb);
+    (*print_ptr)("r(G) = %d\n",r);
+    (*print_ptr)("2A(x+) = M(x+) = sl(x+)+1 = %d\n",tb - r + 1);
+    (*print_ptr)("2A(x-) = M(x-) = sl(x-)+1 = %d\n\n",tb + r + 1);
   }
 
   if (null_homologous_D1Q(UR, &G)) {
@@ -738,8 +775,11 @@ void print_state(const State state, const Grid_t *const G) {
     j--;
   };
   (*print_ptr)("\n");
-  (*print_ptr)("2A=M=SL+1=%d\n", NESW_pp(G->Xs, G) - NESW_pO(G->Xs, G) -
-                               NESW_Op(G->Xs, G) + NESW_pp(G->Os, G) + 1);
+  print_grid_perm(G);
+  (*print_ptr)("\n");
+ // (*print_ptr)("2A=M=SL+1=%d\n", NESW_pp(G->Xs, G) - NESW_pO(G->Xs, G) -
+ //                              NESW_Op(G->Xs, G) + NESW_pp(G->Os, G) + 1);
+ // (*print_ptr)("\n");
 }
 
 /**
@@ -1165,7 +1205,7 @@ void print_edges(const EdgeList edge_list) {
   EdgeList temp;
   temp = edge_list;
   while (temp != NULL) {
-    (*print_ptr)("[%d->%d]\n", temp->start, temp->end);
+    (*print_ptr)("[%d -> %d]\n", temp->start, temp->end);
     temp = (temp->nextEdge);
   };
 }
@@ -1713,7 +1753,7 @@ int NESW_Op(const char *const x, const Grid_t *const G) {
  * Sum over each point in the permutation count the number of points in
  * the same permutation that occur to the northeast
  * @param x a permutation
- * @param G working gridn
+ * @param G working grid
  * @return an int containing the quantity described above
  */
 int NESW_pp(const char *const x, const Grid_t *const G) {
@@ -1730,4 +1770,117 @@ int NESW_pp(const char *const x, const Grid_t *const G) {
     i++;
   };
   return (ans);
+}
+
+/**
+ * Prints the permutations of the Grid, ie the X O code inputed 
+ * by the user
+ * @param G working grid
+ */
+void print_grid_perm(const Grid_t *const G) {
+  int i=0;
+  (*print_ptr)("X's [");
+  while(i < G->arc_index) {
+    (*print_ptr)(" %d",G->Xs[i]);
+    if(i != G->arc_index-1) (*print_ptr)(",");
+    i++;
+  }
+  (*print_ptr)(" ]\nO's [");
+  i=0;
+  while(i < G->arc_index) {
+    (*print_ptr)(" %d",G->Os[i]);
+    if(i != G->arc_index-1) (*print_ptr)(",");
+    i++;
+  }
+  (*print_ptr)(" ]\n");
+}
+
+/* Computes the writhe of the passed grid
+ * @param G working grid
+ * @return writhe of the grid
+ */
+int writhe(const Grid_t *const G) {
+   int i=1, j=0, k=0;
+   int maxXO, minXO;
+   int writhe = 0;
+   int temp_X, temp_O;
+   int current_X, current_O;
+   while(i < G->arc_index) {
+     temp_X = G->Xs[i]-'0';
+     temp_O = G->Os[i]-'0';
+     minXO = min(temp_X,temp_O);
+     if(minXO==temp_X) maxXO = temp_O;
+     else maxXO = temp_X;
+     j=0;
+     while(j<i) {
+       current_X = G->Xs[j]-'0';
+       current_O = G->Os[j]-'0';
+       if(minXO < current_X && maxXO > current_X ) {
+         k=i+1;
+         while(k < G->arc_index) {
+           if(G->Os[k]-'0' == current_X) {
+             if(maxXO == temp_X) writhe++;
+             else writhe--;
+           }
+           k++;
+         }
+       }
+       if(minXO < current_O && maxXO > current_O) {
+         k=i+1;
+         while(k < G->arc_index) {
+           if(G->Xs[k]-'0' == current_O) {
+             if(maxXO == temp_O) writhe++;
+             else writhe--;
+           }
+           k++;
+         }
+       }
+       j++;
+     }
+     i++;
+   }
+   return writhe;
+}
+
+/*computes up_down_cusps array, which stores the number of up cusps in first
+ * position and number of down cusps in second
+ * @param up_down_cusps a length two int array
+ * @param G working grid
+ * @return number of up cusps stored in the first param and down cusps in the second
+ */
+void cusps(int * up_down_cusps, const Grid_t *const G) {
+  int i=0, j=0;
+  while(i < G->arc_index) {
+    if(G->Xs[i] < G->Os[i]) {
+        j=i+1;
+        while(j < G->arc_index) {
+          if(G->Os[j] == G->Xs[i]) up_down_cusps[0]++;
+          j++;
+        }
+    }
+    if(G->Os[i] < G->Xs[i]) {
+      j=i+1;
+      while(j < G->arc_index) {
+        if(G->Xs[j] == G->Os[i]) up_down_cusps[1]++;
+        j++;
+      }
+    }
+
+    if(G->Xs[i] > G->Os[i]) {
+      j=0;
+      while(j < i) {
+        if(G->Os[j] == G->Xs[i]) up_down_cusps[1]++;
+        j++;
+      }
+    }
+    if(G->Os[i] > G->Xs[i]) {
+      j=0;
+      while(j < i) {
+        if(G->Xs[j] == G->Os[i]) up_down_cusps[0]++;
+        j++;
+      }
+    }
+
+    i++;
+  }
 }
