@@ -14,6 +14,25 @@ Calculating graph for LL invariant
 *---------------@---*
 
 2A=M=SL+1=-4
+Gathering A_1:
+[0->1]
+[1->1]
+[2->1]
+[3->1]
+[4->1]
+[5->1]
+
+Gathering B_1:
+[0->1]
+[1->1]
+[2->1]
+[3->1]
+[4->1]
+[5->1]
+
+Contracting edges from 0 to 1:
+
+No edges pointing out of A_0!
 LL is null-homologous
 
  
@@ -31,6 +50,25 @@ Calculating graph for UR invariant
 *---@---------------*
 
 2A=M=SL+1=-4
+Gathering A_1:
+[0->1]
+[1->1]
+[2->1]
+[3->1]
+[4->1]
+[5->1]
+
+Gathering B_1:
+[0->1]
+[1->1]
+[2->1]
+[3->1]
+[4->1]
+[5->1]
+
+Contracting edges from 0 to 1:
+
+No edges pointing out of A_0!
 UR is null-homologous
 
  
