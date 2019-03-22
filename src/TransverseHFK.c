@@ -28,7 +28,7 @@ static const char args_doc[] = "-i [ArcIndex] -X [Xs] -O [Os]";
 
 static struct argp_option options[] = {
     {"verbose", 'v', 0, 0, "Produce verbose output", 0},
-    {"quiet" , 'q' , 0, 0, "Produce some extraneous output", 0},
+    {"quiet", 'q', 0, 0, "Produce some extraneous output", 0},
     {"silent", 's', 0, 0, "Don't produce any extraneous output", 0},
     {"index", 'i', "ArcIndex", 0, "ArcIndex of the grid", 0},
     {"Xs", 'X', "[...]", 0, "List of Xs", 0},
@@ -39,14 +39,14 @@ static struct argp_option options[] = {
 // Temporary location
 static error_t parse_opt(int, char *, struct argp_state *);
 static struct argp argp = {options, parse_opt, args_doc, doc, 0, 0, 0};
-struct arguments  {
+struct arguments {
   int arc_index;
-  char* Xs;
-  char* Os;
+  char *Xs;
+  char *Os;
   int max_time;
 };
 
-typedef int (*printf_t) (const char * format, ...);
+typedef int (*printf_t)(const char *format, ...);
 #define SILENT 0
 #define QUIET 1
 #define VERBOSE 2
@@ -96,7 +96,7 @@ EdgeList prepend_edge(const int, const int, const EdgeList);
 StateList fixed_wt_rectangles_out_of(const int, const State,
                                      const Grid_t *const);
 StateList swap_cols(const int, const int, const State, const Grid_t *const);
-int get_number(const State, const StateList, const Grid_t* const);
+int get_number(const State, const StateList, const Grid_t *const);
 void free_state_list(StateList);
 int null_homologous_D0Q(const State, const Grid_t *const);
 int null_homologous_D1Q(const State, const Grid_t *const);
@@ -139,17 +139,13 @@ int eq_state(const State a, const State b, const Grid_t *const G) {
   return (!strncmp(a, b, G->arc_index));
 }
 
-int get_verbosity() {
-  return verbosity;
-}
+int get_verbosity() { return verbosity; }
 
-void set_verbosity(const int val) {
-  verbosity = val;
-}
+void set_verbosity(const int val) { verbosity = val; }
 
 static error_t parse_opt(int key, char *arg, struct argp_state *state) {
-  struct arguments* args = state->input; 
-  
+  struct arguments *args = state->input;
+
   switch (key) {
   case 'v':
     set_verbosity(VERBOSE);
@@ -176,12 +172,10 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     break;
   case 'X': {
     args->Xs = arg;
-  }
-    break;
+  } break;
   case 'O': {
     args->Os = arg;
-  }
-    break;
+  } break;
   default:
     break;
   }
@@ -276,27 +270,28 @@ int is_grid(const Grid_t *const G) {
 }
 
 /**
- * Determines whether the supplied state is a valid grid state for the supplied grid
+ * Determines whether the supplied state is a valid grid state for the supplied
+ * grid
  * @param state the grid state
  * @param G the grid
  * @return 1 if the state is valid, 0 otherwise
  */
 int is_state(const State state, const Grid_t *const G) {
-  for(int i = 0; i< G->arc_index; ++i) {
-    if(state[i] <= 0 || state[i] > G->arc_index) {
+  for (int i = 0; i < G->arc_index; ++i) {
+    if (state[i] <= 0 || state[i] > G->arc_index) {
       return 0;
     }
 
     int found_i = 0;
-    
-    for(int j = 0; j < G->arc_index; ++j) {
-      if(state[j] == i+1) {
+
+    for (int j = 0; j < G->arc_index; ++j) {
+      if (state[j] == i + 1) {
         found_i = 1;
         break;
       }
     }
 
-    if(!found_i) {
+    if (!found_i) {
       return 0;
     }
   }
@@ -311,25 +306,25 @@ int main(int argc, char **argv) {
   args.Os = NULL;
   argp_parse(&argp, argc, argv, 0, 0, &args);
 
-  if(args.arc_index == -1) {
+  if (args.arc_index == -1) {
     fprintf(stderr, "transverseHFK: Missing arc_index\n");
     exit(1);
   }
 
-  if(args.Xs == NULL) {
+  if (args.Xs == NULL) {
     fprintf(stderr, "transverseHFK: Missing Xs\n");
     exit(1);
   }
 
-  if(args.Os == NULL) {
+  if (args.Os == NULL) {
     fprintf(stderr, "transverseHFK: Missing Os\n");
     exit(1);
   }
 
   Grid_t G;
   G.arc_index = args.arc_index;
-  G.Xs = malloc(sizeof(char)*G.arc_index);
-  G.Os = malloc(sizeof(char)*G.arc_index);
+  G.Xs = malloc(sizeof(char) * G.arc_index);
+  G.Os = malloc(sizeof(char) * G.arc_index);
 
   if (-1 == build_permutation(G.Xs, args.Xs, args.arc_index)) {
     fprintf(stderr, "transverseHFK: Malformatted Xs\n");
@@ -345,10 +340,10 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  State UR = malloc(sizeof(char)*G.arc_index);
+  State UR = malloc(sizeof(char) * G.arc_index);
   int i;
   int Writhe = 0;
-  int up_down_cusps[2] = {0,0};
+  int up_down_cusps[2] = {0, 0};
   int tb;
   int r;
 
@@ -368,19 +363,20 @@ int main(int argc, char **argv) {
   }
 
   Writhe = writhe(&G);
-  cusps(up_down_cusps,&G);
-  tb = Writhe- .5 * (up_down_cusps[0]+up_down_cusps[1]);
+  cusps(up_down_cusps, &G);
+  tb = Writhe - .5 * (up_down_cusps[0] + up_down_cusps[1]);
   r = .5 * (up_down_cusps[1] - up_down_cusps[0]);
-  
+
   if (QUIET <= get_verbosity()) {
     (*print_ptr)("\n \nCalculating graph for LL invariant\n");
     print_state(G.Xs, &G);
-    (*print_ptr)("Writhe = %d\n",Writhe);
-    (*print_ptr)("Up Cusps: %d\nDown Cusps: %d\n",up_down_cusps[0],up_down_cusps[1]);
-    (*print_ptr)("tb(G) = %d\n",tb);
-    (*print_ptr)("r(G) = %d\n",r);
-    (*print_ptr)("2A(x+) = M(x+) = sl(x+)+1 = %d\n",tb - r + 1);
-    (*print_ptr)("2A(x-) = M(x-) = sl(x-)+1 = %d\n\n",tb + r + 1);
+    (*print_ptr)("Writhe = %d\n", Writhe);
+    (*print_ptr)("Up Cusps: %d\nDown Cusps: %d\n", up_down_cusps[0],
+                 up_down_cusps[1]);
+    (*print_ptr)("tb(G) = %d\n", tb);
+    (*print_ptr)("r(G) = %d\n", r);
+    (*print_ptr)("2A(x+) = M(x+) = sl(x+)+1 = %d\n", tb - r + 1);
+    (*print_ptr)("2A(x-) = M(x-) = sl(x-)+1 = %d\n\n", tb + r + 1);
   }
   if (null_homologous_D0Q(G.Xs, &G)) {
     (*print_ptr)("LL is null-homologous\n");
@@ -407,12 +403,13 @@ int main(int argc, char **argv) {
   }
   if (QUIET <= get_verbosity()) {
     print_state(UR, &G);
-    (*print_ptr)("Writhe = %d\n",Writhe);
-    (*print_ptr)("Up Cusps: %d\nDown Cusps: %d\n",up_down_cusps[0],up_down_cusps[1]);
-    (*print_ptr)("tb(G) = %d\n",tb);
-    (*print_ptr)("r(G) = %d\n",r);
-    (*print_ptr)("2A(x+) = M(x+) = sl(x+)+1 = %d\n",tb - r + 1);
-    (*print_ptr)("2A(x-) = M(x-) = sl(x-)+1 = %d\n\n",tb + r + 1);
+    (*print_ptr)("Writhe = %d\n", Writhe);
+    (*print_ptr)("Up Cusps: %d\nDown Cusps: %d\n", up_down_cusps[0],
+                 up_down_cusps[1]);
+    (*print_ptr)("tb(G) = %d\n", tb);
+    (*print_ptr)("r(G) = %d\n", r);
+    (*print_ptr)("2A(x+) = M(x+) = sl(x+)+1 = %d\n", tb - r + 1);
+    (*print_ptr)("2A(x-) = M(x-) = sl(x-)+1 = %d\n\n", tb + r + 1);
   }
 
   if (null_homologous_D0Q(UR, &G)) {
@@ -424,12 +421,13 @@ int main(int argc, char **argv) {
   if (QUIET <= get_verbosity()) {
     (*print_ptr)("\n \nCalculating graph for D1[LL] invariant\n");
     print_state(G.Xs, &G);
-    (*print_ptr)("Writhe = %d\n",Writhe);
-    (*print_ptr)("Up Cusps: %d\nDown Cusps: %d\n",up_down_cusps[0],up_down_cusps[1]);
-    (*print_ptr)("tb(G) = %d\n",tb);
-    (*print_ptr)("r(G) = %d\n",r);
-    (*print_ptr)("2A(x+) = M(x+) = sl(x+)+1 = %d\n",tb - r + 1);
-    (*print_ptr)("2A(x-) = M(x-) = sl(x-)+1 = %d\n\n",tb + r + 1);
+    (*print_ptr)("Writhe = %d\n", Writhe);
+    (*print_ptr)("Up Cusps: %d\nDown Cusps: %d\n", up_down_cusps[0],
+                 up_down_cusps[1]);
+    (*print_ptr)("tb(G) = %d\n", tb);
+    (*print_ptr)("r(G) = %d\n", r);
+    (*print_ptr)("2A(x+) = M(x+) = sl(x+)+1 = %d\n", tb - r + 1);
+    (*print_ptr)("2A(x-) = M(x-) = sl(x-)+1 = %d\n\n", tb + r + 1);
   }
 
   if (null_homologous_D1Q(G.Xs, &G)) {
@@ -459,12 +457,13 @@ int main(int argc, char **argv) {
 
   if (QUIET <= get_verbosity()) {
     print_state(UR, &G);
-    (*print_ptr)("Writhe = %d\n",Writhe);
-    (*print_ptr)("Up Cusps: %d\nDown Cusps: %d\n",up_down_cusps[0],up_down_cusps[1]);
-    (*print_ptr)("tb(G) = %d\n",tb);
-    (*print_ptr)("r(G) = %d\n",r);
-    (*print_ptr)("2A(x+) = M(x+) = sl(x+)+1 = %d\n",tb - r + 1);
-    (*print_ptr)("2A(x-) = M(x-) = sl(x-)+1 = %d\n\n",tb + r + 1);
+    (*print_ptr)("Writhe = %d\n", Writhe);
+    (*print_ptr)("Up Cusps: %d\nDown Cusps: %d\n", up_down_cusps[0],
+                 up_down_cusps[1]);
+    (*print_ptr)("tb(G) = %d\n", tb);
+    (*print_ptr)("r(G) = %d\n", r);
+    (*print_ptr)("2A(x+) = M(x+) = sl(x+)+1 = %d\n", tb - r + 1);
+    (*print_ptr)("2A(x-) = M(x-) = sl(x-)+1 = %d\n\n", tb + r + 1);
   }
 
   if (null_homologous_D1Q(UR, &G)) {
@@ -534,7 +533,7 @@ int min(const int a, const int b) {
 StateList new_rectangles_out_of(const StateList prevs, const State incoming,
                                 const Grid_t *const G) {
   StateList temp, ans;
-  State temp_state = malloc(sizeof(char)*G->arc_index);
+  State temp_state = malloc(sizeof(char) * G->arc_index);
   int LL;
   int w, h, m, n, i;
   ans = NULL;
@@ -586,7 +585,7 @@ StateList new_rectangles_out_of(const StateList prevs, const State incoming,
 StateList new_rectangles_into(const StateList prevs, const State incoming,
                               const Grid_t *const G) {
   StateList ans, temp;
-  State temp_state = malloc(sizeof(char)*G->arc_index);
+  State temp_state = malloc(sizeof(char) * G->arc_index);
   int LL, m, n;
   int w, h;
   int i;
@@ -645,7 +644,7 @@ StateList swap_cols(const int x1, const int x2, const State incoming,
   int i;
   i = 0;
   ans = malloc(sizeof(StateNode_t));
-  ans->data = malloc(sizeof(char)*G->arc_index);
+  ans->data = malloc(sizeof(char) * G->arc_index);
 
   while (i < G->arc_index) {
     ans->data[i] = incoming[i];
@@ -746,11 +745,11 @@ void print_state(const State state, const Grid_t *const G) {
             if (i == 0) {
               (*print_ptr)("*---");
             } else {
-                if(i==0){
-                  (*print_ptr)("----");
-                } else {
-                    (*print_ptr)("----");
-                };
+              if (i == 0) {
+                (*print_ptr)("----");
+              } else {
+                (*print_ptr)("----");
+              };
             };
           };
         };
@@ -994,8 +993,9 @@ void special_homology(const int init, const int final, EdgeList *edge_list) {
     if (VERBOSE == get_verbosity() && j == 100) {
       j = 0;
       if (temp != NULL)
-        (*print_ptr)("Iteration number %d; contracting edge starting at (%d,%d)\n", i,
-               temp->start, temp->end);
+        (*print_ptr)(
+            "Iteration number %d; contracting edge starting at (%d,%d)\n", i,
+            temp->start, temp->end);
     };
     i++;
     j++;
@@ -1013,7 +1013,7 @@ void special_homology(const int init, const int final, EdgeList *edge_list) {
  * @param edge_list the EdgeList
  */
 void contract(const int a, const int b, EdgeList *edge_list) {
-  //Initialization
+  // Initialization
   EdgeList temp;
   EdgeList prev;
   VertexList parents, kids, temp_kids, temp_parents;
@@ -1025,89 +1025,89 @@ void contract(const int a, const int b, EdgeList *edge_list) {
   temp_parents = NULL;
   last_parent = NULL;
   last_kid = NULL;
-  //Loops through edge_list edges that end at b or start at a 
+  // Loops through edge_list edges that end at b or start at a
   while (*edge_list != NULL &&
          ((*edge_list)->end == b || (*edge_list)->start == a)) {
-    //If the edge goes from a to b we remove it from the edge_list
+    // If the edge goes from a to b we remove it from the edge_list
     if (((*edge_list)->end == b) && ((*edge_list)->start == a)) {
       temp = *edge_list;
       *edge_list = (*edge_list)->nextEdge;
       free(temp);
     } else {
-      //if the edge ends at b but doesnt start at a we add the parent vertex of 
-      //the edge to a VertexList called last_parents
+      // if the edge ends at b but doesnt start at a we add the parent vertex of
+      // the edge to a VertexList called last_parents
       if ((*edge_list)->end == b) {
-        //Initializes last_parent if it hasnt yet
+        // Initializes last_parent if it hasnt yet
         if (last_parent == NULL) {
           parents = prepend_vertex((*edge_list)->start, NULL);
           last_parent = parents;
         } else {
-          //Adds vertex to last_parent
+          // Adds vertex to last_parent
           temp_parents = prepend_vertex((*edge_list)->start, NULL);
           last_parent->nextVertex = temp_parents;
           last_parent = last_parent->nextVertex;
         };
-        //Removes the edge from edge_list
+        // Removes the edge from edge_list
         temp = *edge_list;
         *edge_list = (*edge_list)->nextEdge;
         free(temp);
       } else if ((*edge_list)->start == a) {
-        //If the edge starts at a but doesnt end at b we add the kid vertex of
-        //the edge to a VertexList called last_kids
-        
-        //Initializes last_kid if it hasnt yet  
+        // If the edge starts at a but doesnt end at b we add the kid vertex of
+        // the edge to a VertexList called last_kids
+
+        // Initializes last_kid if it hasnt yet
         if (last_kid == NULL) {
           kids = prepend_vertex((*edge_list)->end, kids);
           last_kid = kids;
         } else {
-          //Adds vertex to last_kids
+          // Adds vertex to last_kids
           temp_kids = prepend_vertex((*edge_list)->end, NULL);
           last_kid->nextVertex = temp_kids;
           last_kid = last_kid->nextVertex;
         };
-        //Removes the edge from edge_list
+        // Removes the edge from edge_list
         temp = *edge_list;
         *edge_list = (*edge_list)->nextEdge;
         free(temp);
       };
     };
   };
-  //Initializes prev and temp for next 2 loops
+  // Initializes prev and temp for next 2 loops
   prev = *edge_list;
   if (*edge_list != NULL) {
     temp = ((*edge_list)->nextEdge);
   } else {
     temp = NULL;
   };
-  //Loops through edges that have a start vertex occuring before a
+  // Loops through edges that have a start vertex occuring before a
   while (temp != NULL && (temp)->start < a) {
-    //If corresponding edge ends at b we add he parent of the edge to the 
-    //VertexList last_parent
+    // If corresponding edge ends at b we add he parent of the edge to the
+    // VertexList last_parent
     if ((temp)->end == b) {
-      //Initializes last_parent if it hasnt before
+      // Initializes last_parent if it hasnt before
       if (last_parent == NULL) {
         parents = prepend_vertex((temp)->start, NULL);
         last_parent = parents;
       } else {
-        //adds vertex to last_parent
+        // adds vertex to last_parent
         temp_parents = prepend_vertex((temp)->start, NULL);
         last_parent->nextVertex = temp_parents;
         last_parent = last_parent->nextVertex;
       };
-      //Iterates prev and temp to nextEdge and removes edge from temp edge_list
+      // Iterates prev and temp to nextEdge and removes edge from temp edge_list
       (prev->nextEdge) = (temp->nextEdge);
       free(temp);
       temp = prev->nextEdge;
     } else {
-      //Iterates prev and temp
+      // Iterates prev and temp
       temp = (temp)->nextEdge;
       prev = (prev)->nextEdge;
     };
   };
-  //Loops through edges in temp starting at a
+  // Loops through edges in temp starting at a
   while (temp != NULL && (temp)->start == a) {
-    //if the edge does not end at b we add its kid vertex to the vertex_list 
-    //last_kid
+    // if the edge does not end at b we add its kid vertex to the vertex_list
+    // last_kid
     if (temp->end != b) {
       if (last_kid == NULL) {
         kids = prepend_vertex(temp->end, NULL);
@@ -1118,15 +1118,17 @@ void contract(const int a, const int b, EdgeList *edge_list) {
         last_kid = last_kid->nextVertex;
       };
     };
-    //Iterates prev and temp to the nextEdge and removes edge from temp edge_list
+    // Iterates prev and temp to the nextEdge and removes edge from temp
+    // edge_list
     (prev)->nextEdge = temp->nextEdge;
     free(temp);
     temp = (prev)->nextEdge;
   };
-  //Loops through remaining temp edges in order to get edges pointing from vertex
-  //occuring after a to b
+  // Loops through remaining temp edges in order to get edges pointing from
+  // vertex
+  // occuring after a to b
   while (temp != NULL) {
-    //If the edge ends at b we add its parent to VertexList parents
+    // If the edge ends at b we add its parent to VertexList parents
     if ((temp)->end == b) {
       if (last_parent == NULL) {
         parents = prepend_vertex(temp->start, NULL);
@@ -1136,18 +1138,18 @@ void contract(const int a, const int b, EdgeList *edge_list) {
         last_parent->nextVertex = temp_parents;
         last_parent = last_parent->nextVertex;
       };
-      //Iterate and remove
+      // Iterate and remove
       (prev)->nextEdge = (temp)->nextEdge;
       free(temp);
       temp = (prev)->nextEdge;
     } else {
-      //Iterate
+      // Iterate
       temp = (temp)->nextEdge;
       prev = (prev)->nextEdge;
     }
   };
-  //Modifies edge_list based on calculated parents and kids.
-  //see add_mod_two_lists 
+  // Modifies edge_list based on calculated parents and kids.
+  // see add_mod_two_lists
   *edge_list = add_mod_two_lists(parents, kids, edge_list);
 }
 
@@ -1158,7 +1160,8 @@ void contract(const int a, const int b, EdgeList *edge_list) {
  * @return a StateList removing a from v
  * @see eq_state
  */
-StateList remove_state(const State a, const StateList v, const Grid_t *const G) {
+StateList remove_state(const State a, const StateList v,
+                       const Grid_t *const G) {
   StateList temp, prev;
   StateList s_list = v;
   prev = v;
@@ -1350,7 +1353,7 @@ StateList fixed_wt_rectangles_out_of(const int wt, const State incoming,
  * @return nonzero if nullhomologous and zero otherwise.
  */
 int null_homologous_D0Q(const State init, const Grid_t *const G) {
-  //Initialization of variables
+  // Initialization of variables
   StateList new_ins, new_outs, last_new_in, last_new_out, temp;
   StateList prev_ins, prev_outs;
   StateList really_new_outs = NULL, really_new_ins = NULL;
@@ -1363,57 +1366,61 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
   int num_new_ins = 0;
   int num_new_outs = 0;
   StateList present_in, present_out;
-  //Creates first edge for edge list pointing from A_0 to init 
+  // Creates first edge for edge list pointing from A_0 to init
   EdgeList edge_list = prepend_edge(0, 1, NULL);
-  //More initialization
+  // More initialization
   prev_outs = NULL;
   prev_ins = NULL;
   new_ins = malloc(sizeof(StateNode_t));
-  new_ins->data = malloc(sizeof(char)*G->arc_index);
+  new_ins->data = malloc(sizeof(char) * G->arc_index);
   i = 0;
-  //sets new_ins to be initial state (IE initialize B_0)  
+  // sets new_ins to be initial state (IE initialize B_0)
   while (i < G->arc_index) {
-  //sets new_ins to be init state  
+    // sets new_ins to be init state
     new_ins->data[i] = init[i];
     i++;
   };
   new_ins->nextState = NULL;
-  //This loop goes until either new_ins is empty or we have an answer(ans)
-  //The ith loop creates the A_i and B_i sets from A_i-1 and B_i-1 and then contracts edges
-  //new_ins is empty implies that there is no more contracting to affect A_0 connected edges
+  // This loop goes until either new_ins is empty or we have an answer(ans)
+  // The ith loop creates the A_i and B_i sets from A_i-1 and B_i-1 and then
+  // contracts edges
+  // new_ins is empty implies that there is no more contracting to affect A_0
+  // connected edges
   //
-  //THIS IS THE ACTUAL ALGORITHM LOOP
+  // THIS IS THE ACTUAL ALGORITHM LOOP
   ans = 0;
-  int current_pos=1;
+  int current_pos = 1;
   while (new_ins != NULL && !ans) {
-    //sets the present_in states to current working states (B_i-1)
+    // sets the present_in states to current working states (B_i-1)
     present_in = new_ins;
-    //resets variables from last loop
+    // resets variables from last loop
     in_number = 0;
     num_new_outs = 0;
     new_outs = NULL;
-    //loop until there are no in states left to look at in B_i-1
-    //this is to make (A_i)
-    if(get_verbosity()>=VERBOSE) {
-      (*print_ptr)("Gathering A_%d:\n",current_pos);
+    // loop until there are no in states left to look at in B_i-1
+    // this is to make (A_i)
+    if (get_verbosity() >= VERBOSE) {
+      (*print_ptr)("Gathering A_%d:\n", current_pos);
     }
     while (present_in != NULL) {
       free_state_list(really_new_outs);
       in_number++;
-      //sets really_new_outs to be the states with rectangles pointing into present_in (B_i-1)
-      //that is not in prev_outs (A_i-1) (this is part of A_i coming from the current 
-      //working state, present_in)  
+      // sets really_new_outs to be the states with rectangles pointing into
+      // present_in (B_i-1)
+      // that is not in prev_outs (A_i-1) (this is part of A_i coming from the
+      // current
+      // working state, present_in)
       really_new_outs = new_rectangles_into(prev_outs, present_in->data, G);
-      //loop through all really_new_outs
+      // loop through all really_new_outs
       while (really_new_outs != NULL) {
-        //get position of really_new_outs in new_outs (ie position of current 
-        //A_i state in the set of all A_i if it is not in it yet it sets
-        //to 0)
+        // get position of really_new_outs in new_outs (ie position of current
+        // A_i state in the set of all A_i if it is not in it yet it sets
+        // to 0)
         out_number = get_number(really_new_outs->data, new_outs, G);
-        //if really_new_outs state is not in list this adds it to 
-        //the statelist new_outs
+        // if really_new_outs state is not in list this adds it to
+        // the statelist new_outs
         if (out_number == 0) {
-          //creates new_outs if empty
+          // creates new_outs if empty
           if (num_new_outs == 0) {
             new_outs = really_new_outs;
             really_new_outs = really_new_outs->nextState;
@@ -1422,7 +1429,7 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
             num_new_outs++;
             out_number = num_new_outs;
           } else {
-            //appends to new_outs if non-empty
+            // appends to new_outs if non-empty
             last_new_out->nextState = really_new_outs;
             really_new_outs = really_new_outs->nextState;
             last_new_out = last_new_out->nextState;
@@ -1431,26 +1438,26 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
             out_number = num_new_outs;
           };
         } else {
-          //removing data and skipping state if its already in the list
+          // removing data and skipping state if its already in the list
           temp = really_new_outs;
           really_new_outs = really_new_outs->nextState;
           free(temp->data);
           free(temp);
         }
-        //Appends edge to edge_list and then increments edge count
+        // Appends edge to edge_list and then increments edge count
         edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
                                    edge_list);
 
         edge_count++;
       }
-      //goes to the next state in B_i-1 to look for rectangles into it
+      // goes to the next state in B_i-1 to look for rectangles into it
       present_in = present_in->nextState;
     };
-    if(get_verbosity()>=VERBOSE) {
-       print_edges(edge_list);
-       (*print_ptr)("\n");
+    if (get_verbosity() >= VERBOSE) {
+      print_edges(edge_list);
+      (*print_ptr)("\n");
     }
-    //Initialize things to calculate B_i from A_i
+    // Initialize things to calculate B_i from A_i
     free_state_list(prev_ins);
     prev_ins = new_ins;
     i = 1;
@@ -1460,25 +1467,26 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
     new_ins = NULL;
     out_number = 0;
     present_out = new_outs;
-    //loop until there is no states left to look at in A_i to make B_i
-    if(get_verbosity()>=VERBOSE){
-      (*print_ptr)("Gathering B_%d:\n",current_pos);
+    // loop until there is no states left to look at in A_i to make B_i
+    if (get_verbosity() >= VERBOSE) {
+      (*print_ptr)("Gathering B_%d:\n", current_pos);
     }
     while (present_out != NULL) {
       out_number++;
-      //set really_new_ins to be states with rectangles pointing into them from 
-      //the current state in present_out (ie really_new_ins is the part of B_i
-      //that the current state in A_i has a recangle pointing to)
+      // set really_new_ins to be states with rectangles pointing into them from
+      // the current state in present_out (ie really_new_ins is the part of B_i
+      // that the current state in A_i has a recangle pointing to)
       really_new_ins = new_rectangles_out_of(prev_ins, present_out->data, G);
-      //loops through really_new_ins
+      // loops through really_new_ins
       while (really_new_ins != NULL) {
-        //Checks position of current really_new_ins state in new_ins (B_i), 
-        //initializes to 0 if it is not yet in the set
+        // Checks position of current really_new_ins state in new_ins (B_i),
+        // initializes to 0 if it is not yet in the set
         in_number = get_number(really_new_ins->data, new_ins, G);
-        //if really_new_ins state is not in new_ins this checks to add it to new_ins (B_i)
+        // if really_new_ins state is not in new_ins this checks to add it to
+        // new_ins (B_i)
         if (in_number == 0) {
           if (num_new_ins == 0) {
-            //creats new_ins if it does not yet exist
+            // creats new_ins if it does not yet exist
             new_ins = really_new_ins;
             really_new_ins = really_new_ins->nextState;
             new_ins->nextState = NULL;
@@ -1486,7 +1494,7 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
             num_new_ins++;
             in_number = num_new_ins;
           } else {
-            //appends really_new_ins state to new_ins (B_i)
+            // appends really_new_ins state to new_ins (B_i)
             last_new_in->nextState = really_new_ins;
             really_new_ins = really_new_ins->nextState;
             last_new_in = last_new_in->nextState;
@@ -1495,66 +1503,78 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
             in_number = num_new_ins;
           };
         } else {
-          //Frees memory and goes to next state if already in new_ins
+          // Frees memory and goes to next state if already in new_ins
           temp = really_new_ins;
           really_new_ins = really_new_ins->nextState;
           free(temp->data);
           free(temp);
         }
-        //appends the edge found btw A_i and B_i to edge_list
+        // appends the edge found btw A_i and B_i to edge_list
         edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
                                    edge_list);
         edge_count++;
       };
-      //Goes to next state in A_i to check for new states that rectangles in A_i
-      //point to
+      // Goes to next state in A_i to check for new states that rectangles in
+      // A_i
+      // point to
       present_out = present_out->nextState;
     };
-    if(get_verbosity()>=VERBOSE) {
-        print_edges(edge_list);
-        (*print_ptr)("\n");
+    if (get_verbosity() >= VERBOSE) {
+      print_edges(edge_list);
+      (*print_ptr)("\n");
     }
-    //Clears memory of unneccary info (A_i-1) and initializes things for next
-    //iteration of the algorithm
+    // Clears memory of unneccary info (A_i-1) and initializes things for next
+    // iteration of the algorithm
     free_state_list(prev_outs);
     prev_outs = new_outs;
     new_outs = NULL;
-    //Contract edges in edge list
-    if(get_verbosity()>=VERBOSE) {
-      (*print_ptr)("Contracting edges from 0 to %d:\n",prev_in_number);
+    // Contract edges in edge list
+    if (get_verbosity() >= VERBOSE) {
+      (*print_ptr)("Contracting edges from 0 to %d:\n", prev_in_number);
     }
     special_homology(0, prev_in_number, &edge_list);
-    if(get_verbosity()>=VERBOSE) {
-        print_edges(edge_list);
-        (*print_ptr)("\n");
+    if (get_verbosity() >= VERBOSE) {
+      print_edges(edge_list);
+      (*print_ptr)("\n");
     }
-    //calculates answer (ie if nullhomologous or not) if it can be calculated
+    // calculates answer (ie if nullhomologous or not) if it can be calculated
     if ((edge_list == NULL) || (edge_list->start != 0)) {
-      //nullhomologous if edge_list is empty or A_0 no longer points to anything
+      // nullhomologous if edge_list is empty or A_0 no longer points to
+      // anything
       ans = 1;
-      if(get_verbosity() >= VERBOSE) {
+      if (get_verbosity() >= VERBOSE) {
         (*print_ptr)("No edges pointing out of A_0!\n");
       }
       free_state_list(new_ins);
       free_state_list(new_outs);
       new_ins = NULL;
     } else if (edge_list->end <= prev_in_number) {
-      //not nullhomologous if edge still pointing from A_0 to B_i-1
+      // not nullhomologous if edge still pointing from A_0 to B_i-1
       ans = 0;
-      if(get_verbosity() >= VERBOSE) {
-        (*print_ptr)("There exist edges pointing from A_0 to B_%d! No future contractions will remove this edge!\n",current_pos-1);
+      if (get_verbosity() >= VERBOSE) {
+        (*print_ptr)("There exist edges pointing from A_0 to B_%d! No future "
+                     "contractions will remove this edge!\n",
+                     current_pos - 1);
       }
       free_state_list(new_ins);
       free_state_list(new_outs);
       new_ins = NULL;
     } else {
-      //set num_out for next loop through algorithm
+      // set num_out for next loop through algorithm
       num_outs = num_outs + out_number;
-      if (get_verbosity()>=VERBOSE) {
-        (*print_ptr)("Total number of states in B_i up to B_%d (before any contraction): %d \n",current_pos-1,prev_in_number);
-        (*print_ptr)("Total number of states in A_i up to A_%d (before any contraction): %d \n",current_pos,num_outs);
-        (*print_ptr)("Total number of states in B_i up to B_%d (before any contraction): %d \n",current_pos, num_ins+in_number);
-        (*print_ptr)("Total number of edges  up to A_%d and B_%d (before any contraction): %d \n",current_pos,current_pos, edge_count);
+      if (get_verbosity() >= VERBOSE) {
+        (*print_ptr)("Total number of states in B_i up to B_%d (before any "
+                     "contraction): %d \n",
+                     current_pos - 1, prev_in_number);
+        (*print_ptr)("Total number of states in A_i up to A_%d (before any "
+                     "contraction): %d \n",
+                     current_pos, num_outs);
+        (*print_ptr)("Total number of states in B_i up to B_%d (before any "
+                     "contraction): %d \n",
+                     current_pos, num_ins + in_number);
+        (*print_ptr)("Total number of edges  up to A_%d and B_%d (before any "
+                     "contraction): %d \n",
+                     current_pos, current_pos, edge_count);
         (*print_ptr)("\n");
       }
     };
@@ -1570,7 +1590,7 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
  * @return nonzero if nullhomologous and zero otherwise
  */
 int null_homologous_D1Q(const State init, const Grid_t *const G) {
-  //Initialization of variables
+  // Initialization of variables
   StateList new_ins, new_outs, last_new_in, last_new_out, temp;
   StateList prev_ins, prev_outs;
   StateList really_new_outs = NULL, really_new_ins = NULL;
@@ -1779,23 +1799,25 @@ int NESW_pp(const State x, const Grid_t *const G) {
 }
 
 /**
- * Prints the permutations of the Grid, ie the X O code inputed 
+ * Prints the permutations of the Grid, ie the X O code inputed
  * by the user
  * @param G working grid
  */
 void print_grid_perm(const Grid_t *const G) {
-  int i=0;
+  int i = 0;
   (*print_ptr)("X's [");
-  while(i < G->arc_index) {
-    (*print_ptr)(" %d",G->Xs[i]);
-    if(i != G->arc_index-1) (*print_ptr)(",");
+  while (i < G->arc_index) {
+    (*print_ptr)(" %d", G->Xs[i]);
+    if (i != G->arc_index - 1)
+      (*print_ptr)(",");
     i++;
   }
   (*print_ptr)(" ]\nO's [");
-  i=0;
-  while(i < G->arc_index) {
-    (*print_ptr)(" %d",G->Os[i]);
-    if(i != G->arc_index-1) (*print_ptr)(",");
+  i = 0;
+  while (i < G->arc_index) {
+    (*print_ptr)(" %d", G->Os[i]);
+    if (i != G->arc_index - 1)
+      (*print_ptr)(",");
     i++;
   }
   (*print_ptr)(" ]\n");
@@ -1806,83 +1828,94 @@ void print_grid_perm(const Grid_t *const G) {
  * @return writhe of the grid
  */
 int writhe(const Grid_t *const G) {
-   int i=1, j=0, k=0;
-   int maxXO, minXO;
-   int writhe = 0;
-   int temp_X, temp_O;
-   int current_X, current_O;
-   while(i < G->arc_index) {
-     temp_X = G->Xs[i]-'0';
-     temp_O = G->Os[i]-'0';
-     minXO = min(temp_X,temp_O);
-     if(minXO==temp_X) maxXO = temp_O;
-     else maxXO = temp_X;
-     j=0;
-     while(j<i) {
-       current_X = G->Xs[j]-'0';
-       current_O = G->Os[j]-'0';
-       if(minXO < current_X && maxXO > current_X ) {
-         k=i+1;
-         while(k < G->arc_index) {
-           if(G->Os[k]-'0' == current_X) {
-             if(maxXO == temp_X) writhe++;
-             else writhe--;
-           }
-           k++;
-         }
-       }
-       if(minXO < current_O && maxXO > current_O) {
-         k=i+1;
-         while(k < G->arc_index) {
-           if(G->Xs[k]-'0' == current_O) {
-             if(maxXO == temp_O) writhe++;
-             else writhe--;
-           }
-           k++;
-         }
-       }
-       j++;
-     }
-     i++;
-   }
-   return writhe;
+  int i = 1, j = 0, k = 0;
+  int maxXO, minXO;
+  int writhe = 0;
+  int temp_X, temp_O;
+  int current_X, current_O;
+  while (i < G->arc_index) {
+    temp_X = G->Xs[i] - '0';
+    temp_O = G->Os[i] - '0';
+    minXO = min(temp_X, temp_O);
+    if (minXO == temp_X)
+      maxXO = temp_O;
+    else
+      maxXO = temp_X;
+    j = 0;
+    while (j < i) {
+      current_X = G->Xs[j] - '0';
+      current_O = G->Os[j] - '0';
+      if (minXO < current_X && maxXO > current_X) {
+        k = i + 1;
+        while (k < G->arc_index) {
+          if (G->Os[k] - '0' == current_X) {
+            if (maxXO == temp_X)
+              writhe++;
+            else
+              writhe--;
+          }
+          k++;
+        }
+      }
+      if (minXO < current_O && maxXO > current_O) {
+        k = i + 1;
+        while (k < G->arc_index) {
+          if (G->Xs[k] - '0' == current_O) {
+            if (maxXO == temp_O)
+              writhe++;
+            else
+              writhe--;
+          }
+          k++;
+        }
+      }
+      j++;
+    }
+    i++;
+  }
+  return writhe;
 }
 
 /*computes up_down_cusps array, which stores the number of up cusps in first
  * position and number of down cusps in second
  * @param up_down_cusps a length two int array
  * @param G working grid
- * @return number of up cusps stored in the first param and down cusps in the second
+ * @return number of up cusps stored in the first param and down cusps in the
+ * second
  */
-void cusps(int * up_down_cusps, const Grid_t *const G) {
-  int i=0, j=0;
-  while(i < G->arc_index) {
-    if(G->Xs[i] < G->Os[i]) {
-        j=i+1;
-        while(j < G->arc_index) {
-          if(G->Os[j] == G->Xs[i]) up_down_cusps[0]++;
-          j++;
-        }
+void cusps(int *up_down_cusps, const Grid_t *const G) {
+  int i = 0, j = 0;
+  while (i < G->arc_index) {
+    if (G->Xs[i] < G->Os[i]) {
+      j = i + 1;
+      while (j < G->arc_index) {
+        if (G->Os[j] == G->Xs[i])
+          up_down_cusps[0]++;
+        j++;
+      }
     }
-    if(G->Os[i] < G->Xs[i]) {
-      j=i+1;
-      while(j < G->arc_index) {
-        if(G->Xs[j] == G->Os[i]) up_down_cusps[1]++;
+    if (G->Os[i] < G->Xs[i]) {
+      j = i + 1;
+      while (j < G->arc_index) {
+        if (G->Xs[j] == G->Os[i])
+          up_down_cusps[1]++;
         j++;
       }
     }
 
-    if(G->Xs[i] > G->Os[i]) {
-      j=0;
-      while(j < i) {
-        if(G->Os[j] == G->Xs[i]) up_down_cusps[1]++;
+    if (G->Xs[i] > G->Os[i]) {
+      j = 0;
+      while (j < i) {
+        if (G->Os[j] == G->Xs[i])
+          up_down_cusps[1]++;
         j++;
       }
     }
-    if(G->Os[i] > G->Xs[i]) {
-      j=0;
-      while(j < i) {
-        if(G->Xs[j] == G->Os[i]) up_down_cusps[0]++;
+    if (G->Os[i] > G->Xs[i]) {
+      j = 0;
+      while (j < i) {
+        if (G->Xs[j] == G->Os[i])
+          up_down_cusps[0]++;
         j++;
       }
     }
