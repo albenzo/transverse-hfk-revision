@@ -106,13 +106,22 @@ def tHFK(self):
         showwarning('Knots only',
                     'Sorry, I can only compute transverseHFK invariants for knots')
         return
-    Xlist, Olist = self.get_XOlists()
-    t_hfk_object = Tk_tHFK([x+1 for x in Xlist], [o+1 for o in Olist], name=self.window.title())
+    Olist, Xlist = self.get_XOlists()
+    Olist = [len(Olist) - Olist.index(j) - 1 for j in Olist]
+    Xlist = [len(Xlist) - Xlist.index(j) - 1 for j in Xlist]
+    if 0 in Xlist:
+        Xlist = [x+1 for x in Xlist]
+        Olist = [o+1 for o in Olist]
+    t_hfk_object = Tk_tHFK(Xlist, Olist, name=self.window.title())
 ```
 
 Now after installing gridlink via setup.py and installing the tHFK python
 library there will be a menu that allows you to run the transverseHFK 
 invariants.
+
+Note: Gridlink uses the opposite convention as to whether horizontal strands are
+below or above for crossings. When gridlink passes our program it silently converts
+the grid to match our convention.
 
 ## Platform specific notes
 Building on mac requires argp-standalone to be installed
