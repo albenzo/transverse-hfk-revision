@@ -366,19 +366,17 @@ int main(int argc, char **argv) {
     }
     alarm(args.max_time);
   }
-  
-  if(QUIET <= get_verbosity()) {
-    Writhe = writhe(&G);
-    cusps(up_down_cusps,&G);
-  }
 
+  Writhe = writhe(&G);
+  cusps(up_down_cusps,&G);
+  tb = Writhe- .5 * (up_down_cusps[0]+up_down_cusps[1]);
+  r = .5 * (up_down_cusps[1] - up_down_cusps[0]);
+  
   if (QUIET <= get_verbosity()) {
     (*print_ptr)("\n \nCalculating graph for LL invariant\n");
     print_state(G.Xs, &G);
     (*print_ptr)("Writhe = %d\n",Writhe);
     (*print_ptr)("Up Cusps: %d\nDown Cusps: %d\n",up_down_cusps[0],up_down_cusps[1]);
-    tb = Writhe- .5 * (up_down_cusps[0]+up_down_cusps[1]);
-    r = .5 * (up_down_cusps[1] - up_down_cusps[0]);
     (*print_ptr)("tb(G) = %d\n",tb);
     (*print_ptr)("r(G) = %d\n",r);
     (*print_ptr)("2A(x+) = M(x+) = sl(x+)+1 = %d\n",tb - r + 1);
@@ -769,9 +767,6 @@ void print_state(const State state, const Grid_t *const G) {
   (*print_ptr)("\n");
   print_grid_perm(G);
   (*print_ptr)("\n");
- // (*print_ptr)("2A=M=SL+1=%d\n", NESW_pp(G->Xs, G) - NESW_pO(G->Xs, G) -
- //                              NESW_Op(G->Xs, G) + NESW_pp(G->Os, G) + 1);
- // (*print_ptr)("\n");
 }
 
 /**
@@ -1399,7 +1394,9 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
     new_outs = NULL;
     //loop until there are no in states left to look at in B_i-1
     //this is to make (A_i)
-    if(get_verbosity()>=VERBOSE) printf("Gathering A_%d:\n",current_pos);
+    if(get_verbosity()>=VERBOSE) {
+      (*print_ptr)("Gathering A_%d:\n",current_pos);
+    }
     while (present_in != NULL) {
       free_state_list(really_new_outs);
       in_number++;
@@ -1451,7 +1448,7 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
     };
     if(get_verbosity()>=VERBOSE) {
        print_edges(edge_list);
-       printf("\n");
+       (*print_ptr)("\n");
     }
     //Initialize things to calculate B_i from A_i
     free_state_list(prev_ins);
@@ -1464,7 +1461,9 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
     out_number = 0;
     present_out = new_outs;
     //loop until there is no states left to look at in A_i to make B_i
-    if(get_verbosity()>=VERBOSE) printf("Gathering B_%d:\n",current_pos);
+    if(get_verbosity()>=VERBOSE){
+      (*print_ptr)("Gathering B_%d:\n",current_pos);
+    }
     while (present_out != NULL) {
       out_number++;
       //set really_new_ins to be states with rectangles pointing into them from 
