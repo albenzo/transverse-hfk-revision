@@ -13,22 +13,32 @@ Calculating graph for LL invariant
 |   |   | O |   | X |
 *---------------@---*
 
-2A=M=SL+1=-4
+X's [ 5, 4, 3, 2, 1 ]
+O's [ 3, 2, 1, 5, 4 ]
+
+Writhe = -3
+Up Cusps: 2
+Down Cusps: 4
+tb(G) = -6
+r(G) = 1
+2A(x+) = M(x+) = sl(x+)+1 = -6
+2A(x-) = M(x-) = sl(x-)+1 = -4
+
 Gathering A_1:
-[0->1]
-[1->1]
-[2->1]
-[3->1]
-[4->1]
-[5->1]
+[0 -> 1]
+[1 -> 1]
+[2 -> 1]
+[3 -> 1]
+[4 -> 1]
+[5 -> 1]
 
 Gathering B_1:
-[0->1]
-[1->1]
-[2->1]
-[3->1]
-[4->1]
-[5->1]
+[0 -> 1]
+[1 -> 1]
+[2 -> 1]
+[3 -> 1]
+[4 -> 1]
+[5 -> 1]
 
 Contracting edges from 0 to 1:
 
@@ -49,22 +59,32 @@ Calculating graph for UR invariant
 |   |   | O |   | X |
 *---@---------------*
 
-2A=M=SL+1=-4
+X's [ 5, 4, 3, 2, 1 ]
+O's [ 3, 2, 1, 5, 4 ]
+
+Writhe = -3
+Up Cusps: 2
+Down Cusps: 4
+tb(G) = -6
+r(G) = 1
+2A(x+) = M(x+) = sl(x+)+1 = -6
+2A(x-) = M(x-) = sl(x-)+1 = -4
+
 Gathering A_1:
-[0->1]
-[1->1]
-[2->1]
-[3->1]
-[4->1]
-[5->1]
+[0 -> 1]
+[1 -> 1]
+[2 -> 1]
+[3 -> 1]
+[4 -> 1]
+[5 -> 1]
 
 Gathering B_1:
-[0->1]
-[1->1]
-[2->1]
-[3->1]
-[4->1]
-[5->1]
+[0 -> 1]
+[1 -> 1]
+[2 -> 1]
+[3 -> 1]
+[4 -> 1]
+[5 -> 1]
 
 Contracting edges from 0 to 1:
 
@@ -85,7 +105,17 @@ Calculating graph for D1[LL] invariant
 |   |   | O |   | X |
 *---------------@---*
 
-2A=M=SL+1=-4
+X's [ 5, 4, 3, 2, 1 ]
+O's [ 3, 2, 1, 5, 4 ]
+
+Writhe = -3
+Up Cusps: 2
+Down Cusps: 4
+tb(G) = -6
+r(G) = 1
+2A(x+) = M(x+) = sl(x+)+1 = -6
+2A(x-) = M(x-) = sl(x-)+1 = -4
+
 D1[LL] is NOT null-homologous
 
  
@@ -102,5 +132,15 @@ Calculating graph for D1[UR] invariant
 |   |   | O |   | X |
 *---@---------------*
 
-2A=M=SL+1=-4
+X's [ 5, 4, 3, 2, 1 ]
+O's [ 3, 2, 1, 5, 4 ]
+
+Writhe = -3
+Up Cusps: 2
+Down Cusps: 4
+tb(G) = -6
+r(G) = 1
+2A(x+) = M(x+) = sl(x+)+1 = -6
+2A(x-) = M(x-) = sl(x-)+1 = -4
+
 D1[UR] is NOT null-homologous
