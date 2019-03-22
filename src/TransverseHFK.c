@@ -17,10 +17,6 @@
 #include <string.h>
 #include <unistd.h>
 
-/* Hardcoded max arcindex until dynamic allocation can be tested for
- * speed */
-#define MAX_INDEX 30
-
 const char *argp_program_version = "transverseHFK revision 0.0.1";
 const char *argp_program_bug_address = "<lmeye22@lsu.edu>";
 static const char doc[] =
@@ -45,8 +41,8 @@ static error_t parse_opt(int, char *, struct argp_state *);
 static struct argp argp = {options, parse_opt, args_doc, doc, 0, 0, 0};
 struct arguments  {
   int arc_index;
-  char Xs[MAX_INDEX];
-  char Os[MAX_INDEX];
+  char* Xs;
+  char* Os;
   int max_time;
 };
 
@@ -58,9 +54,11 @@ typedef int (*printf_t) (const char * format, ...);
 static int verbosity = SILENT;
 printf_t print_ptr = printf;
 
+typedef char *State;
+
 struct Grid {
-  char Xs[MAX_INDEX];
-  char Os[MAX_INDEX];
+  State Xs;
+  State Os;
   int arc_index;
 };
 
@@ -87,11 +85,9 @@ typedef struct StateNode StateNode_t;
 typedef StateNode_t *StateList;
 
 struct StateNode {
-  char data[MAX_INDEX];
+  State data;
   StateList nextState;
 };
-
-typedef char State[MAX_INDEX];
 
 EdgeList add_mod_two_lists(const VertexList, const VertexList,
                            const EdgeList *const);
@@ -117,9 +113,9 @@ StateList new_rectangles_into(const StateList, const State,
                               const Grid_t *const);
 EdgeList append_ordered(const int, const int, const EdgeList);
 
-int NESW_pO(const char *const, const Grid_t *const);
-int NESW_Op(const char *const, const Grid_t *const);
-int NESW_pp(const char *const, const Grid_t *const);
+int NESW_pO(const State, const Grid_t *const);
+int NESW_Op(const State, const Grid_t *const);
+int NESW_pp(const State, const Grid_t *const);
 int writhe(const Grid_t *const);
 void cusps(int *, const Grid_t *const);
 
@@ -136,10 +132,9 @@ int get_verbosity(void);
 void set_verbosity(const int);
 
 void timeout(const int);
-int perm_len(const char *const);
 int is_grid(const Grid_t *const);
-int is_state(const char *const, const Grid_t *const);
-int build_permutation(char *, char *);
+int is_state(const State, const Grid_t *const);
+int build_permutation(State, char *, int);
 int eq_state(const State a, const State b, const Grid_t *const G) {
   return (!strncmp(a, b, G->arc_index));
 }
@@ -174,22 +169,18 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     break;
   case 'i':
     args->arc_index = atoi(arg);
-    if (args->arc_index > MAX_INDEX || args->arc_index < 2) {
-      argp_failure(state, 0, 0, "ArcIndex value out of range");
+    if (args->arc_index < 2) {
+      argp_failure(state, 0, 0, "ArcIndex must be a non-negative integer");
       exit(1);
     }
     break;
-  case 'X':
-    if (-1 == build_permutation(args->Xs, arg)) {
-      argp_failure(state, 0, 0, "Malformatted Xs");
-      exit(1);
-    }
+  case 'X': {
+    args->Xs = arg;
+  }
     break;
-  case 'O':
-    if (-1 == build_permutation(args->Os, arg)) {
-      argp_failure(state, 0, 0, "Malformatted Os");
-      exit(1);
-    }
+  case 'O': {
+    args->Os = arg;
+  }
     break;
   default:
     break;
@@ -215,7 +206,7 @@ void timeout(const int sig) {
  * @param Destination for the permutation
  * @return 0 on success, -1 on failure
  */
-int build_permutation(char *perm, char *str) {
+int build_permutation(char *perm, char *str, int len) {
   if (str[0] != '[') {
     return -1;
   }
@@ -224,12 +215,12 @@ int build_permutation(char *perm, char *str) {
   long n = -1;
   int i = 0;
 
-  while (i < MAX_INDEX) {
+  while (i < len) {
     errno = 0;
     n = strtol(s, &s, 10);
 
     if ((errno == ERANGE && (n == LONG_MAX || n == LONG_MIN)) ||
-        (errno != 0 && n == 0) || (n < 1 || n > MAX_INDEX)) {
+        (errno != 0 && n == 0) || (n < 1 || n > len)) {
       return -1;
     }
 
@@ -250,31 +241,12 @@ int build_permutation(char *perm, char *str) {
 }
 
 /**
- * Returns the number of characters in the character array before a zero is
- * found
- * @param p a character array
- * @return the number of characters before a zero is found. Returns -1 if not
- * found
- */
-int perm_len(const char *const p) {
-  for (int i = 0;; ++i) {
-    if (0 == p[i]) {
-      return i;
-    }
-  }
-
-  // Will segfault before reaching this point if no 0 is found
-  return -1;
-}
-
-/**
  * Determines whether the grid specified by the parameters is valid
  * @param G working grid
  * @return 1 if the grid is valid, 0 otherwise
  */
 int is_grid(const Grid_t *const G) {
-  if (perm_len(G->Xs) != G->arc_index || perm_len(G->Os) != G->arc_index ||
-      1 >= G->arc_index || MAX_INDEX <= G->arc_index) {
+  if (1 >= G->arc_index) {
     return 0;
   }
 
@@ -310,10 +282,6 @@ int is_grid(const Grid_t *const G) {
  * @return 1 if the state is valid, 0 otherwise
  */
 int is_state(const State state, const Grid_t *const G) {
-  if(G->arc_index != perm_len(state)) {
-    return 0;
-  }
-
   for(int i = 0; i< G->arc_index; ++i) {
     if(state[i] <= 0 || state[i] > G->arc_index) {
       return 0;
@@ -339,28 +307,50 @@ int main(int argc, char **argv) {
   struct arguments args;
   args.arc_index = -1;
   args.max_time = -1;
+  args.Xs = NULL;
+  args.Os = NULL;
   argp_parse(&argp, argc, argv, 0, 0, &args);
 
-  char UR[MAX_INDEX];
+  if(args.arc_index == -1) {
+    fprintf(stderr, "transverseHFK: Missing arc_index\n");
+    exit(1);
+  }
+
+  if(args.Xs == NULL) {
+    fprintf(stderr, "transverseHFK: Missing Xs\n");
+    exit(1);
+  }
+
+  if(args.Os == NULL) {
+    fprintf(stderr, "transverseHFK: Missing Os\n");
+    exit(1);
+  }
+
+  Grid_t G;
+  G.arc_index = args.arc_index;
+  G.Xs = malloc(sizeof(char)*G.arc_index);
+  G.Os = malloc(sizeof(char)*G.arc_index);
+
+  if (-1 == build_permutation(G.Xs, args.Xs, args.arc_index)) {
+    fprintf(stderr, "transverseHFK: Malformatted Xs\n");
+    free(G.Xs);
+    free(G.Os);
+    exit(1);
+  }
+
+  if (-1 == build_permutation(G.Os, args.Os, args.arc_index)) {
+    fprintf(stderr, "transverseHFK: Malformatted Os\n");
+    free(G.Xs);
+    free(G.Os);
+    exit(1);
+  }
+
+  State UR = malloc(sizeof(char)*G.arc_index);
   int i;
   int Writhe = 0;
   int up_down_cusps[2] = {0,0};
   int tb;
   int r;
-
-  Grid_t G;
-  
-  G.arc_index = args.arc_index;
-  for(i=0; i< MAX_INDEX; ++i) {
-    if(i < G.arc_index) {
-      G.Xs[i] = args.Xs[i];
-      G.Os[i] = args.Os[i];
-    }
-    else {
-      G.Xs[i] = 0;
-      G.Os[i] = 0;
-    }
-  }
 
   if (!is_grid(&G)) {
     (*print_ptr)("Invalid grid\n");
@@ -370,23 +360,23 @@ int main(int argc, char **argv) {
   if (args.max_time > 0) {
     if (signal(SIGALRM, timeout) == SIG_ERR) {
       perror("An error occured while setting the timer");
+      free(G.Xs);
+      free(G.Os);
       exit(1);
     }
     alarm(args.max_time);
   }
-  
-  if(QUIET <= get_verbosity()) {
-    Writhe = writhe(&G);
-    cusps(up_down_cusps,&G);
-  }
 
+  Writhe = writhe(&G);
+  cusps(up_down_cusps,&G);
+  tb = Writhe- .5 * (up_down_cusps[0]+up_down_cusps[1]);
+  r = .5 * (up_down_cusps[1] - up_down_cusps[0]);
+  
   if (QUIET <= get_verbosity()) {
     (*print_ptr)("\n \nCalculating graph for LL invariant\n");
     print_state(G.Xs, &G);
     (*print_ptr)("Writhe = %d\n",Writhe);
     (*print_ptr)("Up Cusps: %d\nDown Cusps: %d\n",up_down_cusps[0],up_down_cusps[1]);
-    tb = Writhe- .5 * (up_down_cusps[0]+up_down_cusps[1]);
-    r = .5 * (up_down_cusps[1] - up_down_cusps[0]);
     (*print_ptr)("tb(G) = %d\n",tb);
     (*print_ptr)("r(G) = %d\n",r);
     (*print_ptr)("2A(x+) = M(x+) = sl(x+)+1 = %d\n",tb - r + 1);
@@ -407,16 +397,11 @@ int main(int argc, char **argv) {
     UR[0] = (char)G.Xs[G.arc_index - 1] + 1;
   };
   i = 1;
-  while (i < MAX_INDEX) {
-    if(i < G.arc_index) {
-      if (G.Xs[i - 1] == G.arc_index) {
-        UR[i] = 1;
-      } else {
-        UR[i] = G.Xs[i - 1] + 1;
-      }
-    }
-    else {
-      UR[i] = 0;
+  while (i < G.arc_index) {
+    if (G.Xs[i - 1] == G.arc_index) {
+      UR[i] = 1;
+    } else {
+      UR[i] = G.Xs[i - 1] + 1;
     }
     ++i;
   }
@@ -488,6 +473,10 @@ int main(int argc, char **argv) {
     (*print_ptr)("D1[UR] is NOT null-homologous\n");
   };
 
+  free(G.Xs);
+  free(G.Os);
+  free(UR);
+
   return 0;
 }
 
@@ -545,7 +534,7 @@ int min(const int a, const int b) {
 StateList new_rectangles_out_of(const StateList prevs, const State incoming,
                                 const Grid_t *const G) {
   StateList temp, ans;
-  State temp_state;
+  State temp_state = malloc(sizeof(char)*G->arc_index);
   int LL;
   int w, h, m, n, i;
   ans = NULL;
@@ -597,7 +586,7 @@ StateList new_rectangles_out_of(const StateList prevs, const State incoming,
 StateList new_rectangles_into(const StateList prevs, const State incoming,
                               const Grid_t *const G) {
   StateList ans, temp;
-  State temp_state;
+  State temp_state = malloc(sizeof(char)*G->arc_index);
   int LL, m, n;
   int w, h;
   int i;
@@ -656,7 +645,8 @@ StateList swap_cols(const int x1, const int x2, const State incoming,
   int i;
   i = 0;
   ans = malloc(sizeof(StateNode_t));
-  i = 0;
+  ans->data = malloc(sizeof(char)*G->arc_index);
+
   while (i < G->arc_index) {
     ans->data[i] = incoming[i];
     i++;
@@ -777,9 +767,6 @@ void print_state(const State state, const Grid_t *const G) {
   (*print_ptr)("\n");
   print_grid_perm(G);
   (*print_ptr)("\n");
- // (*print_ptr)("2A=M=SL+1=%d\n", NESW_pp(G->Xs, G) - NESW_pO(G->Xs, G) -
- //                              NESW_Op(G->Xs, G) + NESW_pp(G->Os, G) + 1);
- // (*print_ptr)("\n");
 }
 
 /**
@@ -1180,6 +1167,7 @@ StateList remove_state(const State a, const StateList v, const Grid_t *const G) 
   else if (eq_state(a, v->data, G)) {
     temp = v;
     s_list = v->nextState;
+    free(v->data);
     free(v);
     return (s_list);
   } else {
@@ -1190,6 +1178,7 @@ StateList remove_state(const State a, const StateList v, const Grid_t *const G) 
     };
     if (temp != NULL) {
       prev->nextState = temp->nextState;
+      free(temp->data);
       free(temp);
       return s_list;
     } else
@@ -1278,6 +1267,7 @@ void free_state_list(StateList states) {
   temp = states;
   while (temp != NULL) {
     states = states->nextState;
+    free(temp->data);
     free(temp);
     temp = states;
   };
@@ -1335,6 +1325,7 @@ StateList fixed_wt_rectangles_out_of(const int wt, const State incoming,
           temp = swap_cols(LL, mod(LL + w, G), incoming, G);
           if (get_number(temp->data, ans, G) != 0) {
             ans = remove_state(temp->data, ans, G);
+            free(temp->data);
             free(temp);
             temp = ans;
           } else {
@@ -1378,6 +1369,7 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
   prev_outs = NULL;
   prev_ins = NULL;
   new_ins = malloc(sizeof(StateNode_t));
+  new_ins->data = malloc(sizeof(char)*G->arc_index);
   i = 0;
   //sets new_ins to be initial state (IE initialize B_0)  
   while (i < G->arc_index) {
@@ -1402,7 +1394,9 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
     new_outs = NULL;
     //loop until there are no in states left to look at in B_i-1
     //this is to make (A_i)
-    if(get_verbosity()>=VERBOSE) printf("Gathering A_%d:\n",current_pos);
+    if(get_verbosity()>=VERBOSE) {
+      (*print_ptr)("Gathering A_%d:\n",current_pos);
+    }
     while (present_in != NULL) {
       free_state_list(really_new_outs);
       in_number++;
@@ -1440,6 +1434,7 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
           //removing data and skipping state if its already in the list
           temp = really_new_outs;
           really_new_outs = really_new_outs->nextState;
+          free(temp->data);
           free(temp);
         }
         //Appends edge to edge_list and then increments edge count
@@ -1453,7 +1448,7 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
     };
     if(get_verbosity()>=VERBOSE) {
        print_edges(edge_list);
-       printf("\n");
+       (*print_ptr)("\n");
     }
     //Initialize things to calculate B_i from A_i
     free_state_list(prev_ins);
@@ -1466,7 +1461,9 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
     out_number = 0;
     present_out = new_outs;
     //loop until there is no states left to look at in A_i to make B_i
-    if(get_verbosity()>=VERBOSE) printf("Gathering B_%d:\n",current_pos);
+    if(get_verbosity()>=VERBOSE){
+      (*print_ptr)("Gathering B_%d:\n",current_pos);
+    }
     while (present_out != NULL) {
       out_number++;
       //set really_new_ins to be states with rectangles pointing into them from 
@@ -1501,6 +1498,7 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
           //Frees memory and goes to next state if already in new_ins
           temp = really_new_ins;
           really_new_ins = really_new_ins->nextState;
+          free(temp->data);
           free(temp);
         }
         //appends the edge found btw A_i and B_i to edge_list
@@ -1514,7 +1512,7 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
     };
     if(get_verbosity()>=VERBOSE) {
         print_edges(edge_list);
-        printf("\n");
+        (*print_ptr)("\n");
     }
     //Clears memory of unneccary info (A_i-1) and initializes things for next
     //iteration of the algorithm
@@ -1522,24 +1520,30 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
     prev_outs = new_outs;
     new_outs = NULL;
     //Contract edges in edge list
-    if(get_verbosity()>=VERBOSE) printf("Contracting edges from 0 to %d:\n",prev_in_number);
+    if(get_verbosity()>=VERBOSE) {
+      (*print_ptr)("Contracting edges from 0 to %d:\n",prev_in_number);
+    }
     special_homology(0, prev_in_number, &edge_list);
     if(get_verbosity()>=VERBOSE) {
         print_edges(edge_list);
-        printf("\n");
+        (*print_ptr)("\n");
     }
     //calculates answer (ie if nullhomologous or not) if it can be calculated
     if ((edge_list == NULL) || (edge_list->start != 0)) {
       //nullhomologous if edge_list is empty or A_0 no longer points to anything
       ans = 1;
-      printf("No edges pointing out of A_0!\n");
+      if(get_verbosity() >= VERBOSE) {
+        (*print_ptr)("No edges pointing out of A_0!\n");
+      }
       free_state_list(new_ins);
       free_state_list(new_outs);
       new_ins = NULL;
     } else if (edge_list->end <= prev_in_number) {
       //not nullhomologous if edge still pointing from A_0 to B_i-1
       ans = 0;
-      printf("There exist edges pointing from A_0 to B_%d! No future contractions will remove this edge!\n",current_pos-1);
+      if(get_verbosity() >= VERBOSE) {
+        (*print_ptr)("There exist edges pointing from A_0 to B_%d! No future contractions will remove this edge!\n",current_pos-1);
+      }
       free_state_list(new_ins);
       free_state_list(new_outs);
       new_ins = NULL;
@@ -1630,6 +1634,7 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
         } else {
           temp = really_new_outs;
           really_new_outs = really_new_outs->nextState;
+          free(temp->data);
           free(temp);
         }
         edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
@@ -1671,6 +1676,7 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
         } else {
           temp = really_new_ins;
           really_new_ins = really_new_ins->nextState;
+          free(temp->data);
           free(temp);
         }
         edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
@@ -1710,7 +1716,7 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
  * @param G working Grid
  * @return an int containing the quantity described above
  */
-int NESW_pO(const char *const x, const Grid_t *const G) {
+int NESW_pO(const State x, const Grid_t *const G) {
   int i = 0, j = 0;
   int ans = 0;
   while (i < G->arc_index) {
@@ -1733,7 +1739,7 @@ int NESW_pO(const char *const x, const Grid_t *const G) {
  * @param G working Grid
  * @return an int containing the quantity described above
  */
-int NESW_Op(const char *const x, const Grid_t *const G) {
+int NESW_Op(const State x, const Grid_t *const G) {
   int i = 0, j = 0;
   int ans = 0;
   while (i < G->arc_index) {
@@ -1756,7 +1762,7 @@ int NESW_Op(const char *const x, const Grid_t *const G) {
  * @param G working grid
  * @return an int containing the quantity described above
  */
-int NESW_pp(const char *const x, const Grid_t *const G) {
+int NESW_pp(const State x, const Grid_t *const G) {
   int i = 0, j = 0;
   int ans = 0;
   while (i < G->arc_index) {
