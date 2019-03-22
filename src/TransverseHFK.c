@@ -121,7 +121,7 @@ int NESW_pO(const char *const, const Grid_t *const);
 int NESW_Op(const char *const, const Grid_t *const);
 int NESW_pp(const char *const, const Grid_t *const);
 int writhe(const Grid_t *const);
-void cusps(const Grid_t *const G, int * up_down_cusps);
+void cusps(int *, const Grid_t *const);
 
 void print_state(const State, const Grid_t *const);
 void print_state_short(const State, const Grid_t *const);
@@ -377,7 +377,7 @@ int main(int argc, char **argv) {
   
   if(QUIET <= get_verbosity()) {
     Writhe = writhe(&G);
-    cusps(&G,up_down_cusps);
+    cusps(up_down_cusps,&G);
   }
 
   if (QUIET <= get_verbosity()) {
@@ -1797,6 +1797,7 @@ void print_grid_perm(const Grid_t *const G) {
 
 /* Computes the writhe of the passed grid
  * @param G working grid
+ * @return writhe of the grid
  */
 int writhe(const Grid_t *const G) {
    int i=1, j=0, k=0;
@@ -1843,10 +1844,11 @@ int writhe(const Grid_t *const G) {
 
 /*computes up_down_cusps array, which stores the number of up cusps in first
  * position and number of down cusps in second
- *@param G working grid
- *@param up_down_cusps
+ * @param up_down_cusps a length two int array
+ * @param G working grid
+ * @return number of up cusps stored in the first param and down cusps in the second
  */
-void cusps(const Grid_t *const G, int * up_down_cusps) {
+void cusps(int * up_down_cusps, const Grid_t *const G) {
   int i=0, j=0;
   while(i < G->arc_index) {
     if(G->Xs[i] < G->Os[i]) {
