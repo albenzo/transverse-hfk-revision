@@ -127,6 +127,7 @@ void print_math_edges(const EdgeList);
 void print_math_edges_a(const EdgeList);
 void print_vertices(const VertexList);
 void print_grid_perm(const Grid_t *const G);
+void print_self_link(const Grid_t *const G);
 
 int get_verbosity(void);
 void set_verbosity(const int);
@@ -342,10 +343,6 @@ int main(int argc, char **argv) {
 
   State UR = malloc(sizeof(char) * G.arc_index);
   int i;
-  int Writhe = 0;
-  int up_down_cusps[2] = {0, 0};
-  int tb;
-  int r;
 
   if (!is_grid(&G)) {
     (*print_ptr)("Invalid grid\n");
@@ -362,21 +359,10 @@ int main(int argc, char **argv) {
     alarm(args.max_time);
   }
 
-  Writhe = writhe(&G);
-  cusps(up_down_cusps, &G);
-  tb = Writhe - .5 * (up_down_cusps[0] + up_down_cusps[1]);
-  r = .5 * (up_down_cusps[1] - up_down_cusps[0]);
-
   if (QUIET <= get_verbosity()) {
     (*print_ptr)("\n \nCalculating graph for LL invariant\n");
-    print_state(G.Xs, &G);
-    (*print_ptr)("Writhe = %d\n", Writhe);
-    (*print_ptr)("Up Cusps: %d\nDown Cusps: %d\n", up_down_cusps[0],
-                 up_down_cusps[1]);
-    (*print_ptr)("tb(G) = %d\n", tb);
-    (*print_ptr)("r(G) = %d\n", r);
-    (*print_ptr)("2A(x+) = M(x+) = sl(x+)+1 = %d\n", tb - r + 1);
-    (*print_ptr)("2A(x-) = M(x-) = sl(x-)+1 = %d\n\n", tb + r + 1);
+    print_state(G.Xs,&G);
+    print_self_link(&G);
   }
   if (null_homologous_D0Q(G.Xs, &G)) {
     (*print_ptr)("LL is null-homologous\n");
@@ -403,13 +389,7 @@ int main(int argc, char **argv) {
   }
   if (QUIET <= get_verbosity()) {
     print_state(UR, &G);
-    (*print_ptr)("Writhe = %d\n", Writhe);
-    (*print_ptr)("Up Cusps: %d\nDown Cusps: %d\n", up_down_cusps[0],
-                 up_down_cusps[1]);
-    (*print_ptr)("tb(G) = %d\n", tb);
-    (*print_ptr)("r(G) = %d\n", r);
-    (*print_ptr)("2A(x+) = M(x+) = sl(x+)+1 = %d\n", tb - r + 1);
-    (*print_ptr)("2A(x-) = M(x-) = sl(x-)+1 = %d\n\n", tb + r + 1);
+    print_self_link(&G);
   }
 
   if (null_homologous_D0Q(UR, &G)) {
@@ -421,13 +401,7 @@ int main(int argc, char **argv) {
   if (QUIET <= get_verbosity()) {
     (*print_ptr)("\n \nCalculating graph for D1[LL] invariant\n");
     print_state(G.Xs, &G);
-    (*print_ptr)("Writhe = %d\n", Writhe);
-    (*print_ptr)("Up Cusps: %d\nDown Cusps: %d\n", up_down_cusps[0],
-                 up_down_cusps[1]);
-    (*print_ptr)("tb(G) = %d\n", tb);
-    (*print_ptr)("r(G) = %d\n", r);
-    (*print_ptr)("2A(x+) = M(x+) = sl(x+)+1 = %d\n", tb - r + 1);
-    (*print_ptr)("2A(x-) = M(x-) = sl(x-)+1 = %d\n\n", tb + r + 1);
+    print_self_link(&G);
   }
 
   if (null_homologous_D1Q(G.Xs, &G)) {
@@ -457,13 +431,7 @@ int main(int argc, char **argv) {
 
   if (QUIET <= get_verbosity()) {
     print_state(UR, &G);
-    (*print_ptr)("Writhe = %d\n", Writhe);
-    (*print_ptr)("Up Cusps: %d\nDown Cusps: %d\n", up_down_cusps[0],
-                 up_down_cusps[1]);
-    (*print_ptr)("tb(G) = %d\n", tb);
-    (*print_ptr)("r(G) = %d\n", r);
-    (*print_ptr)("2A(x+) = M(x+) = sl(x+)+1 = %d\n", tb - r + 1);
-    (*print_ptr)("2A(x-) = M(x-) = sl(x-)+1 = %d\n\n", tb + r + 1);
+    print_self_link(&G);
   }
 
   if (null_homologous_D1Q(UR, &G)) {
@@ -1822,6 +1790,23 @@ void print_grid_perm(const Grid_t *const G) {
   }
   (*print_ptr)(" ]\n");
 }
+
+void print_self_link(const Grid_t *const G) {
+  int Writhe = 0;
+  int up_down_cusps[2] = {0, 0};
+  int tb;
+  int r;
+  Writhe = writhe(G);
+  cusps(up_down_cusps, G);
+  tb = Writhe - .5 * (up_down_cusps[0] + up_down_cusps[1]);
+  r = .5 * (up_down_cusps[1] - up_down_cusps[0]);
+  (*print_ptr)("Writhe = %d\n", Writhe);
+  (*print_ptr)("Up Cusps: %d\nDown Cusps: %d\n", up_down_cusps[0],
+               up_down_cusps[1]);
+  (*print_ptr)("tb(G) = %d\n", tb);
+  (*print_ptr)("r(G) = %d\n", r);
+  (*print_ptr)("2A(x+) = M(x+) = sl(x+)+1 = %d\n\n", tb - r + 1);    
+} 
 
 /* Computes the writhe of the passed grid
  * @param G working grid
