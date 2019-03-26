@@ -22,7 +22,9 @@ const char *argp_program_bug_address = "<lmeye22@lsu.edu>";
 static const char doc[] =
     "A program to calculate the Legendrian/Transverse knot invariants\
  via the algorithm described in \"Transverse knots distinguished by\
- Knot Floer Homology\" by L. Ng, P. S. Ozsvath, and D. P. Thurston.";
+ Knot Floer Homology\" by L. Ng, P. S. Ozsvath, and D. P. Thurston.\
+ If the number of sheets is not equal to 1 it instead calculates the\
+ theta invariant for the n-fold cyclic cover.";
 
 static const char args_doc[] = "-i [ArcIndex] -X [Xs] -O [Os]";
 
@@ -33,6 +35,7 @@ static struct argp_option options[] = {
     {"index", 'i', "ArcIndex", 0, "ArcIndex of the grid", 0},
     {"Xs", 'X', "[...]", 0, "List of Xs", 0},
     {"Os", 'O', "[...]", 0, "List of Os", 0},
+    {"sheets", 'n', 0, 0, "Number of sheets for cyclic branch cover. Default: 1", 0},
     {"timeout", 't', "SECONDS", 0, "Maximum time to run in seconds", 0},
     {0}};
 
@@ -41,6 +44,7 @@ static error_t parse_opt(int, char *, struct argp_state *);
 static struct argp argp = {options, parse_opt, args_doc, doc, 0, 0, 0};
 struct arguments {
   int arc_index;
+  int sheets;
   char *Xs;
   char *Os;
   int max_time;
@@ -63,6 +67,16 @@ struct Grid {
 };
 
 typedef struct Grid Grid_t;
+
+typedef char **LiftState;
+struct LiftGrid {
+  State Xs;
+  State Os;
+  int arc_index;
+  int sheets;
+};
+
+typedef struct LiftGrid LiftGrid_t;
 
 struct Vertex {
   int data;
@@ -87,6 +101,14 @@ typedef StateNode_t *StateList;
 struct StateNode {
   State data;
   StateList nextState;
+};
+
+typedef struct LiftStateNode LiftStateNode_t;
+typedef LiftStateNode_t *LiftStateList;
+
+struct LiftStateNode {
+  LiftState data;
+  LiftStateList nextState;
 };
 
 EdgeList add_mod_two_lists(const VertexList, const VertexList,
@@ -160,14 +182,21 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
   case 't':
     args->max_time = atoi(arg);
     if (args->max_time <= 0) {
-      argp_failure(state, 0, 0, "Invalid timeout");
+      argp_failure(state, 0, 0, "Invalid timeout.");
       exit(1);
     }
     break;
   case 'i':
     args->arc_index = atoi(arg);
     if (args->arc_index < 2) {
-      argp_failure(state, 0, 0, "ArcIndex must be a non-negative integer");
+      argp_failure(state, 0, 0, "ArcIndex must be a non-negative integer greater than 1.");
+      exit(1);
+    }
+    break;
+  case 'n':
+    args->sheets = atoi(arg);
+    if (args->sheets < 1) {
+      argp_failure(state, 0, 0, "The number of sheets must be atleast 1.");
       exit(1);
     }
     break;
@@ -233,6 +262,11 @@ int build_permutation(char *perm, char *str, int len) {
   }
 
   return 0;
+}
+
+// This is not correct
+void init_lift_state(LiftState *s, LiftGrid_t *G) {
+  (**s)[G->arc_index] = malloc(sizeof(char)*G->sheets*G->arc_index);
 }
 
 /**
@@ -302,6 +336,7 @@ int is_state(const State state, const Grid_t *const G) {
 int main(int argc, char **argv) {
   struct arguments args;
   args.arc_index = -1;
+  args.sheets = 1;
   args.max_time = -1;
   args.Xs = NULL;
   args.Os = NULL;
@@ -320,6 +355,83 @@ int main(int argc, char **argv) {
   if (args.Os == NULL) {
     fprintf(stderr, "transverseHFK: Missing Os\n");
     exit(1);
+  }
+
+  if (args.sheets > 1) {
+    // Do other invariant
+    LiftGrid_t G;
+    G.arc_index = args.arc_index;
+    G.sheets = args.sheets;
+    G.Xs = malloc(sizeof(char) * G.arc_index);
+    G.Os = malloc(sizeof(char) * G.arc_index);
+
+    if (-1 == build_permutation(G.Xs, args.Xs, args.arc_index)) {
+      fprintf(stderr, "transverseHFK: Malformatted Xs\n");
+      free(G.Xs);
+      free(G.Os);
+      exit(1);
+    }
+
+    if (-1 == build_permutation(G.Os, args.Os, args.arc_index)) {
+      fprintf(stderr, "transverseHFK: Malformatted Os\n");
+      free(G.Xs);
+      free(G.Os);
+      exit(1);
+    }
+
+    if(!is_lift_grid(&G)) {
+      (*print_ptr)("Invalid grid\n");
+      exit(1);
+    }
+
+    if (args.max_time > 0) {
+      if (signal(SIGALRM, timeout) == SIG_ERR) {
+        perror("An error occured while setting the timer");
+        free(G.Xs);
+        free(G.Os);
+        exit(1);
+      }
+      alarm(args.max_time);
+    }
+
+    LiftState UR_lift;
+    init_lift_state(&UR_lift, &G);
+    
+    for (int j = 0; j < G.sheets; ++j) {
+      if (G.Xs[G.arc_index - 1] == G.arc_index) {
+        UR_lift[j][0] = 1;
+      } else {
+        UR_lift[j][0] = (char)G.Xs[G.arc_index - 1] + 1;
+      };
+      for (int i = 1; i < G.arc_index; ++i) {
+        if (G.Xs[i - 1] == G.arc_index) {
+          UR_lift[j][i] = 1;
+        } else {
+          UR_lift[j][i] = G.Xs[i - 1] + 1;
+        }
+      }
+    }
+
+    if (QUIET <= get_verbosity()) {
+      (*print_ptr)("Calculating graph for lifted invariant.\n");
+      // These print statements are wrong
+      print_state(G.Xs, &G);
+      print_self_link(&G);
+    }
+
+    // Change the content of these print statements
+    if (null_homologous_lift(UR_lift, &G)) {
+      (*print_ptr)("%d: is null-homologous\n");
+    }
+    else {
+      (*print_ptr)("%d: is NOT null-homologous\n");
+    }
+
+    free(G.Xs);
+    free(G.Os);
+    free(UR_lift);
+    
+    exit(0);
   }
 
   Grid_t G;
@@ -1693,6 +1805,183 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
         (*print_ptr)("%d %d %d\n", num_ins, num_outs, edge_count);
       }
     };
+  };
+  return (ans);
+}
+
+int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
+  // Initialization of variables
+  LiftStateList new_ins, new_outs, last_new_in, last_new_out, temp;
+  LiftStateList prev_ins, prev_outs;
+  LiftStateList really_new_outs = NULL, really_new_ins = NULL;
+  int in_number, ans, prev_in_number;
+  int out_number;
+  int i;
+  int edge_count = 0;
+  int num_ins = 0;
+  int num_outs = 0;
+  int num_new_ins = 0;
+  int num_new_outs = 0;
+  LiftStateList present_in, present_out;
+  EdgeList edge_list = prepend_edge(0, 1, NULL);
+  prev_outs = NULL;
+  prev_ins = NULL;
+
+  new_ins = malloc(sizeof(LiftStateNode_t));
+  init_lift_state(&new_ins->data, G);
+  for (int i = 0; i < G->sheets; ++i) {
+    for (int j = 0; j < G->arc_index; ++j) {
+      new_ins->data[i][j] = init[i][j];
+    }
+  }
+  new_ins->nextState = NULL;
+
+  ans = 0;
+  int current_pos = 1;
+  while (new_ins != NULL && !ans) {
+    present_in = new_ins;
+    in_number = 0;
+    num_new_outs = 0;
+    new_outs = NULL;
+    if (get_verbosity() >= VERBOSE) {
+      (*print_ptr)("Gathering A_%d:\n", current_pos);
+    }
+    while (present_in != NULL) {
+      free_lift_state_list(really_new_outs);
+      in_number++;
+      really_new_outs = new_lifted_rectangles_into(prev_outs, present_in->data, G);
+      while (really_new_outs != NULL) {
+        out_number = get_lift_number(really_new_outs->data, new_outs, G);
+        if (out_number == 0) {
+          if (num_new_outs == 0) {
+            new_outs = really_new_outs;
+            really_new_outs = really_new_outs->nextState;
+            new_outs->nextState = NULL;
+            last_new_out = new_outs;
+            num_new_outs++;
+            out_number = num_new_outs;
+          } else {
+            last_new_out->nextState = really_new_outs;
+            really_new_outs = really_new_outs->nextState;
+            last_new_out = last_new_out->nextState;
+            last_new_out->nextState = NULL;
+            num_new_outs++;
+            out_number = num_new_outs;
+          };
+        } else {
+          temp = really_new_outs;
+          really_new_outs = really_new_outs->nextState;
+          free(temp->data);
+          free(temp);
+        }
+        edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
+                                   edge_list);
+
+        edge_count++;
+      }
+      present_in = present_in->nextState;
+    };
+    if (get_verbosity() >= VERBOSE) {
+      print_edges(edge_list);
+      (*print_ptr)("\n");
+    }
+    free_lift_state_list(prev_ins);
+    prev_ins = new_ins;
+    i = 1;
+    num_ins = num_ins + in_number;
+    prev_in_number = num_ins;
+    num_new_ins = 0;
+    new_ins = NULL;
+    out_number = 0;
+    present_out = new_outs;
+    if (get_verbosity() >= VERBOSE) {
+      (*print_ptr)("Gathering B_%d:\n", current_pos);
+    }
+    while (present_out != NULL) {
+      out_number++;
+      really_new_ins = new_lift_rectangles_out_of(prev_ins, present_out->data, G);
+      while (really_new_ins != NULL) {
+        in_number = get_lift_number(really_new_ins->data, new_ins, G);
+        if (in_number == 0) {
+          if (num_new_ins == 0) {
+            new_ins = really_new_ins;
+            really_new_ins = really_new_ins->nextState;
+            new_ins->nextState = NULL;
+            last_new_in = new_ins;
+            num_new_ins++;
+            in_number = num_new_ins;
+          } else {
+            last_new_in->nextState = really_new_ins;
+            really_new_ins = really_new_ins->nextState;
+            last_new_in = last_new_in->nextState;
+            last_new_in->nextState = NULL;
+            num_new_ins++;
+            in_number = num_new_ins;
+          };
+        } else {
+          temp = really_new_ins;
+          really_new_ins = really_new_ins->nextState;
+          free(temp->data);
+          free(temp);
+        }
+        edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
+                                   edge_list);
+        edge_count++;
+      };
+      present_out = present_out->nextState;
+    };
+    if (get_verbosity() >= VERBOSE) {
+      print_edges(edge_list);
+      (*print_ptr)("\n");
+    }
+    free_lift_state_list(prev_outs);
+    prev_outs = new_outs;
+    new_outs = NULL;
+    if (get_verbosity() >= VERBOSE) {
+      (*print_ptr)("Contracting edges from 0 to %d:\n", prev_in_number);
+    }
+    special_homology(0, prev_in_number, &edge_list);
+    if (get_verbosity() >= VERBOSE) {
+      print_edges(edge_list);
+      (*print_ptr)("\n");
+    }
+    if ((edge_list == NULL) || (edge_list->start != 0)) {
+      ans = 1;
+      if (get_verbosity() >= VERBOSE) {
+        (*print_ptr)("No edges pointing out of A_0!\n");
+      }
+      free_lift_state_list(new_ins);
+      free_lift_state_list(new_outs);
+      new_ins = NULL;
+    } else if (edge_list->end <= prev_in_number) {
+      ans = 0;
+      if (get_verbosity() >= VERBOSE) {
+        (*print_ptr)("There exist edges pointing from A_0 to B_%d! No future "
+                     "contractions will remove this edge!\n",
+                     current_pos - 1);
+      }
+      free_lift_state_list(new_ins);
+      free_lift_state_list(new_outs);
+      new_ins = NULL;
+    } else {
+      num_outs = num_outs + out_number;
+      if (get_verbosity() >= VERBOSE) {
+        (*print_ptr)("Total number of states in B_i up to B_%d (before any "
+                     "contraction): %d \n",
+                     current_pos - 1, prev_in_number);
+        (*print_ptr)("Total number of states in A_i up to A_%d (before any "
+                     "contraction): %d \n",
+                     current_pos, num_outs);
+        (*print_ptr)("Total number of states in B_i up to B_%d (before any "
+                     "contraction): %d \n",
+                     current_pos, num_ins + in_number);
+        (*print_ptr)("Total number of edges  up to A_%d and B_%d (before any "
+                     "contraction): %d \n",
+                     current_pos, current_pos, edge_count);
+        (*print_ptr)("\n");
+      }
+    };
+    current_pos++;
   };
   return (ans);
 }
