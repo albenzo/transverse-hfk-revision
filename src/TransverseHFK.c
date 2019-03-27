@@ -716,7 +716,7 @@ StateList new_rectangles_into(const StateList prevs, const State incoming,
 }
 
 static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G, int is_mirrored) {
-  LiftStateList temp, ans;
+  LiftStateList ans = NULL;
   double *g_Xs, *g_Os;
   LiftState temp_state;
 
@@ -788,7 +788,17 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
           check_index_gen = (((start_x + step + 1) % G->arc_index) + jump) % (G->arc_index * G->sheets);
           if (incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index] == height) {
             // add rectangle new_rects.append(((start_x, gen[start_x]), ((check_index_gen), height)))
-            height = (height - 1) % G->arc_index;
+            LiftState new_state = NULL;
+            // Initialize state with/without mirroring
+            if (0 == get_lift_number(new_state, prevs, G)) {
+              if (0 == get_lift_number(new_state, ans, G)) {
+              LiftStateNode_t* new_node = malloc(sizeof(LiftStateNode_t));
+              new_node->data = new_state;
+              new_node->nextState = ans;
+              ans = new_node;
+            }
+              
+              height = (height - 1) % G->arc_index; // Check this
           }
           step = step + 1;
           jumped_down = 0;
@@ -822,6 +832,8 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
     }
   }
 
+  free(g_Xs);
+  free(g_Os);
   return ans;
 }
 
