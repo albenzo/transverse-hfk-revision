@@ -825,12 +825,47 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
   return ans;
 }
 
-LiftStateList new_lift_rectangles_out_of(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G) {
+LiftGrid_t* mirror_lift_grid(const LiftGrid_t * const G) {
+  LiftGrid_t* G_mirror = malloc(sizeof(LiftGrid_t));
+  G_mirror->Xs = malloc(sizeof(char)*G->arc_index);
+  G_mirror->Os = malloc(sizeof(char)*G->arc_index);
+  G_mirror->arc_index = G->arc_index;
+  G_mirror->sheets = G->sheets;
+
+  for(int i=0; i<G->arc_index; ++i) {
+    G_mirror->Xs[i] = G->Xs[G->arc_index-(i+1)];
+    G_mirror->Os[i] = G->Os[G->arc_index-(i+1)];
+  }
+  return G_mirror;
+}
+
+LiftState mirror_lift_state(const LiftState state, const LiftGrid_t * const G) {
+  LiftState state_mirror;
+  init_lift_state(&state_mirror, G);
+
+  for(int i = 0; i < G->sheets; ++i) {
+    for(int j = 0; j < G->arc_index; ++j) {
+      state_mirror[j][i] = state[j][G->arc_index-(i+1)];
+      // Could also be
+      // state_mirror[j][i] = state[G->sheets-(j+1)][G->arc_index-(i+1)]
+    }
+  }
   return NULL;
 }
 
+LiftStateList new_lift_rectangles_out_of(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G) {
+  return new_lift_rectangles_out_internal(prevs, incoming, G, 0);
+}
+
 LiftStateList new_lift_rectangles_into(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G) {
-  return NULL;
+  LiftGrid_t* G_mirror = mirror_lift_grid(G);
+  LiftState incoming_mirror = mirror_lift_state(incoming, G);
+  LiftStateList ans = new_lift_rectangles_out_internal(prevs, incoming_mirror, G_mirror, 1);
+
+  free(G_mirror);
+  free(incoming_mirror);
+
+  return ans;
 }
 
 /**
