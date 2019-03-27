@@ -156,7 +156,7 @@ static PyObject *null_homologous_D1Q_py(PyObject *self, PyObject *args,
   const char *keyword_list[] = {"state",      "Xs",        "Os",
                                 "out_stream", "verbosity", 0};
 
-  if (!(PyArg_ParseTupleAndKeywords(args, keywds, "OOOOi:null_homologous_D0Q",
+  if (!(PyArg_ParseTupleAndKeywords(args, keywds, "OOOOi:null_homologous_D1Q",
                                     (char **)keyword_list, &py_state, &py_Xs,
                                     &py_Os, &py_out_stream, &py_verbosity))) {
     return NULL;
