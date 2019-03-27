@@ -22,7 +22,6 @@ Down Cusps: 4
 tb(G) = -6
 r(G) = 1
 2A(x+) = M(x+) = sl(x+)+1 = -6
-2A(x-) = M(x-) = sl(x-)+1 = -4
 
 Gathering A_1:
 [0 -> 1]
@@ -68,7 +67,6 @@ Down Cusps: 4
 tb(G) = -6
 r(G) = 1
 2A(x+) = M(x+) = sl(x+)+1 = -6
-2A(x-) = M(x-) = sl(x-)+1 = -4
 
 Gathering A_1:
 [0 -> 1]
@@ -114,7 +112,6 @@ Down Cusps: 4
 tb(G) = -6
 r(G) = 1
 2A(x+) = M(x+) = sl(x+)+1 = -6
-2A(x-) = M(x-) = sl(x-)+1 = -4
 
 D1[LL] is NOT null-homologous
 
@@ -141,6 +138,5 @@ Down Cusps: 4
 tb(G) = -6
 r(G) = 1
 2A(x+) = M(x+) = sl(x+)+1 = -6
-2A(x-) = M(x-) = sl(x-)+1 = -4
 
 D1[UR] is NOT null-homologous
