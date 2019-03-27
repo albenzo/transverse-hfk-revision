@@ -161,6 +161,9 @@ int build_permutation(State, char *, int);
 int eq_state(const State a, const State b, const Grid_t *const G) {
   return (!strncmp(a, b, G->arc_index));
 }
+int eq_lift_state(const LiftState a, const LiftState b, const LiftGrid_t *const G) {
+  return (!strncmp((char*)a, (char*)b, G->arc_index*G->sheets));
+}
 
 int get_verbosity() { return verbosity; }
 
@@ -301,6 +304,10 @@ int is_grid(const Grid_t *const G) {
     }
   }
 
+  return 1;
+}
+
+int is_lift_grid(const LiftGrid_t *const G) {
   return 1;
 }
 
@@ -708,6 +715,124 @@ StateList new_rectangles_into(const StateList prevs, const State incoming,
   return ans;
 }
 
+static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G, int is_mirrored) {
+  LiftStateList temp, ans;
+  double *g_Xs, *g_Os;
+  LiftState temp_state;
+
+  g_Xs = malloc(sizeof(double)*G->arc_index);
+  g_Os = malloc(sizeof(double)*G->arc_index);
+
+  for(int i=0; i < G->arc_index; ++i) {
+    g_Xs[i] = ((double)G->Xs[i]) - .5;
+    g_Os[i] = ((double)G->Os[i]) - .5;
+  }
+
+  init_lift_state(&temp_state, G);
+
+  for(int start_x=0; start_x < G->arc_index*G->sheets; ++start_x) {
+    int jumped_down = 0;
+    int jumped_up = 0;
+    char start_y = incoming[start_x/G->arc_index][start_x%G->arc_index];
+    int start_sheet = start_x/G->arc_index;
+    int step = 0;
+    int check_index = (start_x + step) % G->arc_index;
+    int jump = start_sheet*G->arc_index;
+    int height = (start_y - 1) % G->arc_index;
+
+    while (height != start_y) {
+      check_index = (start_x + step)%G->arc_index;
+      int check_index_gen = (((start_x + step + 1) % G->arc_index) + jump) % (G->arc_index * G->sheets);
+      int clear = 1;
+      if (height > start_y) {
+        if (g_Xs[check_index] < height && g_Xs[check_index] > start_y && clear) {
+          clear = 0;
+        }
+        if (g_Os[check_index] < height && g_Os[check_index] > start_y && clear) {
+          clear = 0;
+        }
+        if (g_Xs[check_index] > height && g_Os[check_index] < start_y && clear) {
+          if (is_mirrored) {
+            jump = jump - G->arc_index;
+            jumped_down = 1;
+          }
+          else {
+            jump = jump + G->arc_index;
+            jumped_up = 1;
+          }
+          check_index_gen = (((start_x + step + 1) % G->arc_index) + jump) % (G->arc_index * G->sheets);
+        }
+        if (g_Os[check_index] > height && g_Xs[check_index] < start_y && clear) {
+          if (is_mirrored) {
+            jump = jump - G->arc_index;
+            jumped_down = 1;
+          }
+          else {
+            jump = jump + G->arc_index;
+            jumped_up = 1;
+          }
+          check_index_gen = (((start_x + step + 1) % G->arc_index) + jump) % (G->arc_index * G->sheets);
+        }
+        if (incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index] < height && incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index] > start_y && clear) {
+          if (jumped_down) {
+            jumped_down = 0;
+            jump = jump + G->arc_index;
+          }
+          if (jumped_up) {
+            jumped_up = 0;
+            jump = jump - G->arc_index;
+          }
+          clear = 0;
+        }
+        if (clear) {
+          check_index_gen = (((start_x + step + 1) % G->arc_index) + jump) % (G->arc_index * G->sheets);
+          if (incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index] == height) {
+            // add rectangle new_rects.append(((start_x, gen[start_x]), ((check_index_gen), height)))
+            height = (height - 1) % G->arc_index;
+          }
+          step = step + 1;
+          jumped_down = 0;
+          jumped_up = 0;
+        }
+        else {
+          height = (height - 1) % G->arc_index;
+        }
+      }
+      else {
+        if ((g_Xs[check_index] < height || g_Xs[check_index] > start_y) && clear) {
+          clear = 0;
+        }
+        if ((g_Os[check_index] < height || g_Os[check_index] > start_y) && clear) {
+          clear = 0;
+        }
+        if ((incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index] < height || incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index] >= start_y) && clear) {
+          clear = 0;
+        }
+        if (clear) {
+          if (incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index] == height) {
+            // add rectangle new_rects.append(((start_x, gen[start_x]), ((check_index_gen), height)))
+            height = (height -1) % G->arc_index;
+          }
+          step = step + 1;
+        }
+        else {
+          height = (height - 1) % G->arc_index;
+        }
+      }
+    }
+  }
+
+  return ans;
+}
+
+LiftStateList new_lift_rectangles_out_of(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G) {
+  return NULL;
+}
+
+LiftStateList new_lift_rectangles_into(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G) {
+  return NULL;
+}
+
 /**
  * Returns a single element statelist containing
  * the permutation incoming with x1 and x2 swapped
@@ -862,10 +987,24 @@ int get_number(const State a, const StateList b, const Grid_t *const G) {
   while (temp != NULL) {
     if (eq_state(a, temp->data, G)) {
       return count;
-    };
+    }
     temp = temp->nextState;
     count++;
-  };
+  }
+  return 0;
+}
+
+int get_lift_number(const LiftState a, const LiftStateList b, const LiftGrid_t *const G) {
+  LiftStateList temp;
+  int count = 1;
+  temp = b;
+  while (temp != NULL) {
+    if (eq_lift_state(a, temp->data, G)) {
+      return count;
+    }
+    temp = temp->nextState;
+    ++count;
+  }
   return 0;
 }
 
@@ -1353,7 +1492,18 @@ void free_state_list(StateList states) {
     free(temp->data);
     free(temp);
     temp = states;
-  };
+  }
+}
+
+void free_lift_state_list(LiftStateList states) {
+  LiftStateList temp;
+  temp = states;
+  while (temp != NULL) {
+    states = states-> nextState;
+    free(temp->data);
+    free(temp);
+    temp = states;
+  }
 }
 
 /**
@@ -1375,7 +1525,7 @@ void free_edge_list(const EdgeList e) {
 
 /**
  * Calculates a StateList containing all states reachable
- * by a rectangles of a fixed width
+ * by a rectangles of a fixed weight
  * @param wt an int specifying rectangle width
  * @param incoming origin state for the rectangles
  * @param G working grid
@@ -1816,7 +1966,6 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
   LiftStateList really_new_outs = NULL, really_new_ins = NULL;
   int in_number, ans, prev_in_number;
   int out_number;
-  int i;
   int edge_count = 0;
   int num_ins = 0;
   int num_outs = 0;
@@ -1838,6 +1987,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
 
   ans = 0;
   int current_pos = 1;
+  int i;
   while (new_ins != NULL && !ans) {
     present_in = new_ins;
     in_number = 0;
@@ -1849,7 +1999,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
     while (present_in != NULL) {
       free_lift_state_list(really_new_outs);
       in_number++;
-      really_new_outs = new_lifted_rectangles_into(prev_outs, present_in->data, G);
+      really_new_outs = new_lift_rectangles_into(prev_outs, present_in->data, G);
       while (really_new_outs != NULL) {
         out_number = get_lift_number(really_new_outs->data, new_outs, G);
         if (out_number == 0) {
