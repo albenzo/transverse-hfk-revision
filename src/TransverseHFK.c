@@ -792,11 +792,15 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
             // Initialize state with/without mirroring
             if (0 == get_lift_number(new_state, prevs, G)) {
               if (0 == get_lift_number(new_state, ans, G)) {
-              LiftStateNode_t* new_node = malloc(sizeof(LiftStateNode_t));
-              new_node->data = new_state;
-              new_node->nextState = ans;
-              ans = new_node;
-            }
+                LiftStateNode_t* new_node = malloc(sizeof(LiftStateNode_t));
+                new_node->data = new_state;
+                new_node->nextState = ans;
+                ans = new_node;
+              }
+              else {
+                remove_lift_state(new_state, ans);
+                free(new_state);
+              }
               
               height = (height - 1) % G->arc_index; // Check this
           }
@@ -821,6 +825,19 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
         if (clear) {
           if (incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index] == height) {
             // add rectangle new_rects.append(((start_x, gen[start_x]), ((check_index_gen), height)))
+            LiftState new_state = NULL;
+            // Initialize with/without mirroring
+            if (0 == get_lift_number(new_state, prevs, G)) {
+              if (0 == get_lift_number(new_state, ans, G)) {
+                LiftStateNode_t* new_node = malloc(sizeof(LiftStateNode_t));
+                new_node->data = new_state;
+                new_node->nextState = ans;
+                ans = new_node;
+              }
+              else {
+                remove_lift_state(new_state, ans);
+                free(new_state);
+              }
             height = (height -1) % G->arc_index;
           }
           step = step + 1;
