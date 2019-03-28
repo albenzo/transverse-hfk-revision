@@ -119,20 +119,26 @@ StateList fixed_wt_rectangles_out_of(const int, const State,
                                      const Grid_t *const);
 StateList swap_cols(const int, const int, const State, const Grid_t *const);
 int get_number(const State, const StateList, const Grid_t *const);
+int get_lift_number(const LiftState, LiftStateList, const LiftGrid_t * const);
 void free_state_list(StateList);
 int null_homologous_D0Q(const State, const Grid_t *const);
 int null_homologous_D1Q(const State, const Grid_t *const);
+int null_homologous_lift(const LiftState, const LiftGrid_t * const);
 void special_homology(const int, const int, EdgeList *);
 void contract(const int, const int, EdgeList *);
 EdgeList create_edge(const int, const int);
 void free_edge_list(const EdgeList);
 StateList remove_state(const State, const StateList, const Grid_t *const);
+LiftStateList remove_lift_state(const LiftState, const LiftStateList, const LiftGrid_t * const);
 int mod(const int, const Grid_t *const);
 int mod_up(const int, const Grid_t *const);
 StateList new_rectangles_out_of(const StateList, const State,
                                 const Grid_t *const);
 StateList new_rectangles_into(const StateList, const State,
                               const Grid_t *const);
+static LiftStateList new_lift_rectangles_out_internal(const LiftStateList, const LiftState, const LiftGrid_t * const, int);
+LiftStateList new_lift_rectangles_out_of(const LiftStateList, const LiftState, const LiftGrid_t * const);
+LiftStateList new_lift_rectangles_into(const LiftStateList, const LiftState, const LiftGrid_t * const);
 EdgeList append_ordered(const int, const int, const EdgeList);
 
 int NESW_pO(const State, const Grid_t *const);
@@ -156,7 +162,12 @@ void set_verbosity(const int);
 
 void timeout(const int);
 int is_grid(const Grid_t *const);
+int is_lift_grid(const LiftGrid_t * const);
 int is_state(const State, const Grid_t *const);
+void init_lift_state(LiftState *, const LiftGrid_t * const);
+void copy_lift_state(LiftState *, const LiftState * const, const LiftGrid_t * const);
+void mirror_lift_state(LiftState *, const LiftGrid_t * const);
+
 int build_permutation(State, char *, int);
 int eq_state(const State a, const State b, const Grid_t *const G) {
   return (!strncmp(a, b, G->arc_index));
@@ -268,7 +279,7 @@ int build_permutation(char *perm, char *str, int len) {
 }
 
 // This is not correct
-void init_lift_state(LiftState *s, LiftGrid_t *G) {
+void init_lift_state(LiftState *s, const LiftGrid_t * const G) {
   (**s)[G->arc_index] = malloc(sizeof(char)*G->sheets*G->arc_index);
 }
 
@@ -308,7 +319,15 @@ int is_grid(const Grid_t *const G) {
 }
 
 int is_lift_grid(const LiftGrid_t *const G) {
-  return 1;
+  if(G->sheets < 1) {
+    return 0;
+  }
+  
+  Grid_t H;
+  H.arc_index = G->arc_index;
+  H.Xs = G->Xs;
+  H.Os = G->Os;
+  return is_grid(&H);
 }
 
 /**
@@ -422,8 +441,8 @@ int main(int argc, char **argv) {
     if (QUIET <= get_verbosity()) {
       (*print_ptr)("Calculating graph for lifted invariant.\n");
       // These print statements are wrong
-      print_state(G.Xs, &G);
-      print_self_link(&G);
+      //print_state(G.Xs, &G);
+      //print_self_link(&G);
     }
 
     // Change the content of these print statements
@@ -787,9 +806,13 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
         if (clear) {
           check_index_gen = (((start_x + step + 1) % G->arc_index) + jump) % (G->arc_index * G->sheets);
           if (incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index] == height) {
-            // add rectangle new_rects.append(((start_x, gen[start_x]), ((check_index_gen), height)))
             LiftState new_state = NULL;
-            // Initialize state with/without mirroring
+            copy_lift_state(&new_state, &incoming, G);
+            new_state[start_x/G->arc_index][start_x%G->arc_index] = incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index];
+            new_state[check_index_gen/G->arc_index][check_index_gen%G->arc_index] = incoming[start_x/G->arc_index][start_x%G->arc_index];
+            if (is_mirrored) {
+              mirror_lift_state(&new_state, G);
+            }
             if (0 == get_lift_number(new_state, prevs, G)) {
               if (0 == get_lift_number(new_state, ans, G)) {
                 LiftStateNode_t* new_node = malloc(sizeof(LiftStateNode_t));
@@ -798,11 +821,11 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
                 ans = new_node;
               }
               else {
-                remove_lift_state(new_state, ans);
+                remove_lift_state(new_state, ans, G);
                 free(new_state);
               }
               
-              height = (height - 1) % G->arc_index; // Check this
+              height = (height - 1) % G->arc_index;
           }
           step = step + 1;
           jumped_down = 0;
@@ -824,9 +847,14 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
         }
         if (clear) {
           if (incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index] == height) {
-            // add rectangle new_rects.append(((start_x, gen[start_x]), ((check_index_gen), height)))
             LiftState new_state = NULL;
-            // Initialize with/without mirroring
+            init_lift_state(new_state, G);
+            copy_lift_state(&new_state, &incoming, G);
+            new_state[start_x/G->arc_index][start_x%G->arc_index] = incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index];
+            new_state[check_index_gen/G->arc_index][check_index_gen%G->arc_index] = incoming[start_x/G->arc_index][start_x%G->arc_index];
+            if (is_mirrored) {
+              mirror_lift_state(&new_state, G);
+            }
             if (0 == get_lift_number(new_state, prevs, G)) {
               if (0 == get_lift_number(new_state, ans, G)) {
                 LiftStateNode_t* new_node = malloc(sizeof(LiftStateNode_t));
@@ -835,7 +863,7 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
                 ans = new_node;
               }
               else {
-                remove_lift_state(new_state, ans);
+                ans = remove_lift_state(new_state, ans, G);
                 free(new_state);
               }
             height = (height -1) % G->arc_index;
@@ -849,6 +877,8 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
     }
   }
 
+
+    }}
   free(g_Xs);
   free(g_Os);
   return ans;
@@ -868,18 +898,24 @@ LiftGrid_t* mirror_lift_grid(const LiftGrid_t * const G) {
   return G_mirror;
 }
 
-LiftState mirror_lift_state(const LiftState state, const LiftGrid_t * const G) {
-  LiftState state_mirror;
-  init_lift_state(&state_mirror, G);
-
+void mirror_lift_state(LiftState * state, const LiftGrid_t * const G) {
+  LiftState original;
+  init_lift_state(&original, G);
+  copy_lift_state(&original, state, G);
   for(int i = 0; i < G->sheets; ++i) {
     for(int j = 0; j < G->arc_index; ++j) {
-      state_mirror[j][i] = state[j][G->arc_index-(i+1)];
-      // Could also be
-      // state_mirror[j][i] = state[G->sheets-(j+1)][G->arc_index-(i+1)]
+      (*state)[j][i] = original[G->sheets-(j+1)][G->arc_index-(i+1)];
     }
   }
-  return NULL;
+  free(original);
+}
+
+void copy_lift_state(LiftState* dest, const LiftState * const origin, const LiftGrid_t * const G) {
+  for(int i = 0; i < G->sheets; ++i) {
+    for(int j = 0; j < G->arc_index; ++j) {
+      (*dest)[i][j] = (*origin)[i][j];
+    }
+  }
 }
 
 LiftStateList new_lift_rectangles_out_of(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G) {
@@ -888,7 +924,10 @@ LiftStateList new_lift_rectangles_out_of(const LiftStateList prevs, const LiftSt
 
 LiftStateList new_lift_rectangles_into(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G) {
   LiftGrid_t* G_mirror = mirror_lift_grid(G);
-  LiftState incoming_mirror = mirror_lift_state(incoming, G);
+  LiftState incoming_mirror;
+  init_lift_state(&incoming_mirror, G);
+  copy_lift_state(&incoming_mirror, &incoming, G);
+  mirror_lift_state(&incoming, G);
   LiftStateList ans = new_lift_rectangles_out_internal(prevs, incoming_mirror, G_mirror, 1);
 
   free(G_mirror);
@@ -1459,6 +1498,35 @@ StateList remove_state(const State a, const StateList v,
   } else {
     temp = prev->nextState;
     while ((temp != NULL) && (!eq_state(a, temp->data, G))) {
+      temp = temp->nextState;
+      prev = prev->nextState;
+    };
+    if (temp != NULL) {
+      prev->nextState = temp->nextState;
+      free(temp->data);
+      free(temp);
+      return s_list;
+    } else
+      return s_list;
+  }
+}
+
+LiftStateList remove_lift_state(const LiftState a, const LiftStateList v,
+                       const LiftGrid_t *const G) {
+  LiftStateList temp, prev;
+  LiftStateList s_list = v;
+  prev = v;
+  if (v == NULL)
+    return (NULL);
+  else if (eq_lift_state(a, v->data, G)) {
+    temp = v;
+    s_list = v->nextState;
+    free(v->data);
+    free(v);
+    return (s_list);
+  } else {
+    temp = prev->nextState;
+    while ((temp != NULL) && (!eq_lift_state(a, temp->data, G))) {
       temp = temp->nextState;
       prev = prev->nextState;
     };
