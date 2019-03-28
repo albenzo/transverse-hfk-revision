@@ -32,15 +32,10 @@ static PyObject *null_homologous_D0Q_py(PyObject *self, PyObject *args,
   PyObject *py_out_stream = NULL;
 
   Grid_t G;
-  char state[MAX_INDEX];
+  State state;
 
   G.arc_index = 0;
-  for (int i = 0; i < MAX_INDEX; ++i) {
-    state[i] = 0;
-    G.Xs[i] = 0;
-    G.Os[i] = 0;
-  }
-
+  
   const char *keyword_list[] = {"state",      "Xs",        "Os",
                                 "out_stream", "verbosity", 0};
 
@@ -64,10 +59,14 @@ static PyObject *null_homologous_D0Q_py(PyObject *self, PyObject *args,
     return NULL;
   }
 
-  if (G.arc_index > 30 || G.arc_index < 2) {
+  if (G.arc_index < 2) {
     PyErr_SetString(error, "The grid size must be between 2 and 30");
     return NULL;
   }
+
+  G.Xs = malloc(sizeof(char)*G.arc_index);
+  G.Os = malloc(sizeof(char)*G.arc_index);
+  state = malloc(sizeof(char)*G.arc_index);
 
   int failed = 0;
 
@@ -104,9 +103,15 @@ static PyObject *null_homologous_D0Q_py(PyObject *self, PyObject *args,
     PyErr_SetString(error, "state, Xs, and Os must be lists containing "
                            "[1,...,N] exactly once with no matching indices "
                            "between Xs and Os");
+    free(G.Xs);
+    free(G.Os);
+    free(state);
     return NULL;
   } else if (verbosity < 0 || 2 < verbosity) {
     PyErr_SetString(error, "verbosity must be passed an integer 0, 1, or 2.");
+    free(G.Xs);
+    free(G.Os);
+    free(state);
     return NULL;
   } else {
     set_verbosity(py_verbosity);
@@ -114,9 +119,15 @@ static PyObject *null_homologous_D0Q_py(PyObject *self, PyObject *args,
 
   if (NULL == py_out_stream) {
     PyErr_SetString(error, "An out stream must be specified.");
+    free(G.Xs);
+    free(G.Os);
+    free(state);
     return NULL;
   } else if (!PyObject_HasAttrString(py_out_stream, "write")) {
     PyErr_SetString(error, "The out stream must implement the write method.");
+    free(G.Xs);
+    free(G.Os);
+    free(state);
     return NULL;
   } else {
     out_stream = py_out_stream;
@@ -138,15 +149,10 @@ static PyObject *null_homologous_D1Q_py(PyObject *self, PyObject *args,
   PyObject *py_out_stream = NULL;
 
   Grid_t G;
-  char state[MAX_INDEX];
+  State state;
 
   G.arc_index = 0;
-  for (int i = 0; i < MAX_INDEX; ++i) {
-    state[i] = 0;
-    G.Xs[i] = 0;
-    G.Os[i] = 0;
-  }
-
+  
   const char *keyword_list[] = {"state",      "Xs",        "Os",
                                 "out_stream", "verbosity", 0};
 
@@ -170,10 +176,14 @@ static PyObject *null_homologous_D1Q_py(PyObject *self, PyObject *args,
     return NULL;
   }
 
-  if (G.arc_index > 30 || G.arc_index < 2) {
+  if (G.arc_index < 2) {
     PyErr_SetString(error, "The grid size must be between 2 and 30");
     return NULL;
   }
+
+  G.Xs = malloc(sizeof(char)*G.arc_index);
+  G.Os = malloc(sizeof(char)*G.arc_index);
+  state = malloc(sizeof(char)*G.arc_index);
 
   int failed = 0;
 
@@ -210,9 +220,15 @@ static PyObject *null_homologous_D1Q_py(PyObject *self, PyObject *args,
     PyErr_SetString(error, "state, Xs, and Os must be lists containing "
                            "[1,...,N] exactly once with no matching indices "
                            "between Xs and Os");
+    free(G.Xs);
+    free(G.Os);
+    free(state);
     return NULL;
   } else if (verbosity < 0 || 2 < verbosity) {
     PyErr_SetString(error, "verbosity must be passed an integer 0, 1, or 2.");
+    free(G.Xs);
+    free(G.Os);
+    free(state);
     return NULL;
   } else {
     set_verbosity(py_verbosity);
@@ -220,9 +236,15 @@ static PyObject *null_homologous_D1Q_py(PyObject *self, PyObject *args,
 
   if (NULL == py_out_stream) {
     PyErr_SetString(error, "An out stream must be specified.");
+    free(G.Xs);
+    free(G.Os);
+    free(state);
     return NULL;
   } else if (!PyObject_HasAttrString(py_out_stream, "write")) {
     PyErr_SetString(error, "The out stream must implement the write method.");
+    free(G.Xs);
+    free(G.Os);
+    free(state);
     return NULL;
   } else {
     out_stream = py_out_stream;
