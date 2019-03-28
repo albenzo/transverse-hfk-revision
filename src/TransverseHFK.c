@@ -127,7 +127,9 @@ void print_math_edges(const EdgeList);
 void print_math_edges_a(const EdgeList);
 void print_vertices(const VertexList);
 void print_grid_perm(const Grid_t *const G);
-void print_self_link(const Grid_t *const G);
+void print_grid(const Grid_t *const G);
+void print_tb_r(const Grid_t *const G);
+void print_2AM(const Grid_t *const G, int plus);
 
 int get_verbosity(void);
 void set_verbosity(const int);
@@ -358,20 +360,25 @@ int main(int argc, char **argv) {
     }
     alarm(args.max_time);
   }
+  
+  if(QUIET <= get_verbosity()) {
+    print_grid(&G);
+    print_tb_r(&G);
+  }
 
   if (QUIET <= get_verbosity()) {
     (*print_ptr)("\n \nCalculating graph for LL invariant\n");
     print_state(G.Xs,&G);
-    print_self_link(&G);
+    print_2AM(&G,0);
   }
   if (null_homologous_D0Q(G.Xs, &G)) {
-    (*print_ptr)("LL is null-homologous\n");
+    (*print_ptr)("LL is null-homologous\n\n");
   } else {
-    (*print_ptr)("LL is NOT null-homologous\n");
+    (*print_ptr)("LL is NOT null-homologous\n\n");
   }
 
   if (QUIET <= get_verbosity()) {
-    (*print_ptr)("\n \nCalculating graph for UR invariant\n");
+    (*print_ptr)("\nCalculating graph for UR invariant\n");
   }
   if (G.Xs[G.arc_index - 1] == G.arc_index) {
     UR[0] = 1;
@@ -389,29 +396,29 @@ int main(int argc, char **argv) {
   }
   if (QUIET <= get_verbosity()) {
     print_state(UR, &G);
-    print_self_link(&G);
+    print_2AM(&G,1);
   }
 
   if (null_homologous_D0Q(UR, &G)) {
-    (*print_ptr)("UR is null-homologous\n");
+    (*print_ptr)("UR is null-homologous\n\n");
   } else {
-    (*print_ptr)("UR is NOT null-homologous\n");
+    (*print_ptr)("UR is NOT null-homologous\n\n");
   };
 
   if (QUIET <= get_verbosity()) {
-    (*print_ptr)("\n \nCalculating graph for D1[LL] invariant\n");
+    (*print_ptr)("\nCalculating graph for D1[LL] invariant\n");
     print_state(G.Xs, &G);
-    print_self_link(&G);
+    print_2AM(&G,0);
   }
 
   if (null_homologous_D1Q(G.Xs, &G)) {
-    (*print_ptr)("D1[LL] is null-homologous\n");
+    (*print_ptr)("D1[LL] is null-homologous\n\n");
   } else {
-    (*print_ptr)("D1[LL] is NOT null-homologous\n");
+    (*print_ptr)("D1[LL] is NOT null-homologous\n\n");
   }
 
   if (QUIET <= get_verbosity()) {
-    (*print_ptr)("\n \nCalculating graph for D1[UR] invariant\n");
+    (*print_ptr)("\nCalculating graph for D1[UR] invariant\n");
   }
 
   if (G.Xs[G.arc_index - 1] == G.arc_index) {
@@ -431,13 +438,13 @@ int main(int argc, char **argv) {
 
   if (QUIET <= get_verbosity()) {
     print_state(UR, &G);
-    print_self_link(&G);
+    print_2AM(&G,1);
   }
 
   if (null_homologous_D1Q(UR, &G)) {
-    (*print_ptr)("D1[UR] is null-homologous\n");
+    (*print_ptr)("D1[UR] is null-homologous\n\n");
   } else {
-    (*print_ptr)("D1[UR] is NOT null-homologous\n");
+    (*print_ptr)("D1[UR] is NOT null-homologous\n\n");
   };
 
   free(G.Xs);
@@ -732,6 +739,64 @@ void print_state(const State state, const Grid_t *const G) {
     j--;
   };
   (*print_ptr)("\n");
+  //(*print_ptr)("2A=M=SL+1=%d\n",NESW_pp(G->Xs,G)-NESW_pO(G->Xs,G)-NESW_Op(G->Xs,G)+NESW_pp(G->Os,G)+1);
+}
+
+/**
+ * Prints the grid without the grid state
+ * @param G working grid
+ */
+void print_grid(const Grid_t *const G) {
+  int i, j;
+  j = G->arc_index;
+  i = 0;
+  (*print_ptr)("*---");
+  while (i < G->arc_index - 1) {
+    (*print_ptr)("----");
+    i++;
+  }
+  (*print_ptr)("*\n");
+  while (j > 0) {
+    i = 0;
+    while (i < G->arc_index) {
+      if (G->Xs[i] == j) {
+        (*print_ptr)("| X ");
+      } else {
+        if (G->Os[i] == j) {
+          (*print_ptr)("| O ");
+        } else {
+          (*print_ptr)("|   ");
+        };
+      };
+      i++;
+    };
+    (*print_ptr)("|\n");
+    i = 0;
+    while (i < G->arc_index) {
+      if (i == 0 && j > 1) {
+        (*print_ptr)("|---");
+      } else {
+        if (j > 1) {
+          (*print_ptr)("+---");
+        } else {
+           if (i == 0) {
+            (*print_ptr)("*---");
+          } else {
+              (*print_ptr)("----");
+            };
+          };
+        };
+      i++;
+    };
+    if (j > 1) {
+      (*print_ptr)("|\n");
+    } else {
+      (*print_ptr)("*\n");
+    };
+    j--;
+  };
+  (*print_ptr)("\n");
+  //(*print_ptr)("2A=M=SL+1=%d\n",NESW_pp(G->Xs,G)-NESW_pO(G->Xs,G)-NESW_Op(G->Xs,G)+NESW_pp(G->Os,G)+1);
   print_grid_perm(G);
   (*print_ptr)("\n");
 }
@@ -957,13 +1022,6 @@ void special_homology(const int init, const int final, EdgeList *edge_list) {
     };
     while ((temp != NULL) && (temp->end > final)) {
       temp = temp->nextEdge;
-    };
-    if (VERBOSE == get_verbosity() && j == 100) {
-      j = 0;
-      if (temp != NULL)
-        (*print_ptr)(
-            "Iteration number %d; contracting edge starting at (%d,%d)\n", i,
-            temp->start, temp->end);
     };
     i++;
     j++;
@@ -1592,11 +1650,15 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
     };
   };
   ans = 0;
+  int current_pos = 1;
   while (new_ins != NULL && !ans) {
     present_in = new_ins;
     in_number = 0;
     num_new_outs = 0;
     new_outs = NULL;
+    if(get_verbosity() >= VERBOSE) {
+      (*print_ptr)("Gathering A_%d:\n",current_pos);
+    }
     while (present_in != NULL) {
       free_state_list(really_new_outs);
       in_number++;
@@ -1631,6 +1693,10 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
       }
       present_in = present_in->nextState;
     };
+    if(get_verbosity() >= VERBOSE) {
+      print_edges(edge_list);
+      (*print_ptr)("\n");
+    }
     free_state_list(prev_ins);
     prev_ins = new_ins;
     i = 1;
@@ -1640,6 +1706,9 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
     new_ins = NULL;
     out_number = 0;
     present_out = new_outs;
+    if(get_verbosity() >= VERBOSE) {
+      (*print_ptr)("Gathering B_%d:\n", current_pos);
+    }
     while (present_out != NULL) {
       out_number++;
       really_new_ins = new_rectangles_out_of(prev_ins, present_out->data, G);
@@ -1673,26 +1742,57 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
       };
       present_out = present_out->nextState;
     };
+    if(get_verbosity() >= VERBOSE) {
+      print_edges(edge_list);
+      (*print_ptr)("\n");
+    }
     free_state_list(prev_outs);
     prev_outs = new_outs;
     new_outs = NULL;
+    if(get_verbosity() >= VERBOSE) {
+      (*print_ptr)("Contracting edges from 0 to %d:\n", prev_in_number);
+    }
     special_homology(0, prev_in_number, &edge_list);
+    if(get_verbosity() >= VERBOSE) {
+      print_edges(edge_list);
+      (*print_ptr)("\n");
+    }
     if ((edge_list == NULL) || (edge_list->start != 0)) {
       ans = 1;
+      if(get_verbosity() >= VERBOSE) {
+        (*print_ptr)("No edges pointing out of A_0!\n");
+      }
       free_state_list(new_ins);
       free_state_list(new_outs);
       new_ins = NULL;
     } else if (edge_list->end <= prev_in_number) {
       ans = 0;
+      if(get_verbosity() >= VERBOSE) {
+        (*print_ptr)("There exist edges pointing from A_0 to B_%d! No future "
+                     "contractions will remove this edge!\n", current_pos - 1);
+      }
       free_state_list(new_ins);
       free_state_list(new_outs);
       new_ins = NULL;
     } else {
       num_outs = num_outs + out_number;
-      if (VERBOSE == get_verbosity()) {
-        (*print_ptr)("%d %d %d\n", num_ins, num_outs, edge_count);
+      if (get_verbosity() >= VERBOSE) {
+        (*print_ptr)("Total number of states in B_i up to B_%d (before any "
+                     "contraction): %d \n", 
+                     current_pos - 1, prev_in_number);
+        (*print_ptr)("Total number of states in A_i up to A_%d (before any "
+                     "contraction): %d \n",
+                     current_pos, num_outs);
+        (*print_ptr)("Total number of states in B_i up to B_%d (before any "
+                     "contraction): %d \n",
+                     current_pos, num_ins + in_number);
+        (*print_ptr)("Total number of edges up to A_%d and B_%d (before any "
+                     "contraction): %d \n",
+                     current_pos, current_pos, edge_count);
+        (*print_ptr)("\n");
       }
     };
+    current_pos++;
   };
   return (ans);
 }
@@ -1773,14 +1873,14 @@ int NESW_pp(const State x, const Grid_t *const G) {
  */
 void print_grid_perm(const Grid_t *const G) {
   int i = 0;
-  (*print_ptr)("X's [");
+  (*print_ptr)("X = [");
   while (i < G->arc_index) {
     (*print_ptr)(" %d", G->Xs[i]);
     if (i != G->arc_index - 1)
       (*print_ptr)(",");
     i++;
   }
-  (*print_ptr)(" ]\nO's [");
+  (*print_ptr)(" ]\nO = [");
   i = 0;
   while (i < G->arc_index) {
     (*print_ptr)(" %d", G->Os[i]);
@@ -1791,7 +1891,11 @@ void print_grid_perm(const Grid_t *const G) {
   (*print_ptr)(" ]\n");
 }
 
-void print_self_link(const Grid_t *const G) {
+/**
+ * Prints Thurston Bennequin and rotation number of grid
+ * @param G working grid
+ */
+void print_tb_r(const Grid_t *const G) {
   int Writhe = 0;
   int up_down_cusps[2] = {0, 0};
   int tb;
@@ -1800,12 +1904,28 @@ void print_self_link(const Grid_t *const G) {
   cusps(up_down_cusps, G);
   tb = Writhe - .5 * (up_down_cusps[0] + up_down_cusps[1]);
   r = .5 * (up_down_cusps[1] - up_down_cusps[0]);
-  (*print_ptr)("Writhe = %d\n", Writhe);
-  (*print_ptr)("Up Cusps: %d\nDown Cusps: %d\n", up_down_cusps[0],
-               up_down_cusps[1]);
-  (*print_ptr)("tb(G) = %d\n", tb);
-  (*print_ptr)("r(G) = %d\n", r);
-  (*print_ptr)("2A(x+) = M(x+) = sl(x+)+1 = %d\n\n", tb - r + 1);    
+  (*print_ptr)("tb = %d\n", tb);
+  (*print_ptr)("r = %d\n", r);
+} 
+
+/**
+ * Prints the Alexander and Maslov grading lines, which are calculated
+ * from Thurston Bennequin and rotation number
+ * @param G working grid
+ * @param plus 1 if x^+ print, 0 if x^- print
+ */
+void print_2AM(const Grid_t *const G, int plus) {
+  int Writhe = 0;
+  int up_down_cusps[2] = {0, 0};
+  int tb;
+  int r;
+  Writhe = writhe(G);
+  cusps(up_down_cusps, G);
+  tb = Writhe - .5 * (up_down_cusps[0] + up_down_cusps[1]);
+  r = .5 * (up_down_cusps[1] - up_down_cusps[0]);
+  if(plus == 1) (*print_ptr)("2A(x^+) = M(x^+) = sl(x^+)+1 = %d\n\n"
+                    , tb - r + 1);    
+  if(plus == 0) (*print_ptr)("2A(x^-) = M(x^-) = %d\n\n", tb + r + 1);
 } 
 
 /* Computes the writhe of the passed grid
