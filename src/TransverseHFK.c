@@ -121,7 +121,8 @@ StateList swap_cols(const int, const int, const State, const Grid_t *const);
 int get_number(const State, const StateList, const Grid_t *const);
 int get_lift_number(const LiftState, LiftStateList, const LiftGrid_t * const);
 void free_state_list(StateList);
-void free_lift_state_list(LiftStateList);
+void free_lift_state_list(LiftStateList, const LiftGrid_t * const);
+void free_lift_state(LiftState *, const LiftGrid_t * const);
 int null_homologous_D0Q(const State, const Grid_t *const);
 int null_homologous_D1Q(const State, const Grid_t *const);
 int null_homologous_lift(const LiftState, const LiftGrid_t * const);
@@ -173,9 +174,7 @@ int build_permutation(State, char *, int);
 int eq_state(const State a, const State b, const Grid_t *const G) {
   return (!strncmp(a, b, G->arc_index));
 }
-int eq_lift_state(const LiftState a, const LiftState b, const LiftGrid_t *const G) {
-  return (!strncmp((char*)a, (char*)b, G->arc_index*G->sheets));
-}
+int eq_lift_state(const LiftState a, const LiftState b, const LiftGrid_t * const G);
 
 int get_verbosity() { return verbosity; }
 
@@ -281,7 +280,26 @@ int build_permutation(char *perm, char *str, int len) {
 
 // This is not correct
 void init_lift_state(LiftState *s, const LiftGrid_t * const G) {
-  (**s)[G->arc_index] = malloc(sizeof(char)*G->sheets*G->arc_index);
+  *s = (char**)malloc(sizeof(char*)*G->sheets);
+  for(int i = 0; i < G->sheets; ++i) {
+    (*s)[i] = malloc(sizeof(char)*G->arc_index);
+  }
+}
+
+void free_lift_state(LiftState *s, const LiftGrid_t * const G) {
+  for(int i = 0; i < G->sheets; ++i) {
+    free((*s)[i]);
+  }
+  free(*s);  
+}
+
+int eq_lift_state(const LiftState a, const LiftState b, const LiftGrid_t *const G) {
+  for(int i=0; i < G->sheets; ++i) {
+    if(!strncmp(a[i],b[i], G->arc_index)) {
+      return 0;
+    }
+  }
+  return 1;
 }
 
 /**
@@ -738,7 +756,6 @@ StateList new_rectangles_into(const StateList prevs, const State incoming,
 static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G, int is_mirrored) {
   LiftStateList ans = NULL;
   double *g_Xs, *g_Os;
-  LiftState temp_state;
 
   g_Xs = malloc(sizeof(double)*G->arc_index);
   g_Os = malloc(sizeof(double)*G->arc_index);
@@ -747,8 +764,6 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
     g_Xs[i] = ((double)G->Xs[i]) - .5;
     g_Os[i] = ((double)G->Os[i]) - .5;
   }
-
-  init_lift_state(&temp_state, G);
 
   for(int start_x=0; start_x < G->arc_index*G->sheets; ++start_x) {
     int jumped_down = 0;
@@ -823,17 +838,18 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
               }
               else {
                 remove_lift_state(new_state, ans, G);
-                free(new_state);
+                free_lift_state(&new_state, G);
               }
               
               height = (height - 1) % G->arc_index;
+            }
+            step = step + 1;
+            jumped_down = 0;
+            jumped_up = 0;
           }
-          step = step + 1;
-          jumped_down = 0;
-          jumped_up = 0;
-        }
-        else {
-          height = (height - 1) % G->arc_index;
+          else {
+            height = (height - 1) % G->arc_index;
+          }
         }
       }
       else {
@@ -849,7 +865,7 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
         if (clear) {
           if (incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index] == height) {
             LiftState new_state = NULL;
-            init_lift_state(new_state, G);
+            init_lift_state(&new_state, G);
             copy_lift_state(&new_state, &incoming, G);
             new_state[start_x/G->arc_index][start_x%G->arc_index] = incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index];
             new_state[check_index_gen/G->arc_index][check_index_gen%G->arc_index] = incoming[start_x/G->arc_index][start_x%G->arc_index];
@@ -865,11 +881,13 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
               }
               else {
                 ans = remove_lift_state(new_state, ans, G);
-                free(new_state);
+                free_lift_state(&new_state, G);
               }
-            height = (height -1) % G->arc_index;
+              height = (height -1) % G->arc_index;
+            }
+            step = step + 1;
+            
           }
-          step = step + 1;
         }
         else {
           height = (height - 1) % G->arc_index;
@@ -878,8 +896,6 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
     }
   }
 
-
-    }}
   free(g_Xs);
   free(g_Os);
   return ans;
@@ -908,7 +924,7 @@ void mirror_lift_state(LiftState * state, const LiftGrid_t * const G) {
       (*state)[j][i] = original[G->sheets-(j+1)][G->arc_index-(i+1)];
     }
   }
-  free(original);
+  free_lift_state(&original, G);
 }
 
 void copy_lift_state(LiftState* dest, const LiftState * const origin, const LiftGrid_t * const G) {
@@ -928,11 +944,11 @@ LiftStateList new_lift_rectangles_into(const LiftStateList prevs, const LiftStat
   LiftState incoming_mirror;
   init_lift_state(&incoming_mirror, G);
   copy_lift_state(&incoming_mirror, &incoming, G);
-  mirror_lift_state(&incoming, G);
+  mirror_lift_state(&incoming_mirror, G);
   LiftStateList ans = new_lift_rectangles_out_internal(prevs, incoming_mirror, G_mirror, 1);
 
   free(G_mirror);
-  free(incoming_mirror);
+  free_lift_state(&incoming_mirror, G);
 
   return ans;
 }
@@ -1522,7 +1538,7 @@ LiftStateList remove_lift_state(const LiftState a, const LiftStateList v,
   else if (eq_lift_state(a, v->data, G)) {
     temp = v;
     s_list = v->nextState;
-    free(v->data);
+    free_lift_state(&v->data, G);
     free(v);
     return (s_list);
   } else {
@@ -1533,7 +1549,7 @@ LiftStateList remove_lift_state(const LiftState a, const LiftStateList v,
     };
     if (temp != NULL) {
       prev->nextState = temp->nextState;
-      free(temp->data);
+      free_lift_state(&temp->data, G);
       free(temp);
       return s_list;
     } else
@@ -1628,12 +1644,12 @@ void free_state_list(StateList states) {
   }
 }
 
-void free_lift_state_list(LiftStateList states) {
+void free_lift_state_list(LiftStateList states, const LiftGrid_t * const G) {
   LiftStateList temp;
   temp = states;
   while (temp != NULL) {
     states = states-> nextState;
-    free(temp->data);
+    free_lift_state(&temp->data, G);
     free(temp);
     temp = states;
   }
@@ -2120,7 +2136,6 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
 
   ans = 0;
   int current_pos = 1;
-  int i;
   while (new_ins != NULL && !ans) {
     present_in = new_ins;
     in_number = 0;
@@ -2130,7 +2145,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
       (*print_ptr)("Gathering A_%d:\n", current_pos);
     }
     while (present_in != NULL) {
-      free_lift_state_list(really_new_outs);
+      free_lift_state_list(really_new_outs, G);
       in_number++;
       really_new_outs = new_lift_rectangles_into(prev_outs, present_in->data, G);
       while (really_new_outs != NULL) {
@@ -2154,7 +2169,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
         } else {
           temp = really_new_outs;
           really_new_outs = really_new_outs->nextState;
-          free(temp->data);
+          free_lift_state(&temp->data, G);
           free(temp);
         }
         edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
@@ -2168,9 +2183,8 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
       print_edges(edge_list);
       (*print_ptr)("\n");
     }
-    free_lift_state_list(prev_ins);
+    free_lift_state_list(prev_ins, G);
     prev_ins = new_ins;
-    i = 1;
     num_ins = num_ins + in_number;
     prev_in_number = num_ins;
     num_new_ins = 0;
@@ -2204,7 +2218,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
         } else {
           temp = really_new_ins;
           really_new_ins = really_new_ins->nextState;
-          free(temp->data);
+          free_lift_state(&temp->data, G);
           free(temp);
         }
         edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
@@ -2217,7 +2231,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
       print_edges(edge_list);
       (*print_ptr)("\n");
     }
-    free_lift_state_list(prev_outs);
+    free_lift_state_list(prev_outs, G);
     prev_outs = new_outs;
     new_outs = NULL;
     if (get_verbosity() >= VERBOSE) {
@@ -2233,8 +2247,8 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
       if (get_verbosity() >= VERBOSE) {
         (*print_ptr)("No edges pointing out of A_0!\n");
       }
-      free_lift_state_list(new_ins);
-      free_lift_state_list(new_outs);
+      free_lift_state_list(new_ins, G);
+      free_lift_state_list(new_outs, G);
       new_ins = NULL;
     } else if (edge_list->end <= prev_in_number) {
       ans = 0;
@@ -2243,8 +2257,8 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
                      "contractions will remove this edge!\n",
                      current_pos - 1);
       }
-      free_lift_state_list(new_ins);
-      free_lift_state_list(new_outs);
+      free_lift_state_list(new_ins, G);
+      free_lift_state_list(new_outs, G);
       new_ins = NULL;
     } else {
       num_outs = num_outs + out_number;
