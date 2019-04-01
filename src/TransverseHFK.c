@@ -372,9 +372,9 @@ int main(int argc, char **argv) {
     print_2AM(&G,0);
   }
   if (null_homologous_D0Q(G.Xs, &G)) {
-    (*print_ptr)("LL is null-homologous\n\n");
+    (*print_ptr)("LL is null-homologous\n");
   } else {
-    (*print_ptr)("LL is NOT null-homologous\n\n");
+    (*print_ptr)("LL is NOT null-homologous\n");
   }
 
   if (QUIET <= get_verbosity()) {
@@ -400,9 +400,9 @@ int main(int argc, char **argv) {
   }
 
   if (null_homologous_D0Q(UR, &G)) {
-    (*print_ptr)("UR is null-homologous\n\n");
+    (*print_ptr)("UR is null-homologous\n");
   } else {
-    (*print_ptr)("UR is NOT null-homologous\n\n");
+    (*print_ptr)("UR is NOT null-homologous\n");
   };
 
   if (QUIET <= get_verbosity()) {
@@ -412,9 +412,9 @@ int main(int argc, char **argv) {
   }
 
   if (null_homologous_D1Q(G.Xs, &G)) {
-    (*print_ptr)("D1[LL] is null-homologous\n\n");
+    (*print_ptr)("D1[LL] is null-homologous\n");
   } else {
-    (*print_ptr)("D1[LL] is NOT null-homologous\n\n");
+    (*print_ptr)("D1[LL] is NOT null-homologous\n");
   }
 
   if (QUIET <= get_verbosity()) {
@@ -442,9 +442,9 @@ int main(int argc, char **argv) {
   }
 
   if (null_homologous_D1Q(UR, &G)) {
-    (*print_ptr)("D1[UR] is null-homologous\n\n");
+    (*print_ptr)("D1[UR] is null-homologous\n");
   } else {
-    (*print_ptr)("D1[UR] is NOT null-homologous\n\n");
+    (*print_ptr)("D1[UR] is NOT null-homologous\n");
   };
 
   free(G.Xs);
