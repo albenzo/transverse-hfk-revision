@@ -121,6 +121,7 @@ StateList swap_cols(const int, const int, const State, const Grid_t *const);
 int get_number(const State, const StateList, const Grid_t *const);
 int get_lift_number(const LiftState, LiftStateList, const LiftGrid_t * const);
 void free_state_list(StateList);
+void free_lift_state_list(LiftStateList);
 int null_homologous_D0Q(const State, const Grid_t *const);
 int null_homologous_D1Q(const State, const Grid_t *const);
 int null_homologous_lift(const LiftState, const LiftGrid_t * const);
