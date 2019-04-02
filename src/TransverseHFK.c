@@ -838,7 +838,7 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
                 ans = new_node;
               }
               else {
-                remove_lift_state(new_state, ans, G);
+                ans = remove_lift_state(new_state, ans, G);
                 free_lift_state(&new_state, G);
               }
             }
@@ -1545,7 +1545,7 @@ LiftStateList remove_lift_state(const LiftState a, const LiftStateList v,
     while ((temp != NULL) && (!eq_lift_state(a, temp->data, G))) {
       temp = temp->nextState;
       prev = prev->nextState;
-    };
+    }
     if (temp != NULL) {
       prev->nextState = temp->nextState;
       free_lift_state(&temp->data, G);
