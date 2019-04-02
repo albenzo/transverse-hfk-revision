@@ -795,7 +795,7 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
             jump = jump + G->arc_index;
             jumped_up = 1;
           }
-          check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index);
+          check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index * G->sheets);
         }
         if (g_Os[check_index] > height && g_Xs[check_index] < start_y && clear) {
           if (is_mirrored) {
@@ -806,7 +806,7 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
             jump = jump + G->arc_index;
             jumped_up = 1;
           }
-          check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index);
+          check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index * G->sheets);
         }
         if (mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index], G->arc_index) < height && mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index], G->arc_index) > start_y && clear) {
           if (jumped_down) {
@@ -823,6 +823,7 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
           check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index*G->sheets);
           if (mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index], G->arc_index) == height) {
             LiftState new_state = NULL;
+            init_lift_state(&new_state, G);
             copy_lift_state(&new_state, &incoming, G);
             new_state[start_x/G->arc_index][start_x%G->arc_index] = incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index];
             new_state[check_index_gen/G->arc_index][check_index_gen%G->arc_index] = incoming[start_x/G->arc_index][start_x%G->arc_index];
@@ -2107,7 +2108,6 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
 }
 
 int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
-  // Initialization of variables
   LiftStateList new_ins, new_outs, last_new_in, last_new_out, temp;
   LiftStateList prev_ins, prev_outs;
   LiftStateList really_new_outs = NULL, really_new_ins = NULL;
