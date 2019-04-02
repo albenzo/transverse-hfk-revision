@@ -26,7 +26,7 @@ static const char doc[] =
  If the number of sheets is not equal to 1 it instead calculates the\
  theta invariant for the n-fold cyclic cover.";
 
-static const char args_doc[] = "-i [ArcIndex] -X [Xs] -O [Os]";
+static const char args_doc[] = "-i <ArcIndex> -n <Sheets:1> -X [<Xs>] -O [<Os>]";
 
 static struct argp_option options[] = {
     {"verbose", 'v', 0, 0, "Produce verbose output", 0},
@@ -35,7 +35,7 @@ static struct argp_option options[] = {
     {"index", 'i', "ArcIndex", 0, "ArcIndex of the grid", 0},
     {"Xs", 'X', "[...]", 0, "List of Xs", 0},
     {"Os", 'O', "[...]", 0, "List of Os", 0},
-    {"sheets", 'n', 0, 0, "Number of sheets for cyclic branch cover. Default: 1", 0},
+    {"sheets", 'n', "SHEETS", 0, "Number of sheets for cyclic branch cover. Default: 1", 0},
     {"timeout", 't', "SECONDS", 0, "Maximum time to run in seconds", 0},
     {0}};
 
@@ -132,8 +132,8 @@ EdgeList create_edge(const int, const int);
 void free_edge_list(const EdgeList);
 StateList remove_state(const State, const StateList, const Grid_t *const);
 LiftStateList remove_lift_state(const LiftState, const LiftStateList, const LiftGrid_t * const);
-int mod(const int, const Grid_t *const);
-int mod_up(const int, const Grid_t *const);
+int mod(const int, const int);
+int mod_up(const int, const int);
 StateList new_rectangles_out_of(const StateList, const State,
                                 const Grid_t *const);
 StateList new_rectangles_into(const StateList, const State,
@@ -466,10 +466,10 @@ int main(int argc, char **argv) {
 
     // Change the content of these print statements
     if (null_homologous_lift(UR_lift, &G)) {
-      (*print_ptr)("%d: is null-homologous\n");
+      (*print_ptr)("theta_%d is null-homologous\n", G.sheets);
     }
     else {
-      (*print_ptr)("%d: is NOT null-homologous\n");
+      (*print_ptr)("theta_%d is NOT null-homologous\n", G.sheets);
     }
 
     free(G.Xs);
@@ -608,14 +608,14 @@ int main(int argc, char **argv) {
  * Shifts the input towards the interval [0,arc_index) by
  * a multiple of arc_index
  * @param a An integer
- * @param G working grid
+ * @param arc_index an int
  * @return a shifted towards the interval [0,arc_index)
  */
-int mod(const int a, const Grid_t *const G) {
-  if (a >= G->arc_index) {
-    return (a - G->arc_index);
+int mod(const int a, const int arc_index) {
+  if (a >= arc_index) {
+    return (a - arc_index);
   } else if (a < 0) {
-    return (a + G->arc_index);
+    return (a + arc_index);
   } else {
     return (a);
   };
@@ -625,14 +625,14 @@ int mod(const int a, const Grid_t *const G) {
  * Shifts the input towards the interval (0,arc_index] by
  * a multiple of arc_index
  * @param a An integer
- * @param G working grid
+ * @param arc_index an int
  * @return a shifted towards the interval (0,arc_index]
  */
-int mod_up(const int a, const Grid_t *const G) {
-  if (a > G->arc_index) {
-    return (a - G->arc_index);
+int mod_up(const int a, const int arc_index) {
+  if (a > arc_index) {
+    return (a - arc_index);
   } else if (a <= 0) {
-    return (a + G->arc_index);
+    return (a + arc_index);
   } else {
     return (a);
   };
@@ -670,28 +670,28 @@ StateList new_rectangles_out_of(const StateList prevs, const State incoming,
   LL = 0;
   while (LL < G->arc_index) {
     w = 1;
-    h = min(mod(G->Os[LL] - incoming[LL], G), mod(G->Xs[LL] - incoming[LL], G));
+    h = min(mod(G->Os[LL] - incoming[LL], G->arc_index), mod(G->Xs[LL] - incoming[LL], G->arc_index));
     while (w < G->arc_index && h > 0) {
-      if (mod(incoming[mod(LL + w, G)] - incoming[LL], G) <= h) {
-        temp_state[LL] = incoming[mod(LL + w, G)];
-        temp_state[mod(LL + w, G)] = incoming[LL];
+      if (mod(incoming[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index) <= h) {
+        temp_state[LL] = incoming[mod(LL + w, G->arc_index)];
+        temp_state[mod(LL + w, G->arc_index)] = incoming[LL];
         m = get_number(temp_state, prevs, G);
         if (m == 0) {
           n = get_number(temp_state, ans, G);
           if (n != 0) {
             ans = remove_state(temp_state, ans, G);
           } else {
-            temp = swap_cols(LL, mod(LL + w, G), incoming, G);
+            temp = swap_cols(LL, mod(LL + w, G->arc_index), incoming, G);
             temp->nextState = ans;
             ans = temp;
           }
         };
         temp_state[LL] = incoming[LL];
-        temp_state[mod(LL + w, G)] = incoming[mod(LL + w, G)];
-        h = mod(incoming[mod(LL + w, G)] - incoming[LL], G);
+        temp_state[mod(LL + w, G->arc_index)] = incoming[mod(LL + w, G->arc_index)];
+        h = mod(incoming[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index);
       };
-      h = min(h, min(mod(G->Os[mod(LL + w, G)] - incoming[LL], G),
-                     mod(G->Xs[mod(LL + w, G)] - incoming[LL], G)));
+      h = min(h, min(mod(G->Os[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index),
+                     mod(G->Xs[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index)));
       w++;
     };
     LL++;
@@ -723,29 +723,29 @@ StateList new_rectangles_into(const StateList prevs, const State incoming,
   LL = 0;
   while (LL < G->arc_index) {
     w = 1;
-    h = min(mod_up(incoming[LL] - G->Os[LL], G),
-            mod_up(incoming[LL] - G->Xs[LL], G));
+    h = min(mod_up(incoming[LL] - G->Os[LL], G->arc_index),
+            mod_up(incoming[LL] - G->Xs[LL], G->arc_index));
     while (w < G->arc_index && h > 0) {
-      if (mod_up(incoming[LL] - incoming[mod(LL + w, G)], G) < h) {
-        temp_state[LL] = incoming[mod(LL + w, G)];
-        temp_state[mod(LL + w, G)] = incoming[LL];
+      if (mod_up(incoming[LL] - incoming[mod(LL + w, G->arc_index)], G->arc_index) < h) {
+        temp_state[LL] = incoming[mod(LL + w, G->arc_index)];
+        temp_state[mod(LL + w, G->arc_index)] = incoming[LL];
         m = get_number(temp_state, prevs, G);
         if (m == 0) {
           n = get_number(temp_state, ans, G);
           if (n != 0) {
             ans = remove_state(temp_state, ans, G);
           } else {
-            temp = swap_cols(LL, mod(LL + w, G), incoming, G);
+            temp = swap_cols(LL, mod(LL + w, G->arc_index), incoming, G);
             temp->nextState = ans;
             ans = temp;
           }
         };
         temp_state[LL] = incoming[LL];
-        temp_state[mod(LL + w, G)] = incoming[mod(LL + w, G)];
-        h = mod_up(incoming[LL] - incoming[mod(LL + w, G)], G);
+        temp_state[mod(LL + w, G->arc_index)] = incoming[mod(LL + w, G->arc_index)];
+        h = mod_up(incoming[LL] - incoming[mod(LL + w, G->arc_index)], G->arc_index);
       };
-      h = min(h, min(mod_up(incoming[LL] - G->Os[mod(LL + w, G)], G),
-                     mod_up(incoming[LL] - G->Xs[mod(LL + w, G)], G)));
+      h = min(h, min(mod_up(incoming[LL] - G->Os[mod(LL + w, G->arc_index)], G->arc_index),
+                     mod_up(incoming[LL] - G->Xs[mod(LL + w, G->arc_index)], G->arc_index)));
       w++;
     };
     LL++;
@@ -768,16 +768,16 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
   for(int start_x=0; start_x < G->arc_index*G->sheets; ++start_x) {
     int jumped_down = 0;
     int jumped_up = 0;
-    char start_y = incoming[start_x/G->arc_index][start_x%G->arc_index];
+    int start_y = mod(incoming[start_x/G->arc_index][start_x%G->arc_index], G->arc_index);
     int start_sheet = start_x/G->arc_index;
     int step = 0;
-    int check_index = (start_x + step) % G->arc_index;
+    int check_index = mod((start_x + step) % G->arc_index, G->arc_index);
     int jump = start_sheet*G->arc_index;
-    int height = (start_y - 1) % G->arc_index;
+    int height = mod((start_y - 1) % G->arc_index, G->arc_index);
 
     while (height != start_y) {
-      check_index = (start_x + step)%G->arc_index;
-      int check_index_gen = (((start_x + step + 1) % G->arc_index) + jump) % (G->arc_index * G->sheets);
+      check_index = mod((start_x + step)%G->arc_index, G->arc_index);
+      int check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index * G->sheets);
       int clear = 1;
       if (height > start_y) {
         if (g_Xs[check_index] < height && g_Xs[check_index] > start_y && clear) {
@@ -795,7 +795,7 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
             jump = jump + G->arc_index;
             jumped_up = 1;
           }
-          check_index_gen = (((start_x + step + 1) % G->arc_index) + jump) % (G->arc_index * G->sheets);
+          check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index);
         }
         if (g_Os[check_index] > height && g_Xs[check_index] < start_y && clear) {
           if (is_mirrored) {
@@ -806,9 +806,9 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
             jump = jump + G->arc_index;
             jumped_up = 1;
           }
-          check_index_gen = (((start_x + step + 1) % G->arc_index) + jump) % (G->arc_index * G->sheets);
+          check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index);
         }
-        if (incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index] < height && incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index] > start_y && clear) {
+        if (mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index], G->arc_index) < height && mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index], G->arc_index) > start_y && clear) {
           if (jumped_down) {
             jumped_down = 0;
             jump = jump + G->arc_index;
@@ -820,8 +820,8 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
           clear = 0;
         }
         if (clear) {
-          check_index_gen = (((start_x + step + 1) % G->arc_index) + jump) % (G->arc_index * G->sheets);
-          if (incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index] == height) {
+          check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index*G->sheets);
+          if (mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index], G->arc_index) == height) {
             LiftState new_state = NULL;
             copy_lift_state(&new_state, &incoming, G);
             new_state[start_x/G->arc_index][start_x%G->arc_index] = incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index];
@@ -840,16 +840,15 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
                 remove_lift_state(new_state, ans, G);
                 free_lift_state(&new_state, G);
               }
-              
-              height = (height - 1) % G->arc_index;
             }
-            step = step + 1;
-            jumped_down = 0;
-            jumped_up = 0;
+            height = mod((height - 1) % G->arc_index, G->arc_index);
           }
-          else {
-            height = (height - 1) % G->arc_index;
-          }
+          step = step + 1;
+          jumped_down = 0;
+          jumped_up = 0;          
+        }
+        else {
+          height = mod((height - 1) % G->arc_index,G->arc_index);
         }
       }
       else {
@@ -859,11 +858,11 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
         if ((g_Os[check_index] < height || g_Os[check_index] > start_y) && clear) {
           clear = 0;
         }
-        if ((incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index] < height || incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index] >= start_y) && clear) {
+        if ((mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index], G->arc_index) < height || mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index], G->arc_index) >= start_y) && clear) {
           clear = 0;
         }
         if (clear) {
-          if (incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index] == height) {
+          if (mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index], G->arc_index) == height) {
             LiftState new_state = NULL;
             init_lift_state(&new_state, G);
             copy_lift_state(&new_state, &incoming, G);
@@ -883,14 +882,13 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
                 ans = remove_lift_state(new_state, ans, G);
                 free_lift_state(&new_state, G);
               }
-              height = (height -1) % G->arc_index;
             }
-            step = step + 1;
-            
+            height = mod((height -1) % G->arc_index,G->arc_index);
           }
+          step = step + 1;
         }
         else {
-          height = (height - 1) % G->arc_index;
+          height = mod((height - 1) % G->arc_index, G->arc_index);
         }
       }
     }
@@ -921,7 +919,7 @@ void mirror_lift_state(LiftState * state, const LiftGrid_t * const G) {
   copy_lift_state(&original, state, G);
   for(int i = 0; i < G->sheets; ++i) {
     for(int j = 0; j < G->arc_index; ++j) {
-      (*state)[j][i] = original[G->sheets-(j+1)][G->arc_index-(i+1)];
+      (*state)[i][j] = original[G->sheets-(i+1)][G->arc_index-(j+1)];
     }
   }
   free_lift_state(&original, G);
@@ -1691,20 +1689,20 @@ StateList fixed_wt_rectangles_out_of(const int wt, const State incoming,
   LL = 0;
   while (LL < G->arc_index) {
     w = 1;
-    h = mod(G->Os[LL] - incoming[LL], G);
+    h = mod(G->Os[LL] - incoming[LL], G->arc_index);
     while (w < G->arc_index && h > 0) {
-      if (mod(incoming[mod(LL + w, G)] - incoming[LL], G) <= h) {
+      if (mod(incoming[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index) <= h) {
         this_weight = 0;
         i = 0;
         while (i < w && this_weight <= wt + 1) {
-          if (mod(G->Xs[mod(LL + i, G)] - incoming[LL], G) <
-              mod(incoming[mod(LL + w, G)] - incoming[LL], G)) {
+          if (mod(G->Xs[mod(LL + i, G->arc_index)] - incoming[LL], G->arc_index) <
+              mod(incoming[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index)) {
             this_weight++;
           };
           i++;
         };
         if (this_weight == wt) {
-          temp = swap_cols(LL, mod(LL + w, G), incoming, G);
+          temp = swap_cols(LL, mod(LL + w, G->arc_index), incoming, G);
           if (get_number(temp->data, ans, G) != 0) {
             ans = remove_state(temp->data, ans, G);
             free(temp->data);
@@ -1715,9 +1713,9 @@ StateList fixed_wt_rectangles_out_of(const int wt, const State incoming,
             ans = temp;
           }
         };
-        h = mod(incoming[mod(LL + w, G)] - incoming[LL], G);
+        h = mod(incoming[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index);
       };
-      h = min(h, mod(G->Os[mod(LL + w, G)] - incoming[LL], G));
+      h = min(h, mod(G->Os[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index));
       w++;
     };
     LL++;
