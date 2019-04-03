@@ -507,6 +507,9 @@ int main(int argc, char **argv) {
 
   if (!is_grid(&G)) {
     (*print_ptr)("Invalid grid\n");
+    free(G.Xs);
+    free(G.Os);
+    free(UR);
     exit(1);
   }
 
@@ -515,6 +518,7 @@ int main(int argc, char **argv) {
       perror("An error occured while setting the timer");
       free(G.Xs);
       free(G.Os);
+      free(UR);
       exit(1);
     }
     alarm(args.max_time);
