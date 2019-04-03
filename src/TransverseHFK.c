@@ -12,6 +12,7 @@
 #include <limits.h>
 #include <math.h>
 #include <signal.h>
+#include "states.c"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -58,59 +59,6 @@ typedef int (*printf_t)(const char *format, ...);
 static int verbosity = SILENT;
 printf_t print_ptr = printf;
 
-typedef char *State;
-
-struct Grid {
-  State Xs;
-  State Os;
-  int arc_index;
-};
-
-typedef struct Grid Grid_t;
-
-typedef char **LiftState;
-struct LiftGrid {
-  State Xs;
-  State Os;
-  int arc_index;
-  int sheets;
-};
-
-typedef struct LiftGrid LiftGrid_t;
-
-struct Vertex {
-  int data;
-  struct Vertex *nextVertex;
-};
-
-typedef struct Vertex Vertex_t;
-typedef Vertex_t *VertexList;
-
-struct EdgeNode {
-  int start;
-  int end;
-  struct EdgeNode *nextEdge;
-};
-
-typedef struct EdgeNode EdgeNode_t;
-typedef EdgeNode_t *EdgeList;
-
-typedef struct StateNode StateNode_t;
-typedef StateNode_t *StateList;
-
-struct StateNode {
-  State data;
-  StateList nextState;
-};
-
-typedef struct LiftStateNode LiftStateNode_t;
-typedef LiftStateNode_t *LiftStateList;
-
-struct LiftStateNode {
-  LiftState data;
-  LiftStateList nextState;
-};
-
 EdgeList add_mod_two_lists(const VertexList, const VertexList,
                            const EdgeList *const);
 VertexList prepend_vertex(const int, const VertexList);
@@ -151,6 +99,7 @@ void cusps(int *, const Grid_t *const);
 
 void print_state(const State, const Grid_t *const);
 void print_state_short(const State, const Grid_t *const);
+void print_lift_state_short(const LiftState, const LiftGrid_t * const);
 void print_edges(const EdgeList);
 void print_states(const StateList, const Grid_t *const);
 void print_math_edges(const EdgeList);
@@ -276,30 +225,6 @@ int build_permutation(char *perm, char *str, int len) {
   }
 
   return 0;
-}
-
-// This is not correct
-void init_lift_state(LiftState *s, const LiftGrid_t * const G) {
-  *s = (char**)malloc(sizeof(char*)*G->sheets);
-  for(int i = 0; i < G->sheets; ++i) {
-    (*s)[i] = malloc(sizeof(char)*G->arc_index);
-  }
-}
-
-void free_lift_state(LiftState *s, const LiftGrid_t * const G) {
-  for(int i = 0; i < G->sheets; ++i) {
-    free((*s)[i]);
-  }
-  free(*s);  
-}
-
-int eq_lift_state(const LiftState a, const LiftState b, const LiftGrid_t *const G) {
-  for(int i=0; i < G->sheets; ++i) {
-    if(!strncmp(a[i],b[i], G->arc_index)) {
-      return 0;
-    }
-  }
-  return 1;
 }
 
 /**
@@ -904,6 +829,10 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
   return ans;
 }
 
+LiftStateRBTree new_lift_rectangles_out_alt(const LiftStateRBTree prevs, const LiftState incoming, const LiftGrid_t * const G) {
+  
+}
+
 LiftGrid_t* mirror_lift_grid(const LiftGrid_t * const G) {
   LiftGrid_t* G_mirror = malloc(sizeof(LiftGrid_t));
   G_mirror->Xs = malloc(sizeof(char)*G->arc_index);
@@ -923,8 +852,9 @@ void mirror_lift_state(LiftState * state, const LiftGrid_t * const G) {
   init_lift_state(&original, G);
   copy_lift_state(&original, state, G);
   for(int i = 0; i < G->sheets; ++i) {
-    for(int j = 0; j < G->arc_index; ++j) {
-      (*state)[i][j] = original[G->sheets-(i+1)][G->arc_index-(j+1)];
+    (*state)[i][0] = original[G->sheets-(i+1)][0];
+    for(int j = 0; j < G->arc_index-1; ++j) {
+      (*state)[i][j+1] = original[G->sheets-(i+1)][G->arc_index-(j+1)];
     }
   }
   free_lift_state(&original, G);
@@ -1025,7 +955,17 @@ void print_state_short(const State state, const Grid_t *const G) {
     (*print_ptr)("%d,", state[i]);
     i++;
   };
-  (*print_ptr)("%d}", state[G->arc_index - 1]);
+  (*print_ptr)("%d}\n", state[G->arc_index - 1]);
+}
+
+void print_lift_state_short(const LiftState state, const LiftGrid_t * const G) {
+  Grid_t G_p;
+  G_p.arc_index = G->arc_index;
+  G_p.Xs = G->Xs;
+  G_p.Os = G->Os;
+  for(int i = 0; i < G->sheets; ++i) {
+    print_state_short(state[i], &G_p);
+  }
 }
 
 /**
