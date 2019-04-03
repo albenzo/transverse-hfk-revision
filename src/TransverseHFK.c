@@ -378,6 +378,10 @@ int is_state(const State state, const Grid_t *const G) {
   return 1;
 }
 
+int is_lift_state(const LiftState state, const LiftGrid_t * const G) {
+  return 1;
+}
+
 int main(int argc, char **argv) {
   struct arguments args;
   args.arc_index = -1;

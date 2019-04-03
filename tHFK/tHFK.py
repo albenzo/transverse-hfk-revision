@@ -118,7 +118,7 @@ class tHFK:
         Returns True if the lift of x+ to the n-fold cyclic branch cover
         is null-homologous. False otherwise.
         """
-        raise NotImplementedError
+        return _tHFK.null_homologous_lift(self.x_plus(), n, self.Xs, self.Os, self.out_stream, self.verbosity)
     
 class Tk_tHFK(tHFK):
     """
@@ -171,7 +171,7 @@ class Tk_tHFK(tHFK):
         self.d_minus_btn = Button(self.window, text=u"\u03B4_1 \u03BB^-", command=self._with_process(self.d_minus_btn_cmd))
         self.n_lbl = Label(self.window,text="n=")
         self.n_entry = Spinbox(self.window, width=3, text="n=", from_=1, to=100)
-        self.theta_n_btn = Button(self.window, text=u"\u03B8_n", command=self._with_process(self.theta_n_btn_cmd), state=DISABLED)
+        self.theta_n_btn = Button(self.window, text=u"\u03B8_n", command=self._with_process(self.theta_n_btn_cmd))
         self.abort_btn = Button(self.window, text="Abort", command=self.abort_btn_cmd)
         self.clear_btn = Button(self.window, text="Clear", command=self.clear_btn_cmd)
         self.verbosity_var = StringVar()
