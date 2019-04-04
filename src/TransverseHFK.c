@@ -66,8 +66,6 @@ EdgeList prepend_edge(const int, const int, const EdgeList);
 StateList fixed_wt_rectangles_out_of(const int, const State,
                                      const Grid_t *const);
 StateList swap_cols(const int, const int, const State, const Grid_t *const);
-int get_number(const State, const StateList, const Grid_t *const);
-int get_lift_number(const LiftState, LiftStateList, const LiftGrid_t * const);
 void free_state_list(StateList);
 void free_lift_state_list(LiftStateList, const LiftGrid_t * const);
 void free_lift_state(LiftState *, const LiftGrid_t * const);
@@ -114,19 +112,7 @@ int get_verbosity(void);
 void set_verbosity(const int);
 
 void timeout(const int);
-int is_grid(const Grid_t *const);
-int is_lift_grid(const LiftGrid_t * const);
-int is_state(const State, const Grid_t *const);
-void init_lift_state(LiftState *, const LiftGrid_t * const);
-void copy_lift_state(LiftState *, const LiftState * const, const LiftGrid_t * const);
-void mirror_lift_state(LiftState *, const LiftGrid_t * const);
-
 int build_permutation(State, char *, int);
-int eq_state(const State a, const State b, const Grid_t *const G) {
-  return (!strncmp(a, b, G->arc_index));
-}
-int eq_lift_state(const LiftState a, const LiftState b, const LiftGrid_t * const G);
-
 int get_verbosity() { return verbosity; }
 
 void set_verbosity(const int val) { verbosity = val; }
@@ -227,86 +213,6 @@ int build_permutation(char *perm, char *str, int len) {
   }
 
   return 0;
-}
-
-/**
- * Determines whether the grid specified by the parameters is valid
- * @param G working grid
- * @return 1 if the grid is valid, 0 otherwise
- */
-int is_grid(const Grid_t *const G) {
-  if (1 >= G->arc_index) {
-    return 0;
-  }
-
-  for (int j = 0; j < G->arc_index; ++j) {
-    if (G->Xs[j] == G->Os[j]) {
-      return 0;
-    }
-    int found_x = 0;
-    int found_o = 0;
-
-    for (int k = 0; k < G->arc_index && (found_x == 0 || found_o == 0); ++k) {
-      if (G->Xs[k] == j + 1) {
-        found_x = 1;
-      }
-
-      if (G->Os[k] == j + 1) {
-        found_o = 1;
-      }
-    }
-
-    if (0 == found_x || 0 == found_o) {
-      return 0;
-    }
-  }
-
-  return 1;
-}
-
-int is_lift_grid(const LiftGrid_t *const G) {
-  if(G->sheets < 1) {
-    return 0;
-  }
-  
-  Grid_t H;
-  H.arc_index = G->arc_index;
-  H.Xs = G->Xs;
-  H.Os = G->Os;
-  return is_grid(&H);
-}
-
-/**
- * Determines whether the supplied state is a valid grid state for the supplied
- * grid
- * @param state the grid state
- * @param G the grid
- * @return 1 if the state is valid, 0 otherwise
- */
-int is_state(const State state, const Grid_t *const G) {
-  for (int i = 0; i < G->arc_index; ++i) {
-    if (state[i] <= 0 || state[i] > G->arc_index) {
-      return 0;
-    }
-
-    int found_i = 0;
-
-    for (int j = 0; j < G->arc_index; ++j) {
-      if (state[j] == i + 1) {
-        found_i = 1;
-        break;
-      }
-    }
-
-    if (!found_i) {
-      return 0;
-    }
-  }
-  return 1;
-}
-
-int is_lift_state(const LiftState state, const LiftGrid_t * const G) {
-  return 1;
 }
 
 int main(int argc, char **argv) {
@@ -856,41 +762,6 @@ LiftStateRBTree new_lift_rectangles_out_alt(const LiftStateRBTree prevs, const L
   return ans;
 }
 
-LiftGrid_t* mirror_lift_grid(const LiftGrid_t * const G) {
-  LiftGrid_t* G_mirror = malloc(sizeof(LiftGrid_t));
-  G_mirror->Xs = malloc(sizeof(char)*G->arc_index);
-  G_mirror->Os = malloc(sizeof(char)*G->arc_index);
-  G_mirror->arc_index = G->arc_index;
-  G_mirror->sheets = G->sheets;
-
-  for(int i=0; i<G->arc_index; ++i) {
-    G_mirror->Xs[i] = G->Xs[G->arc_index-(i+1)];
-    G_mirror->Os[i] = G->Os[G->arc_index-(i+1)];
-  }
-  return G_mirror;
-}
-
-void mirror_lift_state(LiftState * state, const LiftGrid_t * const G) {
-  LiftState original;
-  init_lift_state(&original, G);
-  copy_lift_state(&original, state, G);
-  for(int i = 0; i < G->sheets; ++i) {
-    (*state)[i][0] = original[G->sheets-(i+1)][0];
-    for(int j = 0; j < G->arc_index-1; ++j) {
-      (*state)[i][j+1] = original[G->sheets-(i+1)][G->arc_index-(j+1)];
-    }
-  }
-  free_lift_state(&original, G);
-}
-
-void copy_lift_state(LiftState* dest, const LiftState * const origin, const LiftGrid_t * const G) {
-  for(int i = 0; i < G->sheets; ++i) {
-    for(int j = 0; j < G->arc_index; ++j) {
-      (*dest)[i][j] = (*origin)[i][j];
-    }
-  }
-}
-
 LiftStateList new_lift_rectangles_out_of(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G) {
   return new_lift_rectangles_out_internal(prevs, incoming, G, 0);
 }
@@ -1115,41 +986,6 @@ void print_grid(const Grid_t *const G) {
   //(*print_ptr)("2A=M=SL+1=%d\n",NESW_pp(G->Xs,G)-NESW_pO(G->Xs,G)-NESW_Op(G->Xs,G)+NESW_pp(G->Os,G)+1);
   print_grid_perm(G);
   (*print_ptr)("\n");
-}
-
-/**
- * Returns the index of a State within a StateList
- * Note: Indexed from 1
- * @param a State
- * @param b a StateList
- * @return index of a within b
- */
-int get_number(const State a, const StateList b, const Grid_t *const G) {
-  StateList temp;
-  int count = 1;
-  temp = b;
-  while (temp != NULL) {
-    if (eq_state(a, temp->data, G)) {
-      return count;
-    }
-    temp = temp->nextState;
-    count++;
-  }
-  return 0;
-}
-
-int get_lift_number(const LiftState a, const LiftStateList b, const LiftGrid_t *const G) {
-  LiftStateList temp;
-  int count = 1;
-  temp = b;
-  while (temp != NULL) {
-    if (eq_lift_state(a, temp->data, G)) {
-      return count;
-    }
-    temp = temp->nextState;
-    ++count;
-  }
-  return 0;
 }
 
 /**

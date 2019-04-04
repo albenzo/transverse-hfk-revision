@@ -69,9 +69,23 @@ struct LiftStateNode {
 };
 
 void init_lift_state(LiftState*, const LiftGrid_t * const G);
+void copy_lift_state(LiftState *, const LiftState * const, const LiftGrid_t * const);
 void free_lift_state(LiftState*, const LiftGrid_t * const G);
+
+int is_state(const State, const Grid_t *const);
+int is_lift_state(const LiftState, const LiftGrid_t * const);
+void mirror_lift_state(LiftState *, const LiftGrid_t * const);
+int eq_state(const State a, const State b, const Grid_t * const G);
 int eq_lift_state(const LiftState a, const LiftState b, const LiftGrid_t * const G);
 int comp_lift_state(const LiftState, const LiftState, const LiftGrid_t * const G);
+
+int is_grid(const Grid_t *const);
+int is_lift_grid(const LiftGrid_t * const);
+LiftGrid_t * mirror_lift_grid(const LiftGrid_t * const);
+
+int get_number(const State, const StateList, const Grid_t *const);
+int get_lift_number(const LiftState, LiftStateList, const LiftGrid_t * const);
+
 void left_rotate(LiftStateRBTree, LiftStateRBTree);
 void right_rotate(LiftStateRBTree, LiftStateRBTree);
 void insert_data(LiftStateRBTree, LiftState, const LiftGrid_t * const);
@@ -100,6 +114,14 @@ void init_lift_state(LiftState *s, const LiftGrid_t * const G) {
   }
 }
 
+void copy_lift_state(LiftState* dest, const LiftState * const origin, const LiftGrid_t * const G) {
+  for(int i = 0; i < G->sheets; ++i) {
+    for(int j = 0; j < G->arc_index; ++j) {
+      (*dest)[i][j] = (*origin)[i][j];
+    }
+  }
+}
+
 /**
  * Frees the passed in lift state
  * @param s a pointer to a lift state
@@ -111,6 +133,58 @@ void free_lift_state(LiftState *s, const LiftGrid_t * const G) {
   }
   free(*s);  
 }
+
+/**
+ * Determines whether the supplied state is a valid grid state for the supplied
+ * grid
+ * @param state the grid state
+ * @param G the grid
+ * @return 1 if the state is valid, 0 otherwise
+ */
+int is_state(const State state, const Grid_t *const G) {
+  for (int i = 0; i < G->arc_index; ++i) {
+    if (state[i] <= 0 || state[i] > G->arc_index) {
+      return 0;
+    }
+
+    int found_i = 0;
+
+    for (int j = 0; j < G->arc_index; ++j) {
+      if (state[j] == i + 1) {
+        found_i = 1;
+        break;
+      }
+    }
+
+    if (!found_i) {
+      return 0;
+    }
+  }
+  return 1;
+}
+
+/**
+ * Determines whether the supplied lift state is valid for the supplied
+ * lift grid
+ * @param state a lift state
+ * @param G a lift grid
+ * @return 1 if the state is valid, 0 otherwise
+ */
+int is_lift_state(const LiftState state, const LiftGrid_t * const G) {
+  return 1;
+}
+
+
+/**
+ * Determines whether two states represent the same value
+ * @param a a state
+ * @param b a state
+ * @param G a Grid
+ */
+int eq_state(const State a, const State b, const Grid_t *const G) {
+  return (!strncmp(a, b, G->arc_index));
+}
+
 
 /**
  * Determines whether the two lift states represent the same state
@@ -141,6 +215,137 @@ int comp_lift_state(const LiftState u, const LiftState v, const LiftGrid_t * con
     if (0 != comp) {
       return comp;
     }
+  }
+  return 0;
+}
+
+/**
+ * Modifies the supplied lift state to be its mirror
+ * @param state a lift state
+ * @param G a grid
+ */
+void mirror_lift_state(LiftState * state, const LiftGrid_t * const G) {
+  LiftState original;
+  init_lift_state(&original, G);
+  copy_lift_state(&original, state, G);
+  for(int i = 0; i < G->sheets; ++i) {
+    (*state)[i][0] = original[G->sheets-(i+1)][0];
+    for(int j = 0; j < G->arc_index-1; ++j) {
+      (*state)[i][j+1] = original[G->sheets-(i+1)][G->arc_index-(j+1)];
+    }
+  }
+  free_lift_state(&original, G);
+}
+
+/**
+ * Determines whether the supplied grid is valid
+ * @param G a grid
+ * @return 1 if the grid is valid, 0 otherwise
+ */
+int is_grid(const Grid_t *const G) {
+  if (1 >= G->arc_index) {
+    return 0;
+  }
+
+  for (int j = 0; j < G->arc_index; ++j) {
+    if (G->Xs[j] == G->Os[j]) {
+      return 0;
+    }
+    int found_x = 0;
+    int found_o = 0;
+
+    for (int k = 0; k < G->arc_index && (found_x == 0 || found_o == 0); ++k) {
+      if (G->Xs[k] == j + 1) {
+        found_x = 1;
+      }
+
+      if (G->Os[k] == j + 1) {
+        found_o = 1;
+      }
+    }
+
+    if (0 == found_x || 0 == found_o) {
+      return 0;
+    }
+  }
+
+  return 1;
+}
+
+/**
+ * Determines whether the supplied lift grid is valid
+ * @param G a lift grid
+ * @return 1 if the grid is valid, 0 otherwise
+ */
+int is_lift_grid(const LiftGrid_t *const G) {
+  if(G->sheets < 1) {
+    return 0;
+  }
+  
+  Grid_t H;
+  H.arc_index = G->arc_index;
+  H.Xs = G->Xs;
+  H.Os = G->Os;
+  return is_grid(&H);
+}
+
+/**
+ * Allocates a new grid that is the mirror of the supplied grid
+ * @param G a lift grid
+ * @param the mirror of G
+ */
+LiftGrid_t* mirror_lift_grid(const LiftGrid_t * const G) {
+  LiftGrid_t* G_mirror = malloc(sizeof(LiftGrid_t));
+  G_mirror->Xs = malloc(sizeof(char)*G->arc_index);
+  G_mirror->Os = malloc(sizeof(char)*G->arc_index);
+  G_mirror->arc_index = G->arc_index;
+  G_mirror->sheets = G->sheets;
+
+  for(int i=0; i<G->arc_index; ++i) {
+    G_mirror->Xs[i] = G->Xs[G->arc_index-(i+1)];
+    G_mirror->Os[i] = G->Os[G->arc_index-(i+1)];
+  }
+  return G_mirror;
+}
+
+/**
+ * Returns the index of a State within a StateList
+ * Note: Indexed from 1
+ * @param a State
+ * @param b a StateList
+ * @return index of a within b
+ */
+int get_number(const State a, const StateList b, const Grid_t *const G) {
+  StateList temp;
+  int count = 1;
+  temp = b;
+  while (temp != NULL) {
+    if (eq_state(a, temp->data, G)) {
+      return count;
+    }
+    temp = temp->nextState;
+    count++;
+  }
+  return 0;
+}
+
+/**
+ * Returns the index of a LiftState within a StateList
+ * Note: Indexed from 1
+ * @param a LiftState
+ * @param b a LiftStateList
+ * @return index of a within b
+ */
+int get_lift_number(const LiftState a, const LiftStateList b, const LiftGrid_t *const G) {
+  LiftStateList temp;
+  int count = 1;
+  temp = b;
+  while (temp != NULL) {
+    if (eq_lift_state(a, temp->data, G)) {
+      return count;
+    }
+    temp = temp->nextState;
+    ++count;
   }
   return 0;
 }
