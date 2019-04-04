@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #define BLACK 0
 #define RED 1

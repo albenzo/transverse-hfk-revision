@@ -708,7 +708,7 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
   for(int start_x=0; start_x < G->arc_index*G->sheets; ++start_x) {
     int jumped_down = 0;
     int jumped_up = 0;
-    int start_y = mod(incoming[start_x/G->arc_index][start_x%G->arc_index], G->arc_index);
+    int start_y = mod(incoming[start_x/G->arc_index][start_x%G->arc_index]-1, G->arc_index);
     int start_sheet = start_x/G->arc_index;
     int step = 0;
     int check_index = mod((start_x + step) % G->arc_index, G->arc_index);
@@ -748,7 +748,7 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
           }
           check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index * G->sheets);
         }
-        if (mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index], G->arc_index) < height && mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index], G->arc_index) > start_y && clear) {
+        if (mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) < height && mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) > start_y && clear) {
           if (jumped_down) {
             jumped_down = 0;
             jump = jump + G->arc_index;
@@ -761,7 +761,7 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
         }
         if (clear) {
           check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index*G->sheets);
-          if (mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index], G->arc_index) == height) {
+          if (mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) == height) {
             LiftState new_state = NULL;
             init_lift_state(&new_state, G);
             copy_lift_state(&new_state, &incoming, G);
@@ -799,11 +799,11 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
         if ((g_Os[check_index] < height || g_Os[check_index] > start_y) && clear) {
           clear = 0;
         }
-        if ((mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index], G->arc_index) < height || mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index], G->arc_index) >= start_y) && clear) {
+        if ((mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) < height || mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) >= start_y) && clear) {
           clear = 0;
         }
         if (clear) {
-          if (mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index], G->arc_index) == height) {
+          if (mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) == height) {
             LiftState new_state = NULL;
             init_lift_state(&new_state, G);
             copy_lift_state(&new_state, &incoming, G);
@@ -841,7 +841,19 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
 }
 
 LiftStateRBTree new_lift_rectangles_out_alt(const LiftStateRBTree prevs, const LiftState incoming, const LiftGrid_t * const G) {
-  
+  LiftStateRBTree ans = NULL;
+  for(int LL_sheet = 0; LL_sheet < G->sheets; ++LL_sheet) {
+    for(int  LL = 0; LL < G->arc_index; ++LL) {
+      int j = 0;;
+      int w = 1;
+      int h = min(mod(G->Os[LL] - incoming[LL_sheet][LL], G->arc_index), mod(G->Xs[LL] - incoming[LL_sheet][LL], G->arc_index));
+      while(w < G->arc_index && h > 0) {
+        
+      }
+    }
+  }
+
+  return ans;
 }
 
 LiftGrid_t* mirror_lift_grid(const LiftGrid_t * const G) {
