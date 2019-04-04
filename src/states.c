@@ -104,7 +104,7 @@ void free_lift_state(LiftState *s, const LiftGrid_t * const G) {
 
 int eq_lift_state(const LiftState a, const LiftState b, const LiftGrid_t *const G) {
   for(int i=0; i < G->sheets; ++i) {
-    if(!strncmp(a[i],b[i], G->arc_index)) {
+    if(0 != memcmp(a[i],b[i], G->arc_index)) {
       return 0;
     }
   }
@@ -113,7 +113,7 @@ int eq_lift_state(const LiftState a, const LiftState b, const LiftGrid_t *const 
 
 int comp_lift_state(const LiftState u, const LiftState v, const LiftGrid_t * const G) {
   for(int i=0; i< G->sheets; ++i) {
-    int comp = strncmp(u[i],v[i], G->arc_index);
+    int comp = memcmp(u[i],v[i], G->arc_index);
     if (0 != comp) {
       return comp;
     }

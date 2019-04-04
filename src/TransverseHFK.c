@@ -739,12 +739,12 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
         }
         if (g_Os[check_index] > height && g_Xs[check_index] < start_y && clear) {
           if (is_mirrored) {
-            jump = jump - G->arc_index;
-            jumped_down = 1;
-          }
-          else {
             jump = jump + G->arc_index;
             jumped_up = 1;
+          }
+          else {
+            jump = jump - G->arc_index;
+            jumped_down = 1;
           }
           check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index * G->sheets);
         }

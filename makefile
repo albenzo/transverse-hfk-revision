@@ -24,7 +24,7 @@ install: transverseHFK
 uninstall:
 	rm -rf /usr/bin/transverseHFK
 
-transverseHFK: src/TransverseHFK.c
+transverseHFK: src/TransverseHFK.c src/states.c
 	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC)/TransverseHFK.c -o transverseHFK
 
 clean:
