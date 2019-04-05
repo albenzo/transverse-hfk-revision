@@ -1,1 +1,1 @@
-transverseHFK: ArcIndex must be a non-negative integer
+transverseHFK: ArcIndex must be a non-negative integer greater than 1.

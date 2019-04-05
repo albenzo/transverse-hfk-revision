@@ -361,7 +361,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
   case 't':
     args->max_time = atoi(arg);
     if (args->max_time <= 0) {
-      argp_failure(state, 0, 0, "Invalid timeout.");
+      argp_failure(state, 0, 0, "Invalid timeout");
       exit(1);
     }
     break;
