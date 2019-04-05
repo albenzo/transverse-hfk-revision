@@ -178,7 +178,7 @@ class Tk_tHFK(tHFK):
         self.d_plus_btn = Button(self.window, text=u"\u03B4_1 \u03BB^+", command=self._with_process(self.d_plus_btn_cmd))
         self.d_minus_btn = Button(self.window, text=u"\u03B4_1 \u03BB^-", command=self._with_process(self.d_minus_btn_cmd))
         self.n_lbl = Label(self.window,text="n=")
-        self.n_entry = Spinbox(self.window, width=3, text="n=", from_=1, to=100)
+        self.n_entry = Spinbox(self.window, width=6, text="n=", from_=1, to=100000)
         self.theta_n_btn = Button(self.window, text=u"\u03B8_n", command=self._with_process(self.theta_n_btn_cmd))
         self.abort_btn = Button(self.window, text="Abort", command=self.abort_btn_cmd)
         self.clear_btn = Button(self.window, text="Clear", command=self.clear_btn_cmd)
@@ -187,7 +187,11 @@ class Tk_tHFK(tHFK):
         self.verbosity_var.trace("w", self._sync_verbosity)
         self.verbosity_var.set('silent')
         self.verbosity_list = OptionMenu(self.window, self.verbosity_var, 'silent', 'quiet', 'verbose')
-                
+
+        self.window.rowconfigure(2, weight=1)
+        for i in range(8):
+            self.window.columnconfigure(i, weight=1)
+            
         self.l_plus_btn.grid(column=0,row=0)
         self.l_minus_btn.grid(column=1,row=0)
         self.d_plus_btn.grid(column=2,row=0)
@@ -196,10 +200,10 @@ class Tk_tHFK(tHFK):
         self.abort_btn.grid(column=2,row=3)
         self.clear_btn.grid(column=3,row=3)
         self.sync_btn.grid(column=4,row=3)
-        self.n_lbl.grid(column=5,row=0)
-        self.n_entry.grid(column=6,row=0)
+        self.n_lbl.grid(column=5,row=0,sticky=E)
+        self.n_entry.grid(column=6,row=0,sticky=W)
         self.verbosity_list.grid(column=0,row=1)
-        self.output_area.grid(column=0,row=2, columnspan=7)
+        self.output_area.grid(column=0,row=2, columnspan=7, sticky=N+E+S+W)
 
         self._callback_id = self.window.after(0,self._queue_check)
         self.window.protocol("WM_DELETE_WINDOW", self._clean_and_destroy)
