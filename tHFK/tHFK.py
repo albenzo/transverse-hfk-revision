@@ -357,3 +357,5 @@ class Tk_tHFK(tHFK):
                 nOlist = [o+1 for o in Olist]
             self.Xs = nXlist
             self.Os = nOlist
+            self.write("X: " + str(self.Xs) + '\n')
+            self.write("O: " + str(self.Os) + '\n')
