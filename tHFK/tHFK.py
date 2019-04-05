@@ -135,11 +135,13 @@ class Tk_tHFK(tHFK):
         A list of integers.
     name : str
         Name for the Tkinter window. Defaults to transverseHFK
+    parent : Tkinter window
+        The parent window. Defaults to None.
 
     Note: For the methods to work the Xs and Os must be
     permutations {1,...,N} with nonoverlapping values.
     """
-    def __init__(self,Xs,Os,name=None):
+    def __init__(self,Xs,Os,name=None,parent=None):
         """
         Initializes the Tkinter window.
         Parameters
@@ -150,6 +152,8 @@ class Tk_tHFK(tHFK):
             A list of integers.
         name : str
             Name for the Tkinter window. Defaults to transverseHFK
+        parent : Tkinter window
+            The parent window. Defaults to None.
 
         Note: For the methods to work the Xs and Os must be
         permutations {1,...,N} with nonoverlapping values.
@@ -162,6 +166,7 @@ class Tk_tHFK(tHFK):
         else:
             self.name = "transverseHFK"
             self.window.title("transverseHFK")
+        self.parent = parent
 
         self._process_list = []
         self._write_queue = mp.Queue()
@@ -177,6 +182,7 @@ class Tk_tHFK(tHFK):
         self.theta_n_btn = Button(self.window, text=u"\u03B8_n", command=self._with_process(self.theta_n_btn_cmd))
         self.abort_btn = Button(self.window, text="Abort", command=self.abort_btn_cmd)
         self.clear_btn = Button(self.window, text="Clear", command=self.clear_btn_cmd)
+        self.sync_btn = Button(self.window, text="Sync", command=self.sync_btn_cmd)
         self.verbosity_var = StringVar()
         self.verbosity_var.trace("w", self._sync_verbosity)
         self.verbosity_var.set('silent')
@@ -189,6 +195,7 @@ class Tk_tHFK(tHFK):
         self.theta_n_btn.grid(column=4,row=0)
         self.abort_btn.grid(column=2,row=3)
         self.clear_btn.grid(column=3,row=3)
+        self.sync_btn.grid(column=4,row=3)
         self.n_lbl.grid(column=5,row=0)
         self.n_entry.grid(column=6,row=0)
         self.verbosity_list.grid(column=0,row=1)
@@ -268,7 +275,7 @@ class Tk_tHFK(tHFK):
             else:
                 self.write(u"\u03BB^+ is NOT null-homologous\n")
         except Exception as e:
-            self.write(str(e))
+            self.write(str(e)+"\n")
 
     def l_minus_btn_cmd(self):
         """Calls lambda_minus and prints the result to the output area."""
@@ -278,7 +285,7 @@ class Tk_tHFK(tHFK):
             else:
                 self.write(u"\u03BB^- is NOT null-homologous\n")
         except Exception as e:
-            self.write(str(e))
+            self.write(str(e)+"\n")
 
     def d_plus_btn_cmd(self):
         """Calls d_lambda_plus and prints the result to the output area."""
@@ -288,7 +295,7 @@ class Tk_tHFK(tHFK):
             else:
                 self.write(u"\u03B4_1 \u03BB^+ is NOT null-homologous\n")
         except Exception as e:
-            self.write(str(e))
+            self.write(str(e)+"\n")
 
     def d_minus_btn_cmd(self):
         """Calls d_lambda_minus and prints the result to the output area."""
@@ -298,7 +305,7 @@ class Tk_tHFK(tHFK):
             else:
                 self.write(u"\u03B4_1 \u03BB^- is NOT null-homologous\n")
         except Exception as e:
-            self.write(str(e))
+            self.write(str(e)+"\n")
 
     def theta_n_btn_cmd(self):
         """
@@ -310,14 +317,13 @@ class Tk_tHFK(tHFK):
         except ValueError:
             self.write("Error: n must be an integer\n")
             return
-        
         try:
             if self.theta_n(n):
                 self.write(u"\u03B8_" + str(n) + " is null-homologous\n")
             else:
                 self.write(u"\u03B8_" + str(n) + " is NOT null-homologous\n")
         except Exception as e:
-            self.write(str(e))
+            self.write(str(e)+"\n")
 
     def abort_btn_cmd(self):
         """
@@ -336,3 +342,18 @@ class Tk_tHFK(tHFK):
         self.output_area.config(state=NORMAL)
         self.output_area.delete(1.0,END)
         self.output_area.config(state=DISABLED)
+
+    def sync_btn_cmd(self):
+        """ Syncs Xs and Os with parent window calling parent.get_XOlists"""
+        if self.parent == None:
+            self.write("No parent window to sync with.\n")
+        else:
+            self.write("Syncing...\n")
+            Olist, Xlist = self.parent.get_XOlists()
+            nOlist = [len(Olist) - Olist.index(j) - 1 for j in Olist]
+            nXlist = [len(Xlist) - Xlist.index(j) - 1 for j in Xlist]
+            if 0 in nXlist:
+                nXlist = [x+1 for x in Xlist]
+                nOlist = [o+1 for o in Olist]
+            self.Xs = nXlist
+            self.Os = nOlist
