@@ -107,12 +107,12 @@ def tHFK(self):
                     'Sorry, I can only compute transverseHFK invariants for knots')
         return
     Olist, Xlist = self.get_XOlists()
-    Olist = [len(Olist) - Olist.index(j) - 1 for j in Olist]
-    Xlist = [len(Xlist) - Xlist.index(j) - 1 for j in Xlist]
-    if 0 in Xlist:
-        Xlist = [x+1 for x in Xlist]
-        Olist = [o+1 for o in Olist]
-    t_hfk_object = Tk_tHFK(Xlist, Olist, name=self.window.title())
+    nOlist = [len(Olist) - Olist.index(j) - 1 for j in Olist]
+    nXlist = [len(Xlist) - Xlist.index(j) - 1 for j in Xlist]
+    if 0 in nXlist:
+        nXlist = [x+1 for x in Xlist]
+        nOlist = [o+1 for o in Olist]
+    t_hfk_object = Tk_tHFK(nXlist, nOlist, name=self.window.title(), parent=self)
 ```
 
 Now after installing gridlink via setup.py and installing the tHFK python
