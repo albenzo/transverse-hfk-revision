@@ -40,17 +40,6 @@ static struct argp_option options[] = {
     {"timeout", 't', "SECONDS", 0, "Maximum time to run in seconds", 0},
     {0}};
 
-// Temporary location
-static error_t parse_opt(int, char *, struct argp_state *);
-static struct argp argp = {options, parse_opt, args_doc, doc, 0, 0, 0};
-struct arguments {
-  int arc_index;
-  int sheets;
-  char *Xs;
-  char *Os;
-  int max_time;
-};
-
 typedef int (*printf_t)(const char *format, ...);
 #define SILENT 0
 #define QUIET 1
@@ -59,161 +48,64 @@ typedef int (*printf_t)(const char *format, ...);
 static int verbosity = SILENT;
 printf_t print_ptr = printf;
 
-EdgeList add_mod_two_lists(const VertexList, const VertexList,
-                           const EdgeList *const);
-VertexList prepend_vertex(const int, const VertexList);
-EdgeList prepend_edge(const int, const int, const EdgeList);
-StateList fixed_wt_rectangles_out_of(const int, const State,
-                                     const Grid_t *const);
+StateList fixed_wt_rectangles_out_of(const int, const State, const Grid_t *const);
 StateList swap_cols(const int, const int, const State, const Grid_t *const);
-void free_state_list(StateList);
-void free_lift_state_list(LiftStateList, const LiftGrid_t * const);
-void free_lift_state(LiftState *, const LiftGrid_t * const);
 int null_homologous_D0Q(const State, const Grid_t *const);
 int null_homologous_D1Q(const State, const Grid_t *const);
 int null_homologous_lift(const LiftState, const LiftGrid_t * const);
-void special_homology(const int, const int, EdgeList *);
-void contract(const int, const int, EdgeList *);
+
+VertexList prepend_vertex(const int, const VertexList);
+EdgeList prepend_edge(const int, const int, const EdgeList);
 EdgeList create_edge(const int, const int);
 void free_edge_list(const EdgeList);
-StateList remove_state(const State, const StateList, const Grid_t *const);
-LiftStateList remove_lift_state(const LiftState, const LiftStateList, const LiftGrid_t * const);
-int mod(const int, const int);
-int mod_up(const int, const int);
-StateList new_rectangles_out_of(const StateList, const State,
-                                const Grid_t *const);
-StateList new_rectangles_into(const StateList, const State,
-                              const Grid_t *const);
+EdgeList add_mod_two_lists(const VertexList, const VertexList, const EdgeList *const);
+void special_homology(const int, const int, EdgeList *);
+void contract(const int, const int, EdgeList *);
+
+StateList new_rectangles_out_of(const StateList, const State, const Grid_t *const);
+StateList new_rectangles_into(const StateList, const State, const Grid_t *const);
 static LiftStateList new_lift_rectangles_out_internal(const LiftStateList, const LiftState, const LiftGrid_t * const, int);
 LiftStateList new_lift_rectangles_out_of(const LiftStateList, const LiftState, const LiftGrid_t * const);
 LiftStateList new_lift_rectangles_into(const LiftStateList, const LiftState, const LiftGrid_t * const);
 EdgeList append_ordered(const int, const int, const EdgeList);
 
-int NESW_pO(const State, const Grid_t *const);
-int NESW_Op(const State, const Grid_t *const);
-int NESW_pp(const State, const Grid_t *const);
-int writhe(const Grid_t *const);
-void cusps(int *, const Grid_t *const);
-
+int get_verbosity();
+void set_verbosity(const int);
 void print_state(const State, const Grid_t *const);
+void print_lift_state(const LiftState, const LiftGrid_t * const);
 void print_state_short(const State, const Grid_t *const);
 void print_lift_state_short(const LiftState, const LiftGrid_t * const);
-void print_edges(const EdgeList);
 void print_states(const StateList, const Grid_t *const);
+void print_lift_states(const LiftStateList, const Grid_t * const);
+void print_edges(const EdgeList);
 void print_math_edges(const EdgeList);
 void print_math_edges_a(const EdgeList);
 void print_vertices(const VertexList);
 void print_grid_perm(const Grid_t *const G);
 void print_grid(const Grid_t *const G);
+void print_lift_grid(const Grid_t *const G);
 void print_tb_r(const Grid_t *const G);
 void print_2AM(const Grid_t *const G, int plus);
 
-int get_verbosity(void);
-void set_verbosity(const int);
+int mod(const int, const int);
+int mod_up(const int, const int);
+int min(const int, const int);
 
 void timeout(const int);
 int build_permutation(State, char *, int);
-int get_verbosity() { return verbosity; }
+static error_t parse_opt(int, char *, struct argp_state *);
 
+int get_verbosity() { return verbosity; }
 void set_verbosity(const int val) { verbosity = val; }
 
-static error_t parse_opt(int key, char *arg, struct argp_state *state) {
-  struct arguments *args = state->input;
-
-  switch (key) {
-  case 'v':
-    set_verbosity(VERBOSE);
-    break;
-  case 'q':
-    set_verbosity(QUIET);
-    break;
-  case 's':
-    set_verbosity(SILENT);
-    break;
-  case 't':
-    args->max_time = atoi(arg);
-    if (args->max_time <= 0) {
-      argp_failure(state, 0, 0, "Invalid timeout.");
-      exit(1);
-    }
-    break;
-  case 'i':
-    args->arc_index = atoi(arg);
-    if (args->arc_index < 2) {
-      argp_failure(state, 0, 0, "ArcIndex must be a non-negative integer greater than 1.");
-      exit(1);
-    }
-    break;
-  case 'n':
-    args->sheets = atoi(arg);
-    if (args->sheets < 1) {
-      argp_failure(state, 0, 0, "The number of sheets must be atleast 1.");
-      exit(1);
-    }
-    break;
-  case 'X': {
-    args->Xs = arg;
-  } break;
-  case 'O': {
-    args->Os = arg;
-  } break;
-  default:
-    break;
-  }
-  return 0;
-}
-
-/**
- * Signal handler for SIGALRM that exits when the signal is received.
- * @param sig
- */
-void timeout(const int sig) {
-  if (SIGALRM == sig) {
-    (*print_ptr)("Timeout reached. Terminating\n");
-    exit(0);
-  }
-}
-
-/**
- * Takes in a string and converts it into a permutation.
- * @param String of the form [_,_,...,_] where _ are integers
- * between 1 and MAX_INDEX
- * @param Destination for the permutation
- * @return 0 on success, -1 on failure
- */
-int build_permutation(char *perm, char *str, int len) {
-  if (str[0] != '[') {
-    return -1;
-  }
-
-  char *s = &str[1];
-  long n = -1;
-  int i = 0;
-
-  while (i < len) {
-    errno = 0;
-    n = strtol(s, &s, 10);
-
-    if ((errno == ERANGE && (n == LONG_MAX || n == LONG_MIN)) ||
-        (errno != 0 && n == 0) || (n < 1 || n > len)) {
-      return -1;
-    }
-
-    perm[i] = n;
-    ++i;
-
-    if (s[0] == ']') {
-      if (s[1] != '\0') {
-        return -1;
-      }
-      break;
-    } else if (s[0] == ',') {
-      ++s;
-    }
-  }
-
-  return 0;
-}
+static struct argp argp = {options, parse_opt, args_doc, doc, 0, 0, 0};
+struct arguments {
+  int arc_index;
+  int sheets;
+  char *Xs;
+  char *Os;
+  int max_time;
+};
 
 int main(int argc, char **argv) {
   struct arguments args;
@@ -240,7 +132,6 @@ int main(int argc, char **argv) {
   }
 
   if (args.sheets > 1) {
-    // Do other invariant
     LiftGrid_t G;
     G.arc_index = args.arc_index;
     G.sheets = args.sheets;
@@ -450,6 +341,104 @@ int main(int argc, char **argv) {
   return 0;
 }
 
+static error_t parse_opt(int key, char *arg, struct argp_state *state) {
+  struct arguments *args = state->input;
+
+  switch (key) {
+  case 'v':
+    set_verbosity(VERBOSE);
+    break;
+  case 'q':
+    set_verbosity(QUIET);
+    break;
+  case 's':
+    set_verbosity(SILENT);
+    break;
+  case 't':
+    args->max_time = atoi(arg);
+    if (args->max_time <= 0) {
+      argp_failure(state, 0, 0, "Invalid timeout.");
+      exit(1);
+    }
+    break;
+  case 'i':
+    args->arc_index = atoi(arg);
+    if (args->arc_index < 2) {
+      argp_failure(state, 0, 0, "ArcIndex must be a non-negative integer greater than 1.");
+      exit(1);
+    }
+    break;
+  case 'n':
+    args->sheets = atoi(arg);
+    if (args->sheets < 1) {
+      argp_failure(state, 0, 0, "The number of sheets must be atleast 1.");
+      exit(1);
+    }
+    break;
+  case 'X': {
+    args->Xs = arg;
+  } break;
+  case 'O': {
+    args->Os = arg;
+  } break;
+  default:
+    break;
+  }
+  return 0;
+}
+
+/**
+ * Signal handler for SIGALRM that exits when the signal is received.
+ * @param sig
+ */
+void timeout(const int sig) {
+  if (SIGALRM == sig) {
+    (*print_ptr)("Timeout reached. Terminating\n");
+    exit(0);
+  }
+}
+
+/**
+ * Takes in a string and converts it into a permutation.
+ * @param String of the form [_,_,...,_] where _ are integers
+ * between 1 and MAX_INDEX
+ * @param Destination for the permutation
+ * @return 0 on success, -1 on failure
+ */
+int build_permutation(char *perm, char *str, int len) {
+  if (str[0] != '[') {
+    return -1;
+  }
+
+  char *s = &str[1];
+  long n = -1;
+  int i = 0;
+
+  while (i < len) {
+    errno = 0;
+    n = strtol(s, &s, 10);
+
+    if ((errno == ERANGE && (n == LONG_MAX || n == LONG_MIN)) ||
+        (errno != 0 && n == 0) || (n < 1 || n > len)) {
+      return -1;
+    }
+
+    perm[i] = n;
+    ++i;
+
+    if (s[0] == ']') {
+      if (s[1] != '\0') {
+        return -1;
+      }
+      break;
+    } else if (s[0] == ',') {
+      ++s;
+    }
+  }
+
+  return 0;
+}
+
 /**
  * Shifts the input towards the interval [0,arc_index) by
  * a multiple of arc_index
@@ -484,6 +473,11 @@ int mod_up(const int a, const int arc_index) {
   };
 }
 
+/**
+ * @param a an int
+ * @param b an int
+ * @return the minimum of a and b
+ */
 int min(const int a, const int b) {
   if (a < b) {
     return (a);
@@ -599,6 +593,15 @@ StateList new_rectangles_into(const StateList prevs, const State incoming,
   return ans;
 }
 
+/**
+ * Finds all lift states that are leaving the state incoming on G that are not in prevs. Accounts
+ * for if the grid has been mirrored to calculate rectangles in.
+ * @param prevs a lift state list containing previously encountered states
+ * @param incoming the lift state that rectangles will be leaving
+ * @param G a grid
+ * @param is_mirrored pass 1 if the grid has been mirrored, 0 otherwise
+ * @return a lift state list containing lift states that can be reached from incoming that are not in prevs
+ */
 static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G, int is_mirrored) {
   LiftStateList ans = NULL;
   double *g_Xs, *g_Os;
@@ -746,26 +749,26 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
   return ans;
 }
 
-LiftStateRBTree new_lift_rectangles_out_alt(const LiftStateRBTree prevs, const LiftState incoming, const LiftGrid_t * const G) {
-  LiftStateRBTree ans = NULL;
-  for(int LL_sheet = 0; LL_sheet < G->sheets; ++LL_sheet) {
-    for(int  LL = 0; LL < G->arc_index; ++LL) {
-      int j = 0;;
-      int w = 1;
-      int h = min(mod(G->Os[LL] - incoming[LL_sheet][LL], G->arc_index), mod(G->Xs[LL] - incoming[LL_sheet][LL], G->arc_index));
-      while(w < G->arc_index && h > 0) {
-        
-      }
-    }
-  }
-
-  return ans;
-}
-
+/**
+ * returns a LiftStateList containing those with a rectangle
+ * pointing from the Liftstate incoming that do not overlap with prevs
+ * @param incoming LiftState that is the destination for generated rectangles
+ * @param prevs LiftStateList of excluded states
+ * @param G working grid
+ * @return LiftStateList containing states with a rectangle to incoming.
+ */
 LiftStateList new_lift_rectangles_out_of(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G) {
   return new_lift_rectangles_out_internal(prevs, incoming, G, 0);
 }
 
+/**
+ * returns a LiftStateList containing those with a rectangle
+ * pointing to the LiftState incoming that do not overlap with prevs
+ * @param incoming LiftState that is the destination for generated rectangles
+ * @param prevs LiftStateList of excluded states
+ * @param G working grid
+ * @return LiftStateList containing states with a rectangle to incoming.
+ */
 LiftStateList new_lift_rectangles_into(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G) {
   LiftGrid_t* G_mirror = mirror_lift_grid(G);
   LiftState incoming_mirror;
@@ -852,6 +855,12 @@ void print_state_short(const State state, const Grid_t *const G) {
   (*print_ptr)("%d}\n", state[G->arc_index - 1]);
 }
 
+/**
+ * Prints the permutations of a lift state
+ * @param state a lift state
+ * @param G a grid
+ * @see print_state_short
+ */
 void print_lift_state_short(const LiftState state, const LiftGrid_t * const G) {
   Grid_t G_p;
   G_p.arc_index = G->arc_index;
@@ -926,7 +935,6 @@ void print_state(const State state, const Grid_t *const G) {
     j--;
   };
   (*print_ptr)("\n");
-  //(*print_ptr)("2A=M=SL+1=%d\n",NESW_pp(G->Xs,G)-NESW_pO(G->Xs,G)-NESW_Op(G->Xs,G)+NESW_pp(G->Os,G)+1);
 }
 
 /**
@@ -983,7 +991,6 @@ void print_grid(const Grid_t *const G) {
     j--;
   };
   (*print_ptr)("\n");
-  //(*print_ptr)("2A=M=SL+1=%d\n",NESW_pp(G->Xs,G)-NESW_pO(G->Xs,G)-NESW_Op(G->Xs,G)+NESW_pp(G->Os,G)+1);
   print_grid_perm(G);
   (*print_ptr)("\n");
 }
@@ -1346,71 +1353,6 @@ void contract(const int a, const int b, EdgeList *edge_list) {
 }
 
 /**
- * Removes a state from a StateList. Equality checked using eq_state.
- * @param a a State
- * @param v a StateList
- * @return a StateList removing a from v
- * @see eq_state
- */
-StateList remove_state(const State a, const StateList v,
-                       const Grid_t *const G) {
-  StateList temp, prev;
-  StateList s_list = v;
-  prev = v;
-  if (v == NULL)
-    return (NULL);
-  else if (eq_state(a, v->data, G)) {
-    temp = v;
-    s_list = v->nextState;
-    free(v->data);
-    free(v);
-    return (s_list);
-  } else {
-    temp = prev->nextState;
-    while ((temp != NULL) && (!eq_state(a, temp->data, G))) {
-      temp = temp->nextState;
-      prev = prev->nextState;
-    };
-    if (temp != NULL) {
-      prev->nextState = temp->nextState;
-      free(temp->data);
-      free(temp);
-      return s_list;
-    } else
-      return s_list;
-  }
-}
-
-LiftStateList remove_lift_state(const LiftState a, const LiftStateList v,
-                       const LiftGrid_t *const G) {
-  LiftStateList temp, prev;
-  LiftStateList s_list = v;
-  prev = v;
-  if (v == NULL)
-    return (NULL);
-  else if (eq_lift_state(a, v->data, G)) {
-    temp = v;
-    s_list = v->nextState;
-    free_lift_state(&v->data, G);
-    free(v);
-    return (s_list);
-  } else {
-    temp = prev->nextState;
-    while ((temp != NULL) && (!eq_lift_state(a, temp->data, G))) {
-      temp = temp->nextState;
-      prev = prev->nextState;
-    }
-    if (temp != NULL) {
-      prev->nextState = temp->nextState;
-      free_lift_state(&temp->data, G);
-      free(temp);
-      return s_list;
-    } else
-      return s_list;
-  }
-}
-
-/**
  * Prints each edge in the passed EdgeList
  * @param edge_list an EdgeList
  */
@@ -1480,32 +1422,6 @@ void print_vertices(const VertexList v_list) {
       (*print_ptr)(",");
   };
   (*print_ptr)("}");
-}
-
-/**
- * Frees the supplied StateList
- * @param states a StateList
- */
-void free_state_list(StateList states) {
-  StateList temp;
-  temp = states;
-  while (temp != NULL) {
-    states = states->nextState;
-    free(temp->data);
-    free(temp);
-    temp = states;
-  }
-}
-
-void free_lift_state_list(LiftStateList states, const LiftGrid_t * const G) {
-  LiftStateList temp;
-  temp = states;
-  while (temp != NULL) {
-    states = states-> nextState;
-    free_lift_state(&temp->data, G);
-    free(temp);
-    temp = states;
-  }
 }
 
 /**
@@ -2178,75 +2094,6 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
 }
 
 /**
- * Sum over each point in the permutation count the number of Os
- * that occur to the northeast
- * @param x a permutation
- * @param G working Grid
- * @return an int containing the quantity described above
- */
-int NESW_pO(const State x, const Grid_t *const G) {
-  int i = 0, j = 0;
-  int ans = 0;
-  while (i < G->arc_index) {
-    j = i;
-    while (j < G->arc_index) {
-      if (x[i] <= G->Os[j]) {
-        ans++;
-      };
-      j++;
-    };
-    i++;
-  };
-  return (ans);
-}
-
-/**
- * Sum over each O in Os count the number of points in the permutation
- * to the northeast
- * @param x a permutation
- * @param G working Grid
- * @return an int containing the quantity described above
- */
-int NESW_Op(const State x, const Grid_t *const G) {
-  int i = 0, j = 0;
-  int ans = 0;
-  while (i < G->arc_index) {
-    j = i + 1;
-    while (j < G->arc_index) {
-      if (G->Os[i] < x[j]) {
-        ans++;
-      };
-      j++;
-    };
-    i++;
-  };
-  return (ans);
-}
-
-/**
- * Sum over each point in the permutation count the number of points in
- * the same permutation that occur to the northeast
- * @param x a permutation
- * @param G working grid
- * @return an int containing the quantity described above
- */
-int NESW_pp(const State x, const Grid_t *const G) {
-  int i = 0, j = 0;
-  int ans = 0;
-  while (i < G->arc_index) {
-    j = i;
-    while (j < G->arc_index) {
-      if (x[i] < x[j]) {
-        ans++;
-      };
-      j++;
-    };
-    i++;
-  };
-  return (ans);
-}
-
-/**
  * Prints the permutations of the Grid, ie the X O code inputed
  * by the user
  * @param G working grid
@@ -2276,13 +2123,13 @@ void print_grid_perm(const Grid_t *const G) {
  * @param G working grid
  */
 void print_tb_r(const Grid_t *const G) {
-  int Writhe = 0;
+  int writhe = 0;
   int up_down_cusps[2] = {0, 0};
   int tb;
   int r;
-  Writhe = writhe(G);
+  writhe = get_writhe(G);
   cusps(up_down_cusps, G);
-  tb = Writhe - .5 * (up_down_cusps[0] + up_down_cusps[1]);
+  tb = writhe - .5 * (up_down_cusps[0] + up_down_cusps[1]);
   r = .5 * (up_down_cusps[1] - up_down_cusps[0]);
   (*print_ptr)("tb = %d\n", tb);
   (*print_ptr)("r = %d\n", r);
@@ -2295,116 +2142,15 @@ void print_tb_r(const Grid_t *const G) {
  * @param plus 1 if x^+ print, 0 if x^- print
  */
 void print_2AM(const Grid_t *const G, int plus) {
-  int Writhe = 0;
+  int writhe = 0;
   int up_down_cusps[2] = {0, 0};
   int tb;
   int r;
-  Writhe = writhe(G);
+  writhe = get_writhe(G);
   cusps(up_down_cusps, G);
-  tb = Writhe - .5 * (up_down_cusps[0] + up_down_cusps[1]);
+  tb = writhe - .5 * (up_down_cusps[0] + up_down_cusps[1]);
   r = .5 * (up_down_cusps[1] - up_down_cusps[0]);
   if(plus == 1) (*print_ptr)("2A(x^+) = M(x^+) = sl(x^+)+1 = %d\n\n"
                     , tb - r + 1);    
   if(plus == 0) (*print_ptr)("2A(x^-) = M(x^-) = %d\n\n", tb + r + 1);
 } 
-
-/* Computes the writhe of the passed grid
- * @param G working grid
- * @return writhe of the grid
- */
-int writhe(const Grid_t *const G) {
-  int i = 1, j = 0, k = 0;
-  int maxXO, minXO;
-  int writhe = 0;
-  int temp_X, temp_O;
-  int current_X, current_O;
-  while (i < G->arc_index) {
-    temp_X = G->Xs[i] - '0';
-    temp_O = G->Os[i] - '0';
-    minXO = min(temp_X, temp_O);
-    if (minXO == temp_X)
-      maxXO = temp_O;
-    else
-      maxXO = temp_X;
-    j = 0;
-    while (j < i) {
-      current_X = G->Xs[j] - '0';
-      current_O = G->Os[j] - '0';
-      if (minXO < current_X && maxXO > current_X) {
-        k = i + 1;
-        while (k < G->arc_index) {
-          if (G->Os[k] - '0' == current_X) {
-            if (maxXO == temp_X)
-              writhe++;
-            else
-              writhe--;
-          }
-          k++;
-        }
-      }
-      if (minXO < current_O && maxXO > current_O) {
-        k = i + 1;
-        while (k < G->arc_index) {
-          if (G->Xs[k] - '0' == current_O) {
-            if (maxXO == temp_O)
-              writhe++;
-            else
-              writhe--;
-          }
-          k++;
-        }
-      }
-      j++;
-    }
-    i++;
-  }
-  return writhe;
-}
-
-/*computes up_down_cusps array, which stores the number of up cusps in first
- * position and number of down cusps in second
- * @param up_down_cusps a length two int array
- * @param G working grid
- * @return number of up cusps stored in the first param and down cusps in the
- * second
- */
-void cusps(int *up_down_cusps, const Grid_t *const G) {
-  int i = 0, j = 0;
-  while (i < G->arc_index) {
-    if (G->Xs[i] < G->Os[i]) {
-      j = i + 1;
-      while (j < G->arc_index) {
-        if (G->Os[j] == G->Xs[i])
-          up_down_cusps[0]++;
-        j++;
-      }
-    }
-    if (G->Os[i] < G->Xs[i]) {
-      j = i + 1;
-      while (j < G->arc_index) {
-        if (G->Xs[j] == G->Os[i])
-          up_down_cusps[1]++;
-        j++;
-      }
-    }
-
-    if (G->Xs[i] > G->Os[i]) {
-      j = 0;
-      while (j < i) {
-        if (G->Os[j] == G->Xs[i])
-          up_down_cusps[1]++;
-        j++;
-      }
-    }
-    if (G->Os[i] > G->Xs[i]) {
-      j = 0;
-      while (j < i) {
-        if (G->Xs[j] == G->Os[i])
-          up_down_cusps[0]++;
-        j++;
-      }
-    }
-
-    i++;
-  }
-}

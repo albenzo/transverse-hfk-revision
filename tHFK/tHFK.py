@@ -118,7 +118,10 @@ class tHFK:
         Returns True if the lift of x+ to the n-fold cyclic branch cover
         is null-homologous. False otherwise.
         """
-        return _tHFK.null_homologous_lift(self.x_plus(), n, self.Xs, self.Os, self.out_stream, self.verbosity)
+        if n == 1:
+            return self.lambda_plus()
+        else:
+            return _tHFK.null_homologous_lift(self.x_plus(), n, self.Xs, self.Os, self.out_stream, self.verbosity)
     
 class Tk_tHFK(tHFK):
     """

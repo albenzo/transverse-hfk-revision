@@ -82,9 +82,19 @@ int comp_lift_state(const LiftState, const LiftState, const LiftGrid_t * const G
 int is_grid(const Grid_t *const);
 int is_lift_grid(const LiftGrid_t * const);
 LiftGrid_t * mirror_lift_grid(const LiftGrid_t * const);
+int get_writhe(const Grid_t *const);
+void cusps(int *, const Grid_t *const);
+
+int NESW_pO(const State, const Grid_t *const);
+int NESW_Op(const State, const Grid_t *const);
+int NESW_pp(const State, const Grid_t *const);
 
 int get_number(const State, const StateList, const Grid_t *const);
 int get_lift_number(const LiftState, LiftStateList, const LiftGrid_t * const);
+StateList remove_state(const State, const StateList, const Grid_t *const);
+LiftStateList remove_lift_state(const LiftState, const LiftStateList, const LiftGrid_t * const);
+void free_state_list(StateList);
+void free_lift_state_list(LiftStateList, const LiftGrid_t * const);
 
 void left_rotate(LiftStateRBTree, LiftStateRBTree);
 void right_rotate(LiftStateRBTree, LiftStateRBTree);
@@ -309,6 +319,179 @@ LiftGrid_t* mirror_lift_grid(const LiftGrid_t * const G) {
 }
 
 /**
+ * Computes the writhe of the passed grid
+ * @param G working grid
+ * @return writhe of the grid
+ */
+int get_writhe(const Grid_t *const G) {
+  int i = 1, j = 0, k = 0;
+  int max_XO, min_XO;
+  int writhe = 0;
+  int temp_X, temp_O;
+  int current_X, current_O;
+  while (i < G->arc_index) {
+    temp_X = G->Xs[i] - '0';
+    temp_O = G->Os[i] - '0';
+    min_XO = temp_X < temp_O ? temp_X : temp_O;
+    if (min_XO == temp_X)
+      max_XO = temp_O;
+    else
+      max_XO = temp_X;
+    j = 0;
+    while (j < i) {
+      current_X = G->Xs[j] - '0';
+      current_O = G->Os[j] - '0';
+      if (min_XO < current_X && max_XO > current_X) {
+        k = i + 1;
+        while (k < G->arc_index) {
+          if (G->Os[k] - '0' == current_X) {
+            if (max_XO == temp_X)
+              writhe++;
+            else
+              writhe--;
+          }
+          k++;
+        }
+      }
+      if (min_XO < current_O && max_XO > current_O) {
+        k = i + 1;
+        while (k < G->arc_index) {
+          if (G->Xs[k] - '0' == current_O) {
+            if (max_XO == temp_O)
+              writhe++;
+            else
+              writhe--;
+          }
+          k++;
+        }
+      }
+      j++;
+    }
+    i++;
+  }
+  return writhe;
+}
+
+/**
+ * Computes up_down_cusps array, which stores the number of up cusps in first
+ * position and number of down cusps in second
+ * @param up_down_cusps a length two int array
+ * @param G working grid
+ * @return number of up cusps stored in the first param and down cusps in the
+ * second
+ */
+void cusps(int *up_down_cusps, const Grid_t *const G) {
+  int i = 0, j = 0;
+  while (i < G->arc_index) {
+    if (G->Xs[i] < G->Os[i]) {
+      j = i + 1;
+      while (j < G->arc_index) {
+        if (G->Os[j] == G->Xs[i])
+          up_down_cusps[0]++;
+        j++;
+      }
+    }
+    if (G->Os[i] < G->Xs[i]) {
+      j = i + 1;
+      while (j < G->arc_index) {
+        if (G->Xs[j] == G->Os[i])
+          up_down_cusps[1]++;
+        j++;
+      }
+    }
+
+    if (G->Xs[i] > G->Os[i]) {
+      j = 0;
+      while (j < i) {
+        if (G->Os[j] == G->Xs[i])
+          up_down_cusps[1]++;
+        j++;
+      }
+    }
+    if (G->Os[i] > G->Xs[i]) {
+      j = 0;
+      while (j < i) {
+        if (G->Xs[j] == G->Os[i])
+          up_down_cusps[0]++;
+        j++;
+      }
+    }
+
+    i++;
+  }
+}
+
+
+/**
+ * Sum over each point in the permutation count the number of Os
+ * that occur to the northeast
+ * @param x a permutation
+ * @param G working Grid
+ * @return an int containing the quantity described above
+ */
+int NESW_pO(const State x, const Grid_t *const G) {
+  int i = 0, j = 0;
+  int ans = 0;
+  while (i < G->arc_index) {
+    j = i;
+    while (j < G->arc_index) {
+      if (x[i] <= G->Os[j]) {
+        ans++;
+      };
+      j++;
+    };
+    i++;
+  };
+  return (ans);
+}
+
+/**
+ * Sum over each O in Os count the number of points in the permutation
+ * to the northeast
+ * @param x a permutation
+ * @param G working Grid
+ * @return an int containing the quantity described above
+ */
+int NESW_Op(const State x, const Grid_t *const G) {
+  int i = 0, j = 0;
+  int ans = 0;
+  while (i < G->arc_index) {
+    j = i + 1;
+    while (j < G->arc_index) {
+      if (G->Os[i] < x[j]) {
+        ans++;
+      };
+      j++;
+    };
+    i++;
+  };
+  return (ans);
+}
+
+/**
+ * Sum over each point in the permutation count the number of points in
+ * the same permutation that occur to the northeast
+ * @param x a permutation
+ * @param G working grid
+ * @return an int containing the quantity described above
+ */
+int NESW_pp(const State x, const Grid_t *const G) {
+  int i = 0, j = 0;
+  int ans = 0;
+  while (i < G->arc_index) {
+    j = i;
+    while (j < G->arc_index) {
+      if (x[i] < x[j]) {
+        ans++;
+      };
+      j++;
+    };
+    i++;
+  };
+  return (ans);
+}
+
+/**
  * Returns the index of a State within a StateList
  * Note: Indexed from 1
  * @param a State
@@ -348,6 +531,109 @@ int get_lift_number(const LiftState a, const LiftStateList b, const LiftGrid_t *
     ++count;
   }
   return 0;
+}
+
+/**
+ * Removes a state from a StateList. Equality checked using eq_state.
+ * @param a a State
+ * @param v a StateList
+ * @return a StateList removing a from v
+ * @see eq_state
+ */
+StateList remove_state(const State a, const StateList v,
+                       const Grid_t *const G) {
+  StateList temp, prev;
+  StateList s_list = v;
+  prev = v;
+  if (v == NULL)
+    return (NULL);
+  else if (eq_state(a, v->data, G)) {
+    temp = v;
+    s_list = v->nextState;
+    free(v->data);
+    free(v);
+    return (s_list);
+  } else {
+    temp = prev->nextState;
+    while ((temp != NULL) && (!eq_state(a, temp->data, G))) {
+      temp = temp->nextState;
+      prev = prev->nextState;
+    };
+    if (temp != NULL) {
+      prev->nextState = temp->nextState;
+      free(temp->data);
+      free(temp);
+      return s_list;
+    } else
+      return s_list;
+  }
+}
+
+/**
+ * Remove a lift state from the supplied lift state list. Equality checked
+ * using eq_lift_state
+ * @param a a lift state
+ * @param v a lift state list
+ * @param G a lift grid
+ */
+LiftStateList remove_lift_state(const LiftState a, const LiftStateList v,
+                       const LiftGrid_t *const G) {
+  LiftStateList temp, prev;
+  LiftStateList s_list = v;
+  prev = v;
+  if (v == NULL)
+    return (NULL);
+  else if (eq_lift_state(a, v->data, G)) {
+    temp = v;
+    s_list = v->nextState;
+    free_lift_state(&v->data, G);
+    free(v);
+    return (s_list);
+  } else {
+    temp = prev->nextState;
+    while ((temp != NULL) && (!eq_lift_state(a, temp->data, G))) {
+      temp = temp->nextState;
+      prev = prev->nextState;
+    }
+    if (temp != NULL) {
+      prev->nextState = temp->nextState;
+      free_lift_state(&temp->data, G);
+      free(temp);
+      return s_list;
+    } else
+      return s_list;
+  }
+}
+
+/**
+ * Frees the supplied StateList
+ * @param states a StateList
+ */
+void free_state_list(StateList states) {
+  StateList temp;
+  temp = states;
+  while (temp != NULL) {
+    states = states->nextState;
+    free(temp->data);
+    free(temp);
+    temp = states;
+  }
+}
+
+/**
+ * Frees the supplied lift state list and the data contained within
+ * @param states a lift state list
+ * @param G a lift grid
+ */
+void free_lift_state_list(LiftStateList states, const LiftGrid_t * const G) {
+  LiftStateList temp;
+  temp = states;
+  while (temp != NULL) {
+    states = states-> nextState;
+    free_lift_state(&temp->data, G);
+    free(temp);
+    temp = states;
+  }
 }
 
 /**
