@@ -48,7 +48,16 @@ typedef int (*printf_t)(const char *format, ...);
 static int verbosity = SILENT;
 printf_t print_ptr = printf;
 
-StateList fixed_wt_rectangles_out_of(const int, const State, const Grid_t *const);
+int get_verbosity(void);
+void set_verbosity(const int);
+static error_t parse_opt(int, char *, struct argp_state *);
+void timeout(const int);
+int build_permutation(State, char *, int);
+
+int mod(const int, const int);
+int mod_up(const int, const int);
+int min(const int, const int);
+
 StateList swap_cols(const int, const int, const State, const Grid_t *const);
 int null_homologous_D0Q(const State, const Grid_t *const);
 int null_homologous_D1Q(const State, const Grid_t *const);
@@ -59,18 +68,17 @@ EdgeList prepend_edge(const int, const int, const EdgeList);
 EdgeList create_edge(const int, const int);
 void free_edge_list(const EdgeList);
 EdgeList add_mod_two_lists(const VertexList, const VertexList, const EdgeList *const);
+EdgeList append_ordered(const int, const int, const EdgeList);
 void special_homology(const int, const int, EdgeList *);
 void contract(const int, const int, EdgeList *);
 
 StateList new_rectangles_out_of(const StateList, const State, const Grid_t *const);
 StateList new_rectangles_into(const StateList, const State, const Grid_t *const);
+StateList fixed_wt_rectangles_out_of(const int, const State, const Grid_t *const);
 static LiftStateList new_lift_rectangles_out_internal(const LiftStateList, const LiftState, const LiftGrid_t * const, int);
 LiftStateList new_lift_rectangles_out_of(const LiftStateList, const LiftState, const LiftGrid_t * const);
 LiftStateList new_lift_rectangles_into(const LiftStateList, const LiftState, const LiftGrid_t * const);
-EdgeList append_ordered(const int, const int, const EdgeList);
 
-int get_verbosity();
-void set_verbosity(const int);
 void print_state(const State, const Grid_t *const);
 void print_lift_state(const LiftState, const LiftGrid_t * const);
 void print_state_short(const State, const Grid_t *const);
@@ -86,17 +94,6 @@ void print_grid(const Grid_t *const G);
 void print_lift_grid(const Grid_t *const G);
 void print_tb_r(const Grid_t *const G);
 void print_2AM(const Grid_t *const G, int plus);
-
-int mod(const int, const int);
-int mod_up(const int, const int);
-int min(const int, const int);
-
-void timeout(const int);
-int build_permutation(State, char *, int);
-static error_t parse_opt(int, char *, struct argp_state *);
-
-int get_verbosity() { return verbosity; }
-void set_verbosity(const int val) { verbosity = val; }
 
 static struct argp argp = {options, parse_opt, args_doc, doc, 0, 0, 0};
 struct arguments {
@@ -341,6 +338,13 @@ int main(int argc, char **argv) {
   return 0;
 }
 
+int get_verbosity(){
+  return verbosity;
+}
+void set_verbosity(const int val) {
+  verbosity = val;
+}
+
 static error_t parse_opt(int key, char *arg, struct argp_state *state) {
   struct arguments *args = state->input;
 
@@ -487,303 +491,6 @@ int min(const int a, const int b) {
 }
 
 /**
- * Returns a StateList of states where a rectangle exists from incoming
- * that is not contained in prevs.
- * @param prevs Statelist containing previous states
- * @param incoming the source of rectangles used to generate statelist
- * @param G working grid
- * @return A statelist containing states reached from a rectangle leaving
- * incoming not contained in prevs.
- */
-StateList new_rectangles_out_of(const StateList prevs, const State incoming,
-                                const Grid_t *const G) {
-  StateList temp, ans;
-  State temp_state = malloc(sizeof(char) * G->arc_index);
-  int LL;
-  int w, h, m, n, i;
-  ans = NULL;
-  i = 0;
-  while (i < G->arc_index) {
-    temp_state[i] = incoming[i];
-    i++;
-  }
-  LL = 0;
-  while (LL < G->arc_index) {
-    w = 1;
-    h = min(mod(G->Os[LL] - incoming[LL], G->arc_index), mod(G->Xs[LL] - incoming[LL], G->arc_index));
-    while (w < G->arc_index && h > 0) {
-      if (mod(incoming[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index) <= h) {
-        temp_state[LL] = incoming[mod(LL + w, G->arc_index)];
-        temp_state[mod(LL + w, G->arc_index)] = incoming[LL];
-        m = get_number(temp_state, prevs, G);
-        if (m == 0) {
-          n = get_number(temp_state, ans, G);
-          if (n != 0) {
-            ans = remove_state(temp_state, ans, G);
-          } else {
-            temp = swap_cols(LL, mod(LL + w, G->arc_index), incoming, G);
-            temp->nextState = ans;
-            ans = temp;
-          }
-        };
-        temp_state[LL] = incoming[LL];
-        temp_state[mod(LL + w, G->arc_index)] = incoming[mod(LL + w, G->arc_index)];
-        h = mod(incoming[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index);
-      };
-      h = min(h, min(mod(G->Os[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index),
-                     mod(G->Xs[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index)));
-      w++;
-    };
-    LL++;
-  };
-  return ans;
-}
-
-/**
- * returns a StateList containing those with a rectangle
- * pointing to the state incoming that do not overlap with prevs
- * @param incoming State that is the destination for generated rectangles
- * @param prevs StateList of excluded states
- * @param G working grid
- * @return StateList containing states with a rectangle to incoming.
- */
-StateList new_rectangles_into(const StateList prevs, const State incoming,
-                              const Grid_t *const G) {
-  StateList ans, temp;
-  State temp_state = malloc(sizeof(char) * G->arc_index);
-  int LL, m, n;
-  int w, h;
-  int i;
-  ans = NULL;
-  i = 0;
-  while (i < G->arc_index) {
-    temp_state[i] = incoming[i];
-    i++;
-  }
-  LL = 0;
-  while (LL < G->arc_index) {
-    w = 1;
-    h = min(mod_up(incoming[LL] - G->Os[LL], G->arc_index),
-            mod_up(incoming[LL] - G->Xs[LL], G->arc_index));
-    while (w < G->arc_index && h > 0) {
-      if (mod_up(incoming[LL] - incoming[mod(LL + w, G->arc_index)], G->arc_index) < h) {
-        temp_state[LL] = incoming[mod(LL + w, G->arc_index)];
-        temp_state[mod(LL + w, G->arc_index)] = incoming[LL];
-        m = get_number(temp_state, prevs, G);
-        if (m == 0) {
-          n = get_number(temp_state, ans, G);
-          if (n != 0) {
-            ans = remove_state(temp_state, ans, G);
-          } else {
-            temp = swap_cols(LL, mod(LL + w, G->arc_index), incoming, G);
-            temp->nextState = ans;
-            ans = temp;
-          }
-        };
-        temp_state[LL] = incoming[LL];
-        temp_state[mod(LL + w, G->arc_index)] = incoming[mod(LL + w, G->arc_index)];
-        h = mod_up(incoming[LL] - incoming[mod(LL + w, G->arc_index)], G->arc_index);
-      };
-      h = min(h, min(mod_up(incoming[LL] - G->Os[mod(LL + w, G->arc_index)], G->arc_index),
-                     mod_up(incoming[LL] - G->Xs[mod(LL + w, G->arc_index)], G->arc_index)));
-      w++;
-    };
-    LL++;
-  };
-  return ans;
-}
-
-/**
- * Finds all lift states that are leaving the state incoming on G that are not in prevs. Accounts
- * for if the grid has been mirrored to calculate rectangles in.
- * @param prevs a lift state list containing previously encountered states
- * @param incoming the lift state that rectangles will be leaving
- * @param G a grid
- * @param is_mirrored pass 1 if the grid has been mirrored, 0 otherwise
- * @return a lift state list containing lift states that can be reached from incoming that are not in prevs
- */
-static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G, int is_mirrored) {
-  LiftStateList ans = NULL;
-  double *g_Xs, *g_Os;
-
-  g_Xs = malloc(sizeof(double)*G->arc_index);
-  g_Os = malloc(sizeof(double)*G->arc_index);
-
-  for(int i=0; i < G->arc_index; ++i) {
-    g_Xs[i] = ((double)G->Xs[i]) - .5;
-    g_Os[i] = ((double)G->Os[i]) - .5;
-  }
-
-  for(int start_x=0; start_x < G->arc_index*G->sheets; ++start_x) {
-    int jumped_down = 0;
-    int jumped_up = 0;
-    int start_y = mod(incoming[start_x/G->arc_index][start_x%G->arc_index]-1, G->arc_index);
-    int start_sheet = start_x/G->arc_index;
-    int step = 0;
-    int check_index = mod((start_x + step) % G->arc_index, G->arc_index);
-    int jump = start_sheet*G->arc_index;
-    int height = mod((start_y - 1) % G->arc_index, G->arc_index);
-
-    while (height != start_y) {
-      check_index = mod((start_x + step)%G->arc_index, G->arc_index);
-      int check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index * G->sheets);
-      int clear = 1;
-      if (height > start_y) {
-        if (g_Xs[check_index] < height && g_Xs[check_index] > start_y && clear) {
-          clear = 0;
-        }
-        if (g_Os[check_index] < height && g_Os[check_index] > start_y && clear) {
-          clear = 0;
-        }
-        if (g_Xs[check_index] > height && g_Os[check_index] < start_y && clear) {
-          if (is_mirrored) {
-            jump = jump - G->arc_index;
-            jumped_down = 1;
-          }
-          else {
-            jump = jump + G->arc_index;
-            jumped_up = 1;
-          }
-          check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index * G->sheets);
-        }
-        if (g_Os[check_index] > height && g_Xs[check_index] < start_y && clear) {
-          if (is_mirrored) {
-            jump = jump + G->arc_index;
-            jumped_up = 1;
-          }
-          else {
-            jump = jump - G->arc_index;
-            jumped_down = 1;
-          }
-          check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index * G->sheets);
-        }
-        if (mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) < height && mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) > start_y && clear) {
-          if (jumped_down) {
-            jumped_down = 0;
-            jump = jump + G->arc_index;
-          }
-          if (jumped_up) {
-            jumped_up = 0;
-            jump = jump - G->arc_index;
-          }
-          clear = 0;
-        }
-        if (clear) {
-          check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index*G->sheets);
-          if (mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) == height) {
-            LiftState new_state = NULL;
-            init_lift_state(&new_state, G);
-            copy_lift_state(&new_state, &incoming, G);
-            new_state[start_x/G->arc_index][start_x%G->arc_index] = incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index];
-            new_state[check_index_gen/G->arc_index][check_index_gen%G->arc_index] = incoming[start_x/G->arc_index][start_x%G->arc_index];
-            if (is_mirrored) {
-              mirror_lift_state(&new_state, G);
-            }
-            if (0 == get_lift_number(new_state, prevs, G)) {
-              if (0 == get_lift_number(new_state, ans, G)) {
-                LiftStateNode_t* new_node = malloc(sizeof(LiftStateNode_t));
-                new_node->data = new_state;
-                new_node->nextState = ans;
-                ans = new_node;
-              }
-              else {
-                ans = remove_lift_state(new_state, ans, G);
-                free_lift_state(&new_state, G);
-              }
-            }
-            height = mod((height - 1) % G->arc_index, G->arc_index);
-          }
-          step = step + 1;
-          jumped_down = 0;
-          jumped_up = 0;          
-        }
-        else {
-          height = mod((height - 1) % G->arc_index,G->arc_index);
-        }
-      }
-      else {
-        if ((g_Xs[check_index] < height || g_Xs[check_index] > start_y) && clear) {
-          clear = 0;
-        }
-        if ((g_Os[check_index] < height || g_Os[check_index] > start_y) && clear) {
-          clear = 0;
-        }
-        if ((mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) < height || mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) >= start_y) && clear) {
-          clear = 0;
-        }
-        if (clear) {
-          if (mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) == height) {
-            LiftState new_state = NULL;
-            init_lift_state(&new_state, G);
-            copy_lift_state(&new_state, &incoming, G);
-            new_state[start_x/G->arc_index][start_x%G->arc_index] = incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index];
-            new_state[check_index_gen/G->arc_index][check_index_gen%G->arc_index] = incoming[start_x/G->arc_index][start_x%G->arc_index];
-            if (is_mirrored) {
-              mirror_lift_state(&new_state, G);
-            }
-            if (0 == get_lift_number(new_state, prevs, G)) {
-              if (0 == get_lift_number(new_state, ans, G)) {
-                LiftStateNode_t* new_node = malloc(sizeof(LiftStateNode_t));
-                new_node->data = new_state;
-                new_node->nextState = ans;
-                ans = new_node;
-              }
-              else {
-                ans = remove_lift_state(new_state, ans, G);
-                free_lift_state(&new_state, G);
-              }
-            }
-            height = mod((height -1) % G->arc_index,G->arc_index);
-          }
-          step = step + 1;
-        }
-        else {
-          height = mod((height - 1) % G->arc_index, G->arc_index);
-        }
-      }
-    }
-  }
-
-  free(g_Xs);
-  free(g_Os);
-  return ans;
-}
-
-/**
- * returns a LiftStateList containing those with a rectangle
- * pointing from the Liftstate incoming that do not overlap with prevs
- * @param incoming LiftState that is the destination for generated rectangles
- * @param prevs LiftStateList of excluded states
- * @param G working grid
- * @return LiftStateList containing states with a rectangle to incoming.
- */
-LiftStateList new_lift_rectangles_out_of(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G) {
-  return new_lift_rectangles_out_internal(prevs, incoming, G, 0);
-}
-
-/**
- * returns a LiftStateList containing those with a rectangle
- * pointing to the LiftState incoming that do not overlap with prevs
- * @param incoming LiftState that is the destination for generated rectangles
- * @param prevs LiftStateList of excluded states
- * @param G working grid
- * @return LiftStateList containing states with a rectangle to incoming.
- */
-LiftStateList new_lift_rectangles_into(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G) {
-  LiftGrid_t* G_mirror = mirror_lift_grid(G);
-  LiftState incoming_mirror;
-  init_lift_state(&incoming_mirror, G);
-  copy_lift_state(&incoming_mirror, &incoming, G);
-  mirror_lift_state(&incoming_mirror, G);
-  LiftStateList ans = new_lift_rectangles_out_internal(prevs, incoming_mirror, G_mirror, 1);
-
-  free(G_mirror);
-  free_lift_state(&incoming_mirror, G);
-
-  return ans;
-}
-
-/**
  * Returns a single element statelist containing
  * the permutation incoming with x1 and x2 swapped
  * @param x1 an integer between 0 and MAX_INDEX
@@ -808,689 +515,6 @@ StateList swap_cols(const int x1, const int x2, const State incoming,
   ans->data[x1] = (incoming)[x2];
   ans->data[x2] = (incoming)[x1];
   ans->nextState = NULL;
-  return ans;
-}
-
-/**
- * Prints states in the form "{<state>,...}" up
- * to the first 500,000 states.
- * @param states a StateList
- * @param G working grid
- * @see print_state_short
- */
-void print_states(const StateList states, const Grid_t *const G) {
-  StateList temp;
-  int c;
-  temp = states;
-  (*print_ptr)("{");
-  c = 0;
-  while ((temp != NULL) && c < 500000) {
-    print_state_short(temp->data, G);
-    temp = temp->nextState;
-    if (temp != NULL) {
-      (*print_ptr)(",");
-    };
-    c++;
-  };
-  if (c == 500000) {
-    (*print_ptr)("...");
-  };
-  (*print_ptr)("}");
-}
-
-/**
- * Prints the permutation of state using one line notation
- * "{_,_,...}"
- * @param state a State
- * @param G working grid
- */
-void print_state_short(const State state, const Grid_t *const G) {
-  int i;
-  i = 0;
-  (*print_ptr)("{");
-  while (i < G->arc_index - 1) {
-    (*print_ptr)("%d,", state[i]);
-    i++;
-  };
-  (*print_ptr)("%d}\n", state[G->arc_index - 1]);
-}
-
-/**
- * Prints the permutations of a lift state
- * @param state a lift state
- * @param G a grid
- * @see print_state_short
- */
-void print_lift_state_short(const LiftState state, const LiftGrid_t * const G) {
-  Grid_t G_p;
-  G_p.arc_index = G->arc_index;
-  G_p.Xs = G->Xs;
-  G_p.Os = G->Os;
-  for(int i = 0; i < G->sheets; ++i) {
-    print_state_short(state[i], &G_p);
-  }
-}
-
-/**
- * Prints the permutation of state on the grid specified by
- * Xs and Os, as well as 2A=M=SL+1.
- * @param state a State
- * @param G working grid
- */
-void print_state(const State state, const Grid_t *const G) {
-  int i, j;
-  j = G->arc_index;
-  i = 0;
-  (*print_ptr)("*---");
-  while (i < G->arc_index - 1) {
-    (*print_ptr)("----");
-    i++;
-  }
-  (*print_ptr)("*\n");
-  while (j > 0) {
-    i = 0;
-    while (i < G->arc_index) {
-      if (G->Xs[i] == j) {
-        (*print_ptr)("| X ");
-      } else {
-        if (G->Os[i] == j) {
-          (*print_ptr)("| O ");
-        } else {
-          (*print_ptr)("|   ");
-        };
-      };
-      i++;
-    };
-    (*print_ptr)("|\n");
-    i = 0;
-    while (i < G->arc_index) {
-      if (state[i] == j) {
-        (*print_ptr)("@---");
-      } else {
-        if (i == 0 && j > 1) {
-          (*print_ptr)("|---");
-        } else {
-          if (j > 1) {
-            (*print_ptr)("+---");
-          } else {
-            if (i == 0) {
-              (*print_ptr)("*---");
-            } else {
-              if (i == 0) {
-                (*print_ptr)("----");
-              } else {
-                (*print_ptr)("----");
-              };
-            };
-          };
-        };
-      };
-      i++;
-    };
-    if (j > 1) {
-      (*print_ptr)("|\n");
-    } else {
-      (*print_ptr)("*\n");
-    };
-    j--;
-  };
-  (*print_ptr)("\n");
-}
-
-/**
- * Prints the grid without the grid state
- * @param G working grid
- */
-void print_grid(const Grid_t *const G) {
-  int i, j;
-  j = G->arc_index;
-  i = 0;
-  (*print_ptr)("*---");
-  while (i < G->arc_index - 1) {
-    (*print_ptr)("----");
-    i++;
-  }
-  (*print_ptr)("*\n");
-  while (j > 0) {
-    i = 0;
-    while (i < G->arc_index) {
-      if (G->Xs[i] == j) {
-        (*print_ptr)("| X ");
-      } else {
-        if (G->Os[i] == j) {
-          (*print_ptr)("| O ");
-        } else {
-          (*print_ptr)("|   ");
-        };
-      };
-      i++;
-    };
-    (*print_ptr)("|\n");
-    i = 0;
-    while (i < G->arc_index) {
-      if (i == 0 && j > 1) {
-        (*print_ptr)("|---");
-      } else {
-        if (j > 1) {
-          (*print_ptr)("+---");
-        } else {
-           if (i == 0) {
-            (*print_ptr)("*---");
-          } else {
-              (*print_ptr)("----");
-            };
-          };
-        };
-      i++;
-    };
-    if (j > 1) {
-      (*print_ptr)("|\n");
-    } else {
-      (*print_ptr)("*\n");
-    };
-    j--;
-  };
-  (*print_ptr)("\n");
-  print_grid_perm(G);
-  (*print_ptr)("\n");
-}
-
-/**
- * Takes in a list of parent vertices and a list of child vertices,
- * generates all edges between them and adds this EdgeList to passed edge_list
- * mod 2
- * @param parents a list of parent vertices
- * @param kids a list of child vertices
- * @param edge_list list of Edges between vertices
- * @return A shortEdges containing the result of adding them mod two.
- */
-EdgeList add_mod_two_lists(const VertexList parents, const VertexList kids,
-                           const EdgeList *const edge_list) {
-  VertexList this_kid, this_parent, temp_vert;
-  EdgeList this_edge, temp_edge, prev;
-  EdgeList ans;
-  if ((parents == NULL) || (kids == NULL)) {
-    return *edge_list;
-  } else {
-    this_parent = parents;
-    this_kid = kids;
-    ans = NULL;
-    this_edge = *edge_list;
-    while (this_parent != NULL && this_edge != NULL &&
-           (this_edge->start == this_parent->data &&
-            this_edge->end == this_kid->data)) {
-      temp_edge = this_edge;
-      this_edge = this_edge->nextEdge;
-      this_kid = this_kid->nextVertex;
-      free(temp_edge);
-      if (this_kid == NULL) {
-        temp_vert = this_parent;
-        this_parent = this_parent->nextVertex;
-        free(temp_vert);
-        this_kid = kids;
-      };
-    };
-    if (this_edge != NULL &&
-        (this_parent == NULL || (this_edge->start < this_parent->data ||
-                                 (this_edge->start == this_parent->data &&
-                                  this_edge->end < this_kid->data)))) {
-      ans = this_edge;
-      prev = ans;
-      this_edge = this_edge->nextEdge;
-    } else if (this_parent != NULL) {
-      ans = create_edge(this_parent->data, this_kid->data);
-      ans->nextEdge = NULL;
-      this_kid = this_kid->nextVertex;
-      if (this_kid == NULL) {
-        temp_vert = this_parent;
-        this_parent = this_parent->nextVertex;
-        free(temp_vert);
-        this_kid = kids;
-      };
-    } else {
-      ans = NULL;
-    }
-    prev = ans;
-    while (this_edge != NULL && this_parent != NULL) {
-      while (this_edge != NULL && ((this_edge->start < this_parent->data ||
-                                    (this_edge->start == this_parent->data &&
-                                     this_edge->end < this_kid->data)))) {
-        prev->nextEdge = this_edge;
-        prev = prev->nextEdge;
-        this_edge = this_edge->nextEdge;
-      };
-      while (this_edge != NULL && this_parent != NULL &&
-             (this_edge->start == this_parent->data &&
-              this_edge->end == this_kid->data)) {
-        temp_edge = this_edge;
-        this_edge = temp_edge->nextEdge;
-        prev->nextEdge = this_edge;
-        free(temp_edge);
-        this_kid = this_kid->nextVertex;
-        if (this_kid == NULL) {
-          temp_vert = this_parent;
-          this_parent = this_parent->nextVertex;
-          free(temp_vert);
-          this_kid = kids;
-        };
-      };
-      while (this_parent != NULL &&
-             ((this_edge == NULL) || ((this_edge->start > this_parent->data ||
-                                       (this_edge->start == this_parent->data &&
-                                        this_edge->end > this_kid->data))))) {
-        prev->nextEdge = create_edge(this_parent->data, this_kid->data);
-        prev = prev->nextEdge;
-        prev->nextEdge = NULL;
-        this_kid = this_kid->nextVertex;
-        if (this_kid == NULL) {
-          temp_vert = this_parent;
-          this_parent = this_parent->nextVertex;
-          free(temp_vert);
-          this_kid = kids;
-        };
-      };
-    };
-    if ((this_parent == NULL) && (prev != NULL)) {
-      prev->nextEdge = this_edge;
-    }
-  };
-  return (ans);
-}
-
-/**
- * Places a new edge into the supplied edgelist in order.
- * @param a an int specifying the parent vertex
- * @param b an int specifying the child vertex
- * @param edges a EdgeList where the new edge will be placed
- * @return a pointer to edges with the new edge added
- */
-EdgeList append_ordered(const int a, const int b, const EdgeList edges) {
-  EdgeList temp, prev, curr, ans;
-  prev = edges;
-  if ((edges == NULL) || (edges->start > a) ||
-      (edges->start == a && edges->end > b)) {
-    ans = malloc(sizeof(EdgeNode_t));
-    ans->start = a;
-    ans->end = b;
-    ans->nextEdge = prev;
-  } else {
-    ans = edges;
-    curr = prev->nextEdge;
-    while (curr != NULL &&
-           ((curr->start < a) || ((curr->start == a) && (curr->end < b)))) {
-      curr = curr->nextEdge;
-      prev = prev->nextEdge;
-    };
-    temp = malloc(sizeof(EdgeNode_t));
-    temp->start = a;
-    temp->end = b;
-    temp->nextEdge = curr;
-    prev->nextEdge = temp;
-  };
-  return (ans);
-}
-
-/**
- * Add a new edge to the start of a EdgeList
- * @param a an int indictating the source of the edge
- * @param b an int indictating the destination of the edge
- * @param e the EdgeList
- * @return e with the edge (a,b) at the front
- */
-EdgeList prepend_edge(const int a, const int b, const EdgeList e) {
-  EdgeList new_ptr;
-  new_ptr = malloc(sizeof(EdgeNode_t));
-  new_ptr->start = a;
-  new_ptr->end = b;
-  new_ptr->nextEdge = e;
-  return (new_ptr);
-}
-
-/**
- * Creates a single element ShortEdge
- * @param a an int indicating the source of the edge
- * @param b an int indicating the destination of the edge
- * @return a single element EdgeList (a,b)
- */
-EdgeList create_edge(const int a, const int b) {
-  EdgeList new_ptr;
-  new_ptr = malloc(sizeof(EdgeNode_t));
-  new_ptr->start = a;
-  new_ptr->end = b;
-  new_ptr->nextEdge = NULL;
-  return (new_ptr);
-}
-
-/**
- * Creates a vertex and adds it to the start of the supplied
- * VertexList
- * @param a an int specifying the vertex
- * @param vertices a VertexList
- * @return a VertexList with a Vertex containing a prepended to vertices
- */
-VertexList prepend_vertex(const int a, const VertexList vertices) {
-  VertexList new_ptr;
-  new_ptr = malloc(sizeof(Vertex_t));
-  (new_ptr->data) = a;
-  (new_ptr->nextVertex) = vertices;
-  return new_ptr;
-}
-
-/**
- * contracts all edges such that the parents occur after init
- * and the children are before or at final.
- * @param init an int specifying the required start
- * @param final State to t
- * @param edge_list the EdgeList
- */
-void special_homology(const int init, const int final, EdgeList *edge_list) {
-  int i, j;
-  EdgeList temp;
-  i = 0;
-  j = 0;
-  temp = *edge_list;
-  while ((*edge_list != NULL) && (temp != NULL)) {
-    while ((temp != NULL) && (temp->start == init)) {
-      temp = temp->nextEdge;
-    };
-    while ((temp != NULL) && (temp->end > final)) {
-      temp = temp->nextEdge;
-    };
-    i++;
-    j++;
-    if (temp != NULL) {
-      contract(temp->start, temp->end, edge_list);
-      temp = *edge_list;
-    };
-  };
-}
-
-/**
- * contracts the edge specified by the input within global_edge_list
- * @param a the parent vertex of the edge
- * @param b the child vertex of the edge
- * @param edge_list the EdgeList
- */
-void contract(const int a, const int b, EdgeList *edge_list) {
-  // Initialization
-  EdgeList temp;
-  EdgeList prev;
-  VertexList parents, kids, temp_kids, temp_parents;
-  VertexList last_parent, last_kid;
-  prev = *edge_list; // Multiple equal initializations
-  parents = NULL;
-  kids = NULL;
-  temp_kids = NULL;
-  temp_parents = NULL;
-  last_parent = NULL;
-  last_kid = NULL;
-  // Loops through edge_list edges that end at b or start at a
-  while (*edge_list != NULL &&
-         ((*edge_list)->end == b || (*edge_list)->start == a)) {
-    // If the edge goes from a to b we remove it from the edge_list
-    if (((*edge_list)->end == b) && ((*edge_list)->start == a)) {
-      temp = *edge_list;
-      *edge_list = (*edge_list)->nextEdge;
-      free(temp);
-    } else {
-      // if the edge ends at b but doesnt start at a we add the parent vertex of
-      // the edge to a VertexList called last_parents
-      if ((*edge_list)->end == b) {
-        // Initializes last_parent if it hasnt yet
-        if (last_parent == NULL) {
-          parents = prepend_vertex((*edge_list)->start, NULL);
-          last_parent = parents;
-        } else {
-          // Adds vertex to last_parent
-          temp_parents = prepend_vertex((*edge_list)->start, NULL);
-          last_parent->nextVertex = temp_parents;
-          last_parent = last_parent->nextVertex;
-        };
-        // Removes the edge from edge_list
-        temp = *edge_list;
-        *edge_list = (*edge_list)->nextEdge;
-        free(temp);
-      } else if ((*edge_list)->start == a) {
-        // If the edge starts at a but doesnt end at b we add the kid vertex of
-        // the edge to a VertexList called last_kids
-
-        // Initializes last_kid if it hasnt yet
-        if (last_kid == NULL) {
-          kids = prepend_vertex((*edge_list)->end, kids);
-          last_kid = kids;
-        } else {
-          // Adds vertex to last_kids
-          temp_kids = prepend_vertex((*edge_list)->end, NULL);
-          last_kid->nextVertex = temp_kids;
-          last_kid = last_kid->nextVertex;
-        };
-        // Removes the edge from edge_list
-        temp = *edge_list;
-        *edge_list = (*edge_list)->nextEdge;
-        free(temp);
-      };
-    };
-  };
-  // Initializes prev and temp for next 2 loops
-  prev = *edge_list;
-  if (*edge_list != NULL) {
-    temp = ((*edge_list)->nextEdge);
-  } else {
-    temp = NULL;
-  };
-  // Loops through edges that have a start vertex occuring before a
-  while (temp != NULL && (temp)->start < a) {
-    // If corresponding edge ends at b we add he parent of the edge to the
-    // VertexList last_parent
-    if ((temp)->end == b) {
-      // Initializes last_parent if it hasnt before
-      if (last_parent == NULL) {
-        parents = prepend_vertex((temp)->start, NULL);
-        last_parent = parents;
-      } else {
-        // adds vertex to last_parent
-        temp_parents = prepend_vertex((temp)->start, NULL);
-        last_parent->nextVertex = temp_parents;
-        last_parent = last_parent->nextVertex;
-      };
-      // Iterates prev and temp to nextEdge and removes edge from temp edge_list
-      (prev->nextEdge) = (temp->nextEdge);
-      free(temp);
-      temp = prev->nextEdge;
-    } else {
-      // Iterates prev and temp
-      temp = (temp)->nextEdge;
-      prev = (prev)->nextEdge;
-    };
-  };
-  // Loops through edges in temp starting at a
-  while (temp != NULL && (temp)->start == a) {
-    // if the edge does not end at b we add its kid vertex to the vertex_list
-    // last_kid
-    if (temp->end != b) {
-      if (last_kid == NULL) {
-        kids = prepend_vertex(temp->end, NULL);
-        last_kid = kids;
-      } else {
-        temp_kids = prepend_vertex(temp->end, NULL);
-        last_kid->nextVertex = temp_kids;
-        last_kid = last_kid->nextVertex;
-      };
-    };
-    // Iterates prev and temp to the nextEdge and removes edge from temp
-    // edge_list
-    (prev)->nextEdge = temp->nextEdge;
-    free(temp);
-    temp = (prev)->nextEdge;
-  };
-  // Loops through remaining temp edges in order to get edges pointing from
-  // vertex
-  // occuring after a to b
-  while (temp != NULL) {
-    // If the edge ends at b we add its parent to VertexList parents
-    if ((temp)->end == b) {
-      if (last_parent == NULL) {
-        parents = prepend_vertex(temp->start, NULL);
-        last_parent = parents;
-      } else {
-        temp_parents = prepend_vertex((temp)->start, NULL);
-        last_parent->nextVertex = temp_parents;
-        last_parent = last_parent->nextVertex;
-      };
-      // Iterate and remove
-      (prev)->nextEdge = (temp)->nextEdge;
-      free(temp);
-      temp = (prev)->nextEdge;
-    } else {
-      // Iterate
-      temp = (temp)->nextEdge;
-      prev = (prev)->nextEdge;
-    }
-  };
-  // Modifies edge_list based on calculated parents and kids.
-  // see add_mod_two_lists
-  *edge_list = add_mod_two_lists(parents, kids, edge_list);
-}
-
-/**
- * Prints each edge in the passed EdgeList
- * @param edge_list an EdgeList
- */
-void print_edges(const EdgeList edge_list) {
-  EdgeList temp;
-  temp = edge_list;
-  while (temp != NULL) {
-    (*print_ptr)("[%d -> %d]\n", temp->start, temp->end);
-    temp = (temp->nextEdge);
-  };
-}
-
-/**
- * Print the first 80 edges edge_list on the same line
- * @param edge_list an EdgeList
- */
-void print_math_edges(const EdgeList edge_list) {
-  EdgeList temp;
-  int t;
-  temp = edge_list;
-  (*print_ptr)("{");
-  t = 0;
-  while (temp != NULL) {
-    (*print_ptr)("[%d -> %d]", temp->start, temp->end);
-    t++;
-    if (t == 80) {
-      temp = NULL;
-      (*print_ptr)("...");
-    } else {
-      temp = (temp->nextEdge);
-      if (temp != NULL)
-        (*print_ptr)(",");
-    }
-  };
-  (*print_ptr)("}\n");
-}
-
-/**
- * Prints the edges in a single line
- * @param edges an EdgeList
- */
-void print_math_edges_a(const EdgeList edges) {
-  EdgeList temp;
-  temp = edges;
-  (*print_ptr)("{");
-  while (temp != NULL) {
-    (*print_ptr)("[%d->%d]", temp->start, temp->end);
-    temp = (temp->nextEdge);
-    if (temp != NULL)
-      (*print_ptr)(",");
-  };
-  (*print_ptr)("}");
-}
-
-/**
- * Prints the vertices in VertexList on a single line
- * @param v_list a VertexList
- */
-void print_vertices(const VertexList v_list) {
-  VertexList temp;
-  temp = v_list;
-  (*print_ptr)("{");
-  while (temp != NULL) {
-    (*print_ptr)("%d", (temp)->data);
-    temp = (temp)->nextVertex;
-    if (temp != NULL)
-      (*print_ptr)(",");
-  };
-  (*print_ptr)("}");
-}
-
-/**
- * Frees the supplied EdgeList
- * @param e a EdgeList
- */
-void free_edge_list(const EdgeList e) {
-  EdgeList temp, ntemp;
-  temp = e;
-  ntemp = temp;
-  while (temp != NULL) {
-    ntemp = temp;
-    temp = temp->nextEdge;
-    free(ntemp);
-  };
-}
-
-/* Higher differentials */
-
-/**
- * Calculates a StateList containing all states reachable
- * by a rectangles of a fixed weight
- * @param wt an int specifying rectangle width
- * @param incoming origin state for the rectangles
- * @param G working grid
- * @return a StateList with states that are reached by a rectangle of width
- * wt from incoming.
- */
-StateList fixed_wt_rectangles_out_of(const int wt, const State incoming,
-                                     const Grid_t *const G) {
-  StateList temp, ans;
-  int LL;
-  int w, h;
-  int this_weight, i;
-  ans = NULL;
-  LL = 0;
-  while (LL < G->arc_index) {
-    w = 1;
-    h = mod(G->Os[LL] - incoming[LL], G->arc_index);
-    while (w < G->arc_index && h > 0) {
-      if (mod(incoming[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index) <= h) {
-        this_weight = 0;
-        i = 0;
-        while (i < w && this_weight <= wt + 1) {
-          if (mod(G->Xs[mod(LL + i, G->arc_index)] - incoming[LL], G->arc_index) <
-              mod(incoming[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index)) {
-            this_weight++;
-          };
-          i++;
-        };
-        if (this_weight == wt) {
-          temp = swap_cols(LL, mod(LL + w, G->arc_index), incoming, G);
-          if (get_number(temp->data, ans, G) != 0) {
-            ans = remove_state(temp->data, ans, G);
-            free(temp->data);
-            free(temp);
-            temp = ans;
-          } else {
-            temp->nextState = ans;
-            ans = temp;
-          }
-        };
-        h = mod(incoming[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index);
-      };
-      h = min(h, mod(G->Os[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index));
-      w++;
-    };
-    LL++;
-  };
   return ans;
 }
 
@@ -2094,6 +1118,926 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
 }
 
 /**
+ * Creates a vertex and adds it to the start of the supplied
+ * VertexList
+ * @param a an int specifying the vertex
+ * @param vertices a VertexList
+ * @return a VertexList with a Vertex containing a prepended to vertices
+ */
+VertexList prepend_vertex(const int a, const VertexList vertices) {
+  VertexList new_ptr;
+  new_ptr = malloc(sizeof(Vertex_t));
+  (new_ptr->data) = a;
+  (new_ptr->nextVertex) = vertices;
+  return new_ptr;
+}
+
+/**
+ * Add a new edge to the start of a EdgeList
+ * @param a an int indictating the source of the edge
+ * @param b an int indictating the destination of the edge
+ * @param e the EdgeList
+ * @return e with the edge (a,b) at the front
+ */
+EdgeList prepend_edge(const int a, const int b, const EdgeList e) {
+  EdgeList new_ptr;
+  new_ptr = malloc(sizeof(EdgeNode_t));
+  new_ptr->start = a;
+  new_ptr->end = b;
+  new_ptr->nextEdge = e;
+  return (new_ptr);
+}
+
+/**
+ * Creates a single element ShortEdge
+ * @param a an int indicating the source of the edge
+ * @param b an int indicating the destination of the edge
+ * @return a single element EdgeList (a,b)
+ */
+EdgeList create_edge(const int a, const int b) {
+  EdgeList new_ptr;
+  new_ptr = malloc(sizeof(EdgeNode_t));
+  new_ptr->start = a;
+  new_ptr->end = b;
+  new_ptr->nextEdge = NULL;
+  return (new_ptr);
+}
+
+/**
+ * Frees the supplied EdgeList
+ * @param e a EdgeList
+ */
+void free_edge_list(const EdgeList e) {
+  EdgeList temp, ntemp;
+  temp = e;
+  ntemp = temp;
+  while (temp != NULL) {
+    ntemp = temp;
+    temp = temp->nextEdge;
+    free(ntemp);
+  };
+}
+
+/**
+ * Takes in a list of parent vertices and a list of child vertices,
+ * generates all edges between them and adds this EdgeList to passed edge_list
+ * mod 2
+ * @param parents a list of parent vertices
+ * @param kids a list of child vertices
+ * @param edge_list list of Edges between vertices
+ * @return A shortEdges containing the result of adding them mod two.
+ */
+EdgeList add_mod_two_lists(const VertexList parents, const VertexList kids,
+                           const EdgeList *const edge_list) {
+  VertexList this_kid, this_parent, temp_vert;
+  EdgeList this_edge, temp_edge, prev;
+  EdgeList ans;
+  if ((parents == NULL) || (kids == NULL)) {
+    return *edge_list;
+  } else {
+    this_parent = parents;
+    this_kid = kids;
+    ans = NULL;
+    this_edge = *edge_list;
+    while (this_parent != NULL && this_edge != NULL &&
+           (this_edge->start == this_parent->data &&
+            this_edge->end == this_kid->data)) {
+      temp_edge = this_edge;
+      this_edge = this_edge->nextEdge;
+      this_kid = this_kid->nextVertex;
+      free(temp_edge);
+      if (this_kid == NULL) {
+        temp_vert = this_parent;
+        this_parent = this_parent->nextVertex;
+        free(temp_vert);
+        this_kid = kids;
+      };
+    };
+    if (this_edge != NULL &&
+        (this_parent == NULL || (this_edge->start < this_parent->data ||
+                                 (this_edge->start == this_parent->data &&
+                                  this_edge->end < this_kid->data)))) {
+      ans = this_edge;
+      prev = ans;
+      this_edge = this_edge->nextEdge;
+    } else if (this_parent != NULL) {
+      ans = create_edge(this_parent->data, this_kid->data);
+      ans->nextEdge = NULL;
+      this_kid = this_kid->nextVertex;
+      if (this_kid == NULL) {
+        temp_vert = this_parent;
+        this_parent = this_parent->nextVertex;
+        free(temp_vert);
+        this_kid = kids;
+      };
+    } else {
+      ans = NULL;
+    }
+    prev = ans;
+    while (this_edge != NULL && this_parent != NULL) {
+      while (this_edge != NULL && ((this_edge->start < this_parent->data ||
+                                    (this_edge->start == this_parent->data &&
+                                     this_edge->end < this_kid->data)))) {
+        prev->nextEdge = this_edge;
+        prev = prev->nextEdge;
+        this_edge = this_edge->nextEdge;
+      };
+      while (this_edge != NULL && this_parent != NULL &&
+             (this_edge->start == this_parent->data &&
+              this_edge->end == this_kid->data)) {
+        temp_edge = this_edge;
+        this_edge = temp_edge->nextEdge;
+        prev->nextEdge = this_edge;
+        free(temp_edge);
+        this_kid = this_kid->nextVertex;
+        if (this_kid == NULL) {
+          temp_vert = this_parent;
+          this_parent = this_parent->nextVertex;
+          free(temp_vert);
+          this_kid = kids;
+        };
+      };
+      while (this_parent != NULL &&
+             ((this_edge == NULL) || ((this_edge->start > this_parent->data ||
+                                       (this_edge->start == this_parent->data &&
+                                        this_edge->end > this_kid->data))))) {
+        prev->nextEdge = create_edge(this_parent->data, this_kid->data);
+        prev = prev->nextEdge;
+        prev->nextEdge = NULL;
+        this_kid = this_kid->nextVertex;
+        if (this_kid == NULL) {
+          temp_vert = this_parent;
+          this_parent = this_parent->nextVertex;
+          free(temp_vert);
+          this_kid = kids;
+        };
+      };
+    };
+    if ((this_parent == NULL) && (prev != NULL)) {
+      prev->nextEdge = this_edge;
+    }
+  };
+  return (ans);
+}
+
+/**
+ * contracts all edges such that the parents occur after init
+ * and the children are before or at final.
+ * @param init an int specifying the required start
+ * @param final State to t
+ * @param edge_list the EdgeList
+ */
+void special_homology(const int init, const int final, EdgeList *edge_list) {
+  int i, j;
+  EdgeList temp;
+  i = 0;
+  j = 0;
+  temp = *edge_list;
+  while ((*edge_list != NULL) && (temp != NULL)) {
+    while ((temp != NULL) && (temp->start == init)) {
+      temp = temp->nextEdge;
+    };
+    while ((temp != NULL) && (temp->end > final)) {
+      temp = temp->nextEdge;
+    };
+    i++;
+    j++;
+    if (temp != NULL) {
+      contract(temp->start, temp->end, edge_list);
+      temp = *edge_list;
+    };
+  };
+}
+
+/**
+ * Places a new edge into the supplied edgelist in order.
+ * @param a an int specifying the parent vertex
+ * @param b an int specifying the child vertex
+ * @param edges a EdgeList where the new edge will be placed
+ * @return a pointer to edges with the new edge added
+ */
+EdgeList append_ordered(const int a, const int b, const EdgeList edges) {
+  EdgeList temp, prev, curr, ans;
+  prev = edges;
+  if ((edges == NULL) || (edges->start > a) ||
+      (edges->start == a && edges->end > b)) {
+    ans = malloc(sizeof(EdgeNode_t));
+    ans->start = a;
+    ans->end = b;
+    ans->nextEdge = prev;
+  } else {
+    ans = edges;
+    curr = prev->nextEdge;
+    while (curr != NULL &&
+           ((curr->start < a) || ((curr->start == a) && (curr->end < b)))) {
+      curr = curr->nextEdge;
+      prev = prev->nextEdge;
+    };
+    temp = malloc(sizeof(EdgeNode_t));
+    temp->start = a;
+    temp->end = b;
+    temp->nextEdge = curr;
+    prev->nextEdge = temp;
+  };
+  return (ans);
+}
+
+/**
+ * contracts the edge specified by the input within global_edge_list
+ * @param a the parent vertex of the edge
+ * @param b the child vertex of the edge
+ * @param edge_list the EdgeList
+ */
+void contract(const int a, const int b, EdgeList *edge_list) {
+  // Initialization
+  EdgeList temp;
+  EdgeList prev;
+  VertexList parents, kids, temp_kids, temp_parents;
+  VertexList last_parent, last_kid;
+  prev = *edge_list; // Multiple equal initializations
+  parents = NULL;
+  kids = NULL;
+  temp_kids = NULL;
+  temp_parents = NULL;
+  last_parent = NULL;
+  last_kid = NULL;
+  // Loops through edge_list edges that end at b or start at a
+  while (*edge_list != NULL &&
+         ((*edge_list)->end == b || (*edge_list)->start == a)) {
+    // If the edge goes from a to b we remove it from the edge_list
+    if (((*edge_list)->end == b) && ((*edge_list)->start == a)) {
+      temp = *edge_list;
+      *edge_list = (*edge_list)->nextEdge;
+      free(temp);
+    } else {
+      // if the edge ends at b but doesnt start at a we add the parent vertex of
+      // the edge to a VertexList called last_parents
+      if ((*edge_list)->end == b) {
+        // Initializes last_parent if it hasnt yet
+        if (last_parent == NULL) {
+          parents = prepend_vertex((*edge_list)->start, NULL);
+          last_parent = parents;
+        } else {
+          // Adds vertex to last_parent
+          temp_parents = prepend_vertex((*edge_list)->start, NULL);
+          last_parent->nextVertex = temp_parents;
+          last_parent = last_parent->nextVertex;
+        };
+        // Removes the edge from edge_list
+        temp = *edge_list;
+        *edge_list = (*edge_list)->nextEdge;
+        free(temp);
+      } else if ((*edge_list)->start == a) {
+        // If the edge starts at a but doesnt end at b we add the kid vertex of
+        // the edge to a VertexList called last_kids
+
+        // Initializes last_kid if it hasnt yet
+        if (last_kid == NULL) {
+          kids = prepend_vertex((*edge_list)->end, kids);
+          last_kid = kids;
+        } else {
+          // Adds vertex to last_kids
+          temp_kids = prepend_vertex((*edge_list)->end, NULL);
+          last_kid->nextVertex = temp_kids;
+          last_kid = last_kid->nextVertex;
+        };
+        // Removes the edge from edge_list
+        temp = *edge_list;
+        *edge_list = (*edge_list)->nextEdge;
+        free(temp);
+      };
+    };
+  };
+  // Initializes prev and temp for next 2 loops
+  prev = *edge_list;
+  if (*edge_list != NULL) {
+    temp = ((*edge_list)->nextEdge);
+  } else {
+    temp = NULL;
+  };
+  // Loops through edges that have a start vertex occuring before a
+  while (temp != NULL && (temp)->start < a) {
+    // If corresponding edge ends at b we add he parent of the edge to the
+    // VertexList last_parent
+    if ((temp)->end == b) {
+      // Initializes last_parent if it hasnt before
+      if (last_parent == NULL) {
+        parents = prepend_vertex((temp)->start, NULL);
+        last_parent = parents;
+      } else {
+        // adds vertex to last_parent
+        temp_parents = prepend_vertex((temp)->start, NULL);
+        last_parent->nextVertex = temp_parents;
+        last_parent = last_parent->nextVertex;
+      };
+      // Iterates prev and temp to nextEdge and removes edge from temp edge_list
+      (prev->nextEdge) = (temp->nextEdge);
+      free(temp);
+      temp = prev->nextEdge;
+    } else {
+      // Iterates prev and temp
+      temp = (temp)->nextEdge;
+      prev = (prev)->nextEdge;
+    };
+  };
+  // Loops through edges in temp starting at a
+  while (temp != NULL && (temp)->start == a) {
+    // if the edge does not end at b we add its kid vertex to the vertex_list
+    // last_kid
+    if (temp->end != b) {
+      if (last_kid == NULL) {
+        kids = prepend_vertex(temp->end, NULL);
+        last_kid = kids;
+      } else {
+        temp_kids = prepend_vertex(temp->end, NULL);
+        last_kid->nextVertex = temp_kids;
+        last_kid = last_kid->nextVertex;
+      };
+    };
+    // Iterates prev and temp to the nextEdge and removes edge from temp
+    // edge_list
+    (prev)->nextEdge = temp->nextEdge;
+    free(temp);
+    temp = (prev)->nextEdge;
+  };
+  // Loops through remaining temp edges in order to get edges pointing from
+  // vertex
+  // occuring after a to b
+  while (temp != NULL) {
+    // If the edge ends at b we add its parent to VertexList parents
+    if ((temp)->end == b) {
+      if (last_parent == NULL) {
+        parents = prepend_vertex(temp->start, NULL);
+        last_parent = parents;
+      } else {
+        temp_parents = prepend_vertex((temp)->start, NULL);
+        last_parent->nextVertex = temp_parents;
+        last_parent = last_parent->nextVertex;
+      };
+      // Iterate and remove
+      (prev)->nextEdge = (temp)->nextEdge;
+      free(temp);
+      temp = (prev)->nextEdge;
+    } else {
+      // Iterate
+      temp = (temp)->nextEdge;
+      prev = (prev)->nextEdge;
+    }
+  };
+  // Modifies edge_list based on calculated parents and kids.
+  // see add_mod_two_lists
+  *edge_list = add_mod_two_lists(parents, kids, edge_list);
+}
+
+/**
+ * Returns a StateList of states where a rectangle exists from incoming
+ * that is not contained in prevs.
+ * @param prevs Statelist containing previous states
+ * @param incoming the source of rectangles used to generate statelist
+ * @param G working grid
+ * @return A statelist containing states reached from a rectangle leaving
+ * incoming not contained in prevs.
+ */
+StateList new_rectangles_out_of(const StateList prevs, const State incoming,
+                                const Grid_t *const G) {
+  StateList temp, ans;
+  State temp_state = malloc(sizeof(char) * G->arc_index);
+  int LL;
+  int w, h, m, n, i;
+  ans = NULL;
+  i = 0;
+  while (i < G->arc_index) {
+    temp_state[i] = incoming[i];
+    i++;
+  }
+  LL = 0;
+  while (LL < G->arc_index) {
+    w = 1;
+    h = min(mod(G->Os[LL] - incoming[LL], G->arc_index), mod(G->Xs[LL] - incoming[LL], G->arc_index));
+    while (w < G->arc_index && h > 0) {
+      if (mod(incoming[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index) <= h) {
+        temp_state[LL] = incoming[mod(LL + w, G->arc_index)];
+        temp_state[mod(LL + w, G->arc_index)] = incoming[LL];
+        m = get_number(temp_state, prevs, G);
+        if (m == 0) {
+          n = get_number(temp_state, ans, G);
+          if (n != 0) {
+            ans = remove_state(temp_state, ans, G);
+          } else {
+            temp = swap_cols(LL, mod(LL + w, G->arc_index), incoming, G);
+            temp->nextState = ans;
+            ans = temp;
+          }
+        };
+        temp_state[LL] = incoming[LL];
+        temp_state[mod(LL + w, G->arc_index)] = incoming[mod(LL + w, G->arc_index)];
+        h = mod(incoming[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index);
+      };
+      h = min(h, min(mod(G->Os[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index),
+                     mod(G->Xs[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index)));
+      w++;
+    };
+    LL++;
+  };
+  return ans;
+}
+
+/**
+ * returns a StateList containing those with a rectangle
+ * pointing to the state incoming that do not overlap with prevs
+ * @param incoming State that is the destination for generated rectangles
+ * @param prevs StateList of excluded states
+ * @param G working grid
+ * @return StateList containing states with a rectangle to incoming.
+ */
+StateList new_rectangles_into(const StateList prevs, const State incoming,
+                              const Grid_t *const G) {
+  StateList ans, temp;
+  State temp_state = malloc(sizeof(char) * G->arc_index);
+  int LL, m, n;
+  int w, h;
+  int i;
+  ans = NULL;
+  i = 0;
+  while (i < G->arc_index) {
+    temp_state[i] = incoming[i];
+    i++;
+  }
+  LL = 0;
+  while (LL < G->arc_index) {
+    w = 1;
+    h = min(mod_up(incoming[LL] - G->Os[LL], G->arc_index),
+            mod_up(incoming[LL] - G->Xs[LL], G->arc_index));
+    while (w < G->arc_index && h > 0) {
+      if (mod_up(incoming[LL] - incoming[mod(LL + w, G->arc_index)], G->arc_index) < h) {
+        temp_state[LL] = incoming[mod(LL + w, G->arc_index)];
+        temp_state[mod(LL + w, G->arc_index)] = incoming[LL];
+        m = get_number(temp_state, prevs, G);
+        if (m == 0) {
+          n = get_number(temp_state, ans, G);
+          if (n != 0) {
+            ans = remove_state(temp_state, ans, G);
+          } else {
+            temp = swap_cols(LL, mod(LL + w, G->arc_index), incoming, G);
+            temp->nextState = ans;
+            ans = temp;
+          }
+        };
+        temp_state[LL] = incoming[LL];
+        temp_state[mod(LL + w, G->arc_index)] = incoming[mod(LL + w, G->arc_index)];
+        h = mod_up(incoming[LL] - incoming[mod(LL + w, G->arc_index)], G->arc_index);
+      };
+      h = min(h, min(mod_up(incoming[LL] - G->Os[mod(LL + w, G->arc_index)], G->arc_index),
+                     mod_up(incoming[LL] - G->Xs[mod(LL + w, G->arc_index)], G->arc_index)));
+      w++;
+    };
+    LL++;
+  };
+  return ans;
+}
+
+/**
+ * Calculates a StateList containing all states reachable
+ * by a rectangles of a fixed weight
+ * @param wt an int specifying rectangle width
+ * @param incoming origin state for the rectangles
+ * @param G working grid
+ * @return a StateList with states that are reached by a rectangle of width
+ * wt from incoming.
+ */
+StateList fixed_wt_rectangles_out_of(const int wt, const State incoming,
+                                     const Grid_t *const G) {
+  StateList temp, ans;
+  int LL;
+  int w, h;
+  int this_weight, i;
+  ans = NULL;
+  LL = 0;
+  while (LL < G->arc_index) {
+    w = 1;
+    h = mod(G->Os[LL] - incoming[LL], G->arc_index);
+    while (w < G->arc_index && h > 0) {
+      if (mod(incoming[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index) <= h) {
+        this_weight = 0;
+        i = 0;
+        while (i < w && this_weight <= wt + 1) {
+          if (mod(G->Xs[mod(LL + i, G->arc_index)] - incoming[LL], G->arc_index) <
+              mod(incoming[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index)) {
+            this_weight++;
+          };
+          i++;
+        };
+        if (this_weight == wt) {
+          temp = swap_cols(LL, mod(LL + w, G->arc_index), incoming, G);
+          if (get_number(temp->data, ans, G) != 0) {
+            ans = remove_state(temp->data, ans, G);
+            free(temp->data);
+            free(temp);
+            temp = ans;
+          } else {
+            temp->nextState = ans;
+            ans = temp;
+          }
+        };
+        h = mod(incoming[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index);
+      };
+      h = min(h, mod(G->Os[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index));
+      w++;
+    };
+    LL++;
+  };
+  return ans;
+}
+
+/**
+ * Finds all lift states that are leaving the state incoming on G that are not in prevs. Accounts
+ * for if the grid has been mirrored to calculate rectangles in.
+ * @param prevs a lift state list containing previously encountered states
+ * @param incoming the lift state that rectangles will be leaving
+ * @param G a grid
+ * @param is_mirrored pass 1 if the grid has been mirrored, 0 otherwise
+ * @return a lift state list containing lift states that can be reached from incoming that are not in prevs
+ */
+static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G, int is_mirrored) {
+  LiftStateList ans = NULL;
+  double *g_Xs, *g_Os;
+
+  g_Xs = malloc(sizeof(double)*G->arc_index);
+  g_Os = malloc(sizeof(double)*G->arc_index);
+
+  for(int i=0; i < G->arc_index; ++i) {
+    g_Xs[i] = ((double)G->Xs[i]) - .5;
+    g_Os[i] = ((double)G->Os[i]) - .5;
+  }
+
+  for(int start_x=0; start_x < G->arc_index*G->sheets; ++start_x) {
+    int jumped_down = 0;
+    int jumped_up = 0;
+    int start_y = mod(incoming[start_x/G->arc_index][start_x%G->arc_index]-1, G->arc_index);
+    int start_sheet = start_x/G->arc_index;
+    int step = 0;
+    int check_index = mod((start_x + step) % G->arc_index, G->arc_index);
+    int jump = start_sheet*G->arc_index;
+    int height = mod((start_y - 1) % G->arc_index, G->arc_index);
+
+    while (height != start_y) {
+      check_index = mod((start_x + step)%G->arc_index, G->arc_index);
+      int check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index * G->sheets);
+      int clear = 1;
+      if (height > start_y) {
+        if (g_Xs[check_index] < height && g_Xs[check_index] > start_y && clear) {
+          clear = 0;
+        }
+        if (g_Os[check_index] < height && g_Os[check_index] > start_y && clear) {
+          clear = 0;
+        }
+        if (g_Xs[check_index] > height && g_Os[check_index] < start_y && clear) {
+          if (is_mirrored) {
+            jump = jump - G->arc_index;
+            jumped_down = 1;
+          }
+          else {
+            jump = jump + G->arc_index;
+            jumped_up = 1;
+          }
+          check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index * G->sheets);
+        }
+        if (g_Os[check_index] > height && g_Xs[check_index] < start_y && clear) {
+          if (is_mirrored) {
+            jump = jump + G->arc_index;
+            jumped_up = 1;
+          }
+          else {
+            jump = jump - G->arc_index;
+            jumped_down = 1;
+          }
+          check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index * G->sheets);
+        }
+        if (mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) < height && mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) > start_y && clear) {
+          if (jumped_down) {
+            jumped_down = 0;
+            jump = jump + G->arc_index;
+          }
+          if (jumped_up) {
+            jumped_up = 0;
+            jump = jump - G->arc_index;
+          }
+          clear = 0;
+        }
+        if (clear) {
+          check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index*G->sheets);
+          if (mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) == height) {
+            LiftState new_state = NULL;
+            init_lift_state(&new_state, G);
+            copy_lift_state(&new_state, &incoming, G);
+            new_state[start_x/G->arc_index][start_x%G->arc_index] = incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index];
+            new_state[check_index_gen/G->arc_index][check_index_gen%G->arc_index] = incoming[start_x/G->arc_index][start_x%G->arc_index];
+            if (is_mirrored) {
+              mirror_lift_state(&new_state, G);
+            }
+            if (0 == get_lift_number(new_state, prevs, G)) {
+              if (0 == get_lift_number(new_state, ans, G)) {
+                LiftStateNode_t* new_node = malloc(sizeof(LiftStateNode_t));
+                new_node->data = new_state;
+                new_node->nextState = ans;
+                ans = new_node;
+              }
+              else {
+                ans = remove_lift_state(new_state, ans, G);
+                free_lift_state(&new_state, G);
+              }
+            }
+            height = mod((height - 1) % G->arc_index, G->arc_index);
+          }
+          step = step + 1;
+          jumped_down = 0;
+          jumped_up = 0;          
+        }
+        else {
+          height = mod((height - 1) % G->arc_index,G->arc_index);
+        }
+      }
+      else {
+        if ((g_Xs[check_index] < height || g_Xs[check_index] > start_y) && clear) {
+          clear = 0;
+        }
+        if ((g_Os[check_index] < height || g_Os[check_index] > start_y) && clear) {
+          clear = 0;
+        }
+        if ((mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) < height || mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) >= start_y) && clear) {
+          clear = 0;
+        }
+        if (clear) {
+          if (mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) == height) {
+            LiftState new_state = NULL;
+            init_lift_state(&new_state, G);
+            copy_lift_state(&new_state, &incoming, G);
+            new_state[start_x/G->arc_index][start_x%G->arc_index] = incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index];
+            new_state[check_index_gen/G->arc_index][check_index_gen%G->arc_index] = incoming[start_x/G->arc_index][start_x%G->arc_index];
+            if (is_mirrored) {
+              mirror_lift_state(&new_state, G);
+            }
+            if (0 == get_lift_number(new_state, prevs, G)) {
+              if (0 == get_lift_number(new_state, ans, G)) {
+                LiftStateNode_t* new_node = malloc(sizeof(LiftStateNode_t));
+                new_node->data = new_state;
+                new_node->nextState = ans;
+                ans = new_node;
+              }
+              else {
+                ans = remove_lift_state(new_state, ans, G);
+                free_lift_state(&new_state, G);
+              }
+            }
+            height = mod((height -1) % G->arc_index,G->arc_index);
+          }
+          step = step + 1;
+        }
+        else {
+          height = mod((height - 1) % G->arc_index, G->arc_index);
+        }
+      }
+    }
+  }
+
+  free(g_Xs);
+  free(g_Os);
+  return ans;
+}
+
+/**
+ * returns a LiftStateList containing those with a rectangle
+ * pointing from the Liftstate incoming that do not overlap with prevs
+ * @param incoming LiftState that is the destination for generated rectangles
+ * @param prevs LiftStateList of excluded states
+ * @param G working grid
+ * @return LiftStateList containing states with a rectangle to incoming.
+ */
+LiftStateList new_lift_rectangles_out_of(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G) {
+  return new_lift_rectangles_out_internal(prevs, incoming, G, 0);
+}
+
+/**
+ * returns a LiftStateList containing those with a rectangle
+ * pointing to the LiftState incoming that do not overlap with prevs
+ * @param incoming LiftState that is the destination for generated rectangles
+ * @param prevs LiftStateList of excluded states
+ * @param G working grid
+ * @return LiftStateList containing states with a rectangle to incoming.
+ */
+LiftStateList new_lift_rectangles_into(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G) {
+  LiftGrid_t* G_mirror = mirror_lift_grid(G);
+  LiftState incoming_mirror;
+  init_lift_state(&incoming_mirror, G);
+  copy_lift_state(&incoming_mirror, &incoming, G);
+  mirror_lift_state(&incoming_mirror, G);
+  LiftStateList ans = new_lift_rectangles_out_internal(prevs, incoming_mirror, G_mirror, 1);
+
+  free(G_mirror);
+  free_lift_state(&incoming_mirror, G);
+
+  return ans;
+}
+
+/**
+ * Prints the permutation of state on the grid specified by
+ * Xs and Os, as well as 2A=M=SL+1.
+ * @param state a State
+ * @param G working grid
+ */
+void print_state(const State state, const Grid_t *const G) {
+  int i, j;
+  j = G->arc_index;
+  i = 0;
+  (*print_ptr)("*---");
+  while (i < G->arc_index - 1) {
+    (*print_ptr)("----");
+    i++;
+  }
+  (*print_ptr)("*\n");
+  while (j > 0) {
+    i = 0;
+    while (i < G->arc_index) {
+      if (G->Xs[i] == j) {
+        (*print_ptr)("| X ");
+      } else {
+        if (G->Os[i] == j) {
+          (*print_ptr)("| O ");
+        } else {
+          (*print_ptr)("|   ");
+        };
+      };
+      i++;
+    };
+    (*print_ptr)("|\n");
+    i = 0;
+    while (i < G->arc_index) {
+      if (state[i] == j) {
+        (*print_ptr)("@---");
+      } else {
+        if (i == 0 && j > 1) {
+          (*print_ptr)("|---");
+        } else {
+          if (j > 1) {
+            (*print_ptr)("+---");
+          } else {
+            if (i == 0) {
+              (*print_ptr)("*---");
+            } else {
+              if (i == 0) {
+                (*print_ptr)("----");
+              } else {
+                (*print_ptr)("----");
+              };
+            };
+          };
+        };
+      };
+      i++;
+    };
+    if (j > 1) {
+      (*print_ptr)("|\n");
+    } else {
+      (*print_ptr)("*\n");
+    };
+    j--;
+  };
+  (*print_ptr)("\n");
+}
+
+/**
+ * Prints the permutation of state using one line notation
+ * "{_,_,...}"
+ * @param state a State
+ * @param G working grid
+ */
+void print_state_short(const State state, const Grid_t *const G) {
+  int i;
+  i = 0;
+  (*print_ptr)("{");
+  while (i < G->arc_index - 1) {
+    (*print_ptr)("%d,", state[i]);
+    i++;
+  };
+  (*print_ptr)("%d}\n", state[G->arc_index - 1]);
+}
+
+/**
+ * Prints the permutations of a lift state
+ * @param state a lift state
+ * @param G a grid
+ * @see print_state_short
+ */
+void print_lift_state_short(const LiftState state, const LiftGrid_t * const G) {
+  Grid_t G_p;
+  G_p.arc_index = G->arc_index;
+  G_p.Xs = G->Xs;
+  G_p.Os = G->Os;
+  for(int i = 0; i < G->sheets; ++i) {
+    print_state_short(state[i], &G_p);
+  }
+}
+
+/**
+ * Prints states in the form "{<state>,...}" up
+ * to the first 500,000 states.
+ * @param states a StateList
+ * @param G working grid
+ * @see print_state_short
+ */
+void print_states(const StateList states, const Grid_t *const G) {
+  StateList temp;
+  int c;
+  temp = states;
+  (*print_ptr)("{");
+  c = 0;
+  while ((temp != NULL) && c < 500000) {
+    print_state_short(temp->data, G);
+    temp = temp->nextState;
+    if (temp != NULL) {
+      (*print_ptr)(",");
+    };
+    c++;
+  };
+  if (c == 500000) {
+    (*print_ptr)("...");
+  };
+  (*print_ptr)("}");
+}
+
+/**
+ * Prints each edge in the passed EdgeList
+ * @param edge_list an EdgeList
+ */
+void print_edges(const EdgeList edge_list) {
+  EdgeList temp;
+  temp = edge_list;
+  while (temp != NULL) {
+    (*print_ptr)("[%d -> %d]\n", temp->start, temp->end);
+    temp = (temp->nextEdge);
+  };
+}
+
+/**
+ * Print the first 80 edges edge_list on the same line
+ * @param edge_list an EdgeList
+ */
+void print_math_edges(const EdgeList edge_list) {
+  EdgeList temp;
+  int t;
+  temp = edge_list;
+  (*print_ptr)("{");
+  t = 0;
+  while (temp != NULL) {
+    (*print_ptr)("[%d -> %d]", temp->start, temp->end);
+    t++;
+    if (t == 80) {
+      temp = NULL;
+      (*print_ptr)("...");
+    } else {
+      temp = (temp->nextEdge);
+      if (temp != NULL)
+        (*print_ptr)(",");
+    }
+  };
+  (*print_ptr)("}\n");
+}
+
+/**
+ * Prints the edges in a single line
+ * @param edges an EdgeList
+ */
+void print_math_edges_a(const EdgeList edges) {
+  EdgeList temp;
+  temp = edges;
+  (*print_ptr)("{");
+  while (temp != NULL) {
+    (*print_ptr)("[%d->%d]", temp->start, temp->end);
+    temp = (temp->nextEdge);
+    if (temp != NULL)
+      (*print_ptr)(",");
+  };
+  (*print_ptr)("}");
+}
+
+/**
+ * Prints the vertices in VertexList on a single line
+ * @param v_list a VertexList
+ */
+void print_vertices(const VertexList v_list) {
+  VertexList temp;
+  temp = v_list;
+  (*print_ptr)("{");
+  while (temp != NULL) {
+    (*print_ptr)("%d", (temp)->data);
+    temp = (temp)->nextVertex;
+    if (temp != NULL)
+      (*print_ptr)(",");
+  };
+  (*print_ptr)("}");
+}
+
+/**
  * Prints the permutations of the Grid, ie the X O code inputed
  * by the user
  * @param G working grid
@@ -2116,6 +2060,64 @@ void print_grid_perm(const Grid_t *const G) {
     i++;
   }
   (*print_ptr)(" ]\n");
+}
+
+/**
+ * Prints the grid without the grid state
+ * @param G working grid
+ */
+void print_grid(const Grid_t *const G) {
+  int i, j;
+  j = G->arc_index;
+  i = 0;
+  (*print_ptr)("*---");
+  while (i < G->arc_index - 1) {
+    (*print_ptr)("----");
+    i++;
+  }
+  (*print_ptr)("*\n");
+  while (j > 0) {
+    i = 0;
+    while (i < G->arc_index) {
+      if (G->Xs[i] == j) {
+        (*print_ptr)("| X ");
+      } else {
+        if (G->Os[i] == j) {
+          (*print_ptr)("| O ");
+        } else {
+          (*print_ptr)("|   ");
+        };
+      };
+      i++;
+    };
+    (*print_ptr)("|\n");
+    i = 0;
+    while (i < G->arc_index) {
+      if (i == 0 && j > 1) {
+        (*print_ptr)("|---");
+      } else {
+        if (j > 1) {
+          (*print_ptr)("+---");
+        } else {
+           if (i == 0) {
+            (*print_ptr)("*---");
+          } else {
+              (*print_ptr)("----");
+            };
+          };
+        };
+      i++;
+    };
+    if (j > 1) {
+      (*print_ptr)("|\n");
+    } else {
+      (*print_ptr)("*\n");
+    };
+    j--;
+  };
+  (*print_ptr)("\n");
+  print_grid_perm(G);
+  (*print_ptr)("\n");
 }
 
 /**
