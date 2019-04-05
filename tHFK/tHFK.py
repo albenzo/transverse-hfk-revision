@@ -240,6 +240,7 @@ class Tk_tHFK(tHFK):
         self.output_area.config(state=NORMAL)
         self.output_area.insert(END,s)
         self.output_area.config(state=DISABLED)
+        self.output_area.see(END)
 
     def _with_process(self,f):
         """
