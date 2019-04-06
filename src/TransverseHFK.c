@@ -518,6 +518,18 @@ StateList swap_cols(const int x1, const int x2, const State incoming,
   return ans;
 }
 
+State swap_cols_tree(const int x1, const int x2, const State incoming, const Grid_t *const G) {
+  State ans = malloc(sizeof(char)*G->arc_index);
+
+  for(int i=0; i< G->arc_index; ++i) {
+    ans[i] = incoming[i];
+  }
+  ans[x1] = incoming[x2];
+  ans[x2] = incoming[x1];
+
+  return ans;
+}
+
 /**
  * Calculates whether the supplied state is nullhomologous
  * @param init a State
@@ -733,6 +745,177 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
       new_ins = NULL;
     } else {
       // set num_out for next loop through algorithm
+      num_outs = num_outs + out_number;
+      if (get_verbosity() >= VERBOSE) {
+        (*print_ptr)("Total number of states in B_i up to B_%d (before any "
+                     "contraction): %d \n",
+                     current_pos - 1, prev_in_number);
+        (*print_ptr)("Total number of states in A_i up to A_%d (before any "
+                     "contraction): %d \n",
+                     current_pos, num_outs);
+        (*print_ptr)("Total number of states in B_i up to B_%d (before any "
+                     "contraction): %d \n",
+                     current_pos, num_ins + in_number);
+        (*print_ptr)("Total number of edges  up to A_%d and B_%d (before any "
+                     "contraction): %d \n",
+                     current_pos, current_pos, edge_count);
+        (*print_ptr)("\n");
+      }
+    };
+    current_pos++;
+  };
+  return (ans);
+}
+
+int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
+  StateRBTree new_ins, new_outs, last_new_in, last_new_out, temp;
+  StateRBTree prev_ins, prev_outs;
+  StateRBTree really_new_outs = NULL, really_new_ins = NULL;
+  int in_number, ans, prev_in_number;
+  int out_number;
+  int i;
+  int edge_count = 0;
+  int num_ins = 0;
+  int num_outs = 0;
+  int num_new_ins = 0;
+  int num_new_outs = 0;
+  StateRBTree present_in, present_out;
+  EdgeList edge_list = prepend_edge(0, 1, NULL);
+  prev_outs = NULL;
+  prev_ins = NULL;
+
+  State s = malloc(sizeof(char) * G->arc_index);
+  copy_state(&s, &init, G);
+
+  s_insert_data(new_ins, s, G);
+  
+  ans = 0;
+  int current_pos = 1;
+  while (new_ins != NULL && !ans) {
+    present_in = new_ins;
+    in_number = 0;
+    num_new_outs = 0;
+    new_outs = NULL;
+    if (get_verbosity() >= VERBOSE) {
+      (*print_ptr)("Gathering A_%d:\n", current_pos);
+    }
+    while (present_in != NULL) {
+      free_state_rbtree(really_new_outs);
+      in_number++;
+      really_new_outs = new_rectangles_into_tree(prev_outs, present_in->data, G);
+      while (really_new_outs != NULL) {
+        out_number = get_number(really_new_outs->data, new_outs, G);
+        if (out_number == 0) {
+          if (num_new_outs == 0) {
+            new_outs = really_new_outs;
+            really_new_outs = really_new_outs->nextState;
+            new_outs->nextState = NULL;
+            last_new_out = new_outs;
+            num_new_outs++;
+            out_number = num_new_outs;
+          } else {
+            last_new_out->nextState = really_new_outs;
+            really_new_outs = really_new_outs->nextState;
+            last_new_out = last_new_out->nextState;
+            last_new_out->nextState = NULL;
+            num_new_outs++;
+            out_number = num_new_outs;
+          }
+        } else {
+          temp = really_new_outs;
+          s_delete_node(really_new_outs, really_new_outs);
+          free(temp->data); // Might not be valid
+          free(temp);
+        }
+        edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
+                                   edge_list);
+        edge_count++;
+      }
+      present_in = present_in->nextState;
+    }
+    if (get_verbosity() >= VERBOSE) {
+      print_edges(edge_list);
+      (*print_ptr)("\n");
+    }
+    free_state_rbtree(prev_ins);
+    prev_ins = new_ins;
+    i = 1;
+    num_ins = num_ins + in_number;
+    prev_in_number = num_ins;
+    num_new_ins = 0;
+    new_ins = NULL;
+    out_number = 0;
+    present_out = new_outs;
+    if (get_verbosity() >= VERBOSE) {
+      (*print_ptr)("Gathering B_%d:\n", current_pos);
+    }
+    while (present_out != NULL) {
+      out_number++;
+      really_new_ins = new_rectangles_out_of_tree(prev_ins, present_out->data, G);
+      while (really_new_ins != NULL) {
+        in_number = get_number(really_new_ins->data, new_ins, G);
+        if (in_number == 0) {
+          if (num_new_ins == 0) {
+            new_ins = really_new_ins;
+            really_new_ins = really_new_ins->nextState;
+            new_ins->nextState = NULL;
+            last_new_in = new_ins;
+            num_new_ins++;
+            in_number = num_new_ins;
+          } else {
+            last_new_in->nextState = really_new_ins;
+            really_new_ins = really_new_ins->nextState;
+            last_new_in = last_new_in->nextState;
+            last_new_in->nextState = NULL;
+            num_new_ins++;
+            in_number = num_new_ins;
+          };
+        } else {
+          temp = really_new_ins;
+          s_delete_node(really_new_ins, really_new_ins);
+          free(temp->data);
+          free(temp);
+        }
+        edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
+                                   edge_list);
+        edge_count++;
+      };
+      present_out = present_out->nextState;
+    };
+    if (get_verbosity() >= VERBOSE) {
+      print_edges(edge_list);
+      (*print_ptr)("\n");
+    }
+    free_state_list(prev_outs);
+    prev_outs = new_outs;
+    new_outs = NULL;
+    if (get_verbosity() >= VERBOSE) {
+      (*print_ptr)("Contracting edges from 0 to %d:\n", prev_in_number);
+    }
+    special_homology(0, prev_in_number, &edge_list);
+    if (get_verbosity() >= VERBOSE) {
+      print_edges(edge_list);
+      (*print_ptr)("\n");
+    }
+    if ((edge_list == NULL) || (edge_list->start != 0)) {
+      ans = 1;
+      if (get_verbosity() >= VERBOSE) {
+        (*print_ptr)("No edges pointing out of A_0!\n");
+      }
+      free_state_list(new_ins);
+      free_state_list(new_outs);
+      new_ins = NULL;
+    } else if (edge_list->end <= prev_in_number) {
+      ans = 0;
+      if (get_verbosity() >= VERBOSE) {
+        (*print_ptr)("There exist edges pointing from A_0 to B_%d! No future "
+                     "contractions will remove this edge!\n",
+                     current_pos - 1);
+      }
+      free_state_list(new_ins);
+      free_state_list(new_outs);
+      new_ins = NULL;
+    } else {
       num_outs = num_outs + out_number;
       if (get_verbosity() >= VERBOSE) {
         (*print_ptr)("Total number of states in B_i up to B_%d (before any "
@@ -1581,6 +1764,111 @@ StateList new_rectangles_into(const StateList prevs, const State incoming,
             temp = swap_cols(LL, mod(LL + w, G->arc_index), incoming, G);
             temp->nextState = ans;
             ans = temp;
+          }
+        };
+        temp_state[LL] = incoming[LL];
+        temp_state[mod(LL + w, G->arc_index)] = incoming[mod(LL + w, G->arc_index)];
+        h = mod_up(incoming[LL] - incoming[mod(LL + w, G->arc_index)], G->arc_index);
+      };
+      h = min(h, min(mod_up(incoming[LL] - G->Os[mod(LL + w, G->arc_index)], G->arc_index),
+                     mod_up(incoming[LL] - G->Xs[mod(LL + w, G->arc_index)], G->arc_index)));
+      w++;
+    };
+    LL++;
+  };
+  return ans;
+}
+
+/**
+ * Returns a StateList of states where a rectangle exists from incoming
+ * that is not contained in prevs.
+ * @param prevs Statelist containing previous states
+ * @param incoming the source of rectangles used to generate statelist
+ * @param G working grid
+ * @return A statelist containing states reached from a rectangle leaving
+ * incoming not contained in prevs.
+ */
+StateRBTree new_rectangles_out_of_tree(const StateRBTree prevs, const State incoming,
+                                const Grid_t *const G) {
+  StateRBTree ans;
+  State temp_state = malloc(sizeof(char) * G->arc_index);
+  State temp;
+  int LL;
+  int w, h, i;
+  ans = NULL;
+  i = 0;
+  while (i < G->arc_index) {
+    temp_state[i] = incoming[i];
+    i++;
+  }
+  LL = 0;
+  while (LL < G->arc_index) {
+    w = 1;
+    h = min(mod(G->Os[LL] - incoming[LL], G->arc_index), mod(G->Xs[LL] - incoming[LL], G->arc_index));
+    while (w < G->arc_index && h > 0) {
+      if (mod(incoming[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index) <= h) {
+        temp_state[LL] = incoming[mod(LL + w, G->arc_index)];
+        temp_state[mod(LL + w, G->arc_index)] = incoming[LL];
+        if (!s_is_member(prevs, temp_state, G)) {
+          if (s_is_member(ans, temp_state, G)) {
+            s_delete_data(ans, temp_state, G);
+          } else {
+            temp = swap_cols_tree(LL, mod(LL + w, G->arc_index), incoming, G);
+            s_insert_data(ans, temp, G);
+          }
+        };
+        temp_state[LL] = incoming[LL];
+        temp_state[mod(LL + w, G->arc_index)] = incoming[mod(LL + w, G->arc_index)];
+        h = mod(incoming[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index);
+      };
+      h = min(h, min(mod(G->Os[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index),
+                     mod(G->Xs[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index)));
+      w++;
+    };
+    LL++;
+  }
+  
+  free(temp_state);
+  return ans;
+}
+
+/**
+ * returns a StateRBTree containing those with a rectangle
+ * pointing to the state incoming that do not overlap with prevs
+ * @param incoming State that is the destination for generated rectangles
+ * @param prevs StateRBTree of excluded states
+ * @param G working grid
+ * @return StateRBTree containing states with a rectangle to incoming.
+ */
+StateRBTree new_rectangles_into_tree(const StateRBTree prevs, const State incoming,
+                              const Grid_t *const G) {
+  StateRBTree ans;
+  State temp_state = malloc(sizeof(char) * G->arc_index);
+  State temp;
+  int LL;
+  int w, h;
+  int i;
+  ans = NULL;
+  i = 0;
+  while (i < G->arc_index) {
+    temp_state[i] = incoming[i];
+    i++;
+  }
+  LL = 0;
+  while (LL < G->arc_index) {
+    w = 1;
+    h = min(mod_up(incoming[LL] - G->Os[LL], G->arc_index),
+            mod_up(incoming[LL] - G->Xs[LL], G->arc_index));
+    while (w < G->arc_index && h > 0) {
+      if (mod_up(incoming[LL] - incoming[mod(LL + w, G->arc_index)], G->arc_index) < h) {
+        temp_state[LL] = incoming[mod(LL + w, G->arc_index)];
+        temp_state[mod(LL + w, G->arc_index)] = incoming[LL];
+        if (!s_is_member(prevs, temp_state, G)) {
+          if (s_is_member(ans, temp_state, G)) {
+            s_delete_data(ans, temp_state, G);
+          } else {
+            temp = swap_cols_tree(LL, mod(LL + w, G->arc_index), incoming, G);
+            s_insert_data(ans, temp, G);
           }
         };
         temp_state[LL] = incoming[LL];
