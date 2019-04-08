@@ -29,6 +29,7 @@ typedef LiftStateRBTreeNode_t * LiftStateRBTree;
 
 struct LiftStateRBTreeNode {
   int color;
+  int tag;
   LiftState data;
   LiftStateRBTree left;
   LiftStateRBTree right;
@@ -40,6 +41,7 @@ typedef StateRBTreeNode_t * StateRBTree;
 
 struct StateRBTreeNode {
   int color;
+  int tag;
   State data;
   StateRBTree left;
   StateRBTree right;
@@ -110,39 +112,43 @@ LiftStateList remove_lift_state(const LiftState, const LiftStateList, const Lift
 void free_state_list(StateList);
 void free_lift_state_list(LiftStateList, const LiftGrid_t * const);
 
-void left_rotate(LiftStateRBTree, LiftStateRBTree);
-void right_rotate(LiftStateRBTree, LiftStateRBTree);
-void insert_data(LiftStateRBTree, LiftState, const LiftGrid_t * const);
-void insert_node(LiftStateRBTree, LiftStateRBTree, const LiftGrid_t * const);
-void insert_fixup(LiftStateRBTree, LiftStateRBTree);
-void transplant(LiftStateRBTree, LiftStateRBTree, LiftStateRBTree);
-void delete_node(LiftStateRBTree, LiftStateRBTree);
-void delete_fixup(LiftStateRBTree, LiftStateRBTree);
-void delete_data(LiftStateRBTree, LiftState, const LiftGrid_t * const);
-LiftStateRBTree find_minimum_node(LiftStateRBTree);
-LiftStateRBTree find_maximum_node(LiftStateRBTree);
-LiftState find_minimum(LiftStateRBTree);
-LiftState find_maximum(LiftStateRBTree);
-LiftStateRBTree find_node(LiftStateRBTree, LiftState, const LiftGrid_t * const);
-int is_member(LiftStateRBTree, LiftState, const LiftGrid_t * const);
-void free_lift_state_rbtree(LiftStateRBTree, const LiftGrid_t * const);
+void left_rotate(LiftStateRBTree*, LiftStateRBTree);
+void right_rotate(LiftStateRBTree*, LiftStateRBTree);
+void insert_data(LiftStateRBTree*, LiftState, const LiftGrid_t * const);
+void insert_tagged_data(LiftStateRBTree*, LiftState, int, const LiftGrid_t * const);
+void insert_node(LiftStateRBTree*, LiftStateRBTree, const LiftGrid_t * const);
+void insert_fixup(LiftStateRBTree*, LiftStateRBTree);
+void transplant(LiftStateRBTree*, LiftStateRBTree, LiftStateRBTree);
+void delete_node(LiftStateRBTree*, LiftStateRBTree);
+void delete_fixup(LiftStateRBTree*, LiftStateRBTree);
+void delete_data(LiftStateRBTree*, LiftState, const LiftGrid_t * const);
+LiftStateRBTree find_minimum_node(LiftStateRBTree*);
+LiftStateRBTree find_maximum_node(LiftStateRBTree*);
+LiftState find_minimum(LiftStateRBTree*);
+LiftState find_maximum(LiftStateRBTree*);
+LiftStateRBTree find_node(LiftStateRBTree*, LiftState, const LiftGrid_t * const);
+int find_tag(LiftStateRBTree*, LiftState, const LiftGrid_t * const);
+int is_member(LiftStateRBTree*, LiftState, const LiftGrid_t * const);
+void free_lift_state_rbtree(LiftStateRBTree*, const LiftGrid_t * const);
 
-void s_left_rotate(StateRBTree, StateRBTree);
-void s_right_rotate(StateRBTree, StateRBTree);
-void s_insert_data(StateRBTree, State, const Grid_t * const);
-void s_insert_node(StateRBTree, StateRBTree, const Grid_t * const);
-void s_insert_fixup(StateRBTree, StateRBTree);
-void s_transplant(StateRBTree, StateRBTree, StateRBTree);
-void s_delete_node(StateRBTree, StateRBTree);
-void s_delete_fixup(StateRBTree, StateRBTree);
-void s_delete_data(StateRBTree, State, const Grid_t * const);
-StateRBTree s_find_minimum_node(StateRBTree);
-StateRBTree s_find_maximum_node(StateRBTree);
-State s_find_minimum(StateRBTree);
-State s_find_maximum(StateRBTree);
-StateRBTree s_find_node(StateRBTree, State, const Grid_t * const);
-int s_is_member(StateRBTree, State, const Grid_t * const);
-void free_state_rbtree(StateRBTree);
+void s_left_rotate(StateRBTree*, StateRBTree);
+void s_right_rotate(StateRBTree*, StateRBTree);
+void s_insert_data(StateRBTree*, State, const Grid_t * const);
+void s_insert_tagged_data(StateRBTree*, State, int, const Grid_t * const);
+void s_insert_node(StateRBTree*, StateRBTree, const Grid_t * const);
+void s_insert_fixup(StateRBTree*, StateRBTree);
+void s_transplant(StateRBTree*, StateRBTree, StateRBTree);
+void s_delete_node(StateRBTree*, StateRBTree);
+void s_delete_fixup(StateRBTree*, StateRBTree);
+void s_delete_data(StateRBTree*, State, const Grid_t * const);
+StateRBTree s_find_minimum_node(StateRBTree*);
+StateRBTree s_find_maximum_node(StateRBTree*);
+State s_find_minimum(StateRBTree*);
+State s_find_maximum(StateRBTree*);
+StateRBTree s_find_node(StateRBTree*, State, const Grid_t * const);
+int s_find_tag(StateRBTree*, State, const Grid_t * const);
+int s_is_member(StateRBTree*, State, const Grid_t * const);
+void free_state_rbtree(StateRBTree*);
 
 void copy_state(State* dest, const State * const origin, const Grid_t * const G) {
   for(int i = 0; i < G->arc_index; ++i) {
@@ -682,7 +688,7 @@ void free_lift_state_list(LiftStateList states, const LiftGrid_t * const G) {
  * @param root the root of the RBTree
  * @param x a descendent node of root
  */
-void left_rotate(LiftStateRBTree root, LiftStateRBTree x) {
+void left_rotate(LiftStateRBTree* root, LiftStateRBTree x) {
   LiftStateRBTree y = x->right;
   x->right = y->left;
   if (NULL != y->left) {
@@ -690,7 +696,7 @@ void left_rotate(LiftStateRBTree root, LiftStateRBTree x) {
   }
   y->parent = x->parent;
   if (NULL == x->parent) {
-    *root = *y;
+    *root = y;
   }
   else if (x == x->parent->left) {
     x->parent->left = y;
@@ -707,7 +713,7 @@ void left_rotate(LiftStateRBTree root, LiftStateRBTree x) {
  * @param root the root of the RBTree
  * @param x a descendant node of root
  */
-void right_rotate(LiftStateRBTree root, LiftStateRBTree x) {
+void right_rotate(LiftStateRBTree* root, LiftStateRBTree x) {
   LiftStateRBTree y = x->left;
   x->left = y->right;
   if (NULL != y->right) {
@@ -715,7 +721,7 @@ void right_rotate(LiftStateRBTree root, LiftStateRBTree x) {
   }
   y->parent = x->parent;
   if (NULL == x->parent) {
-    *root = *y;
+    *root = y;
   }
   else if (x == x->parent->right) {
     x->parent->right = y;
@@ -733,9 +739,16 @@ void right_rotate(LiftStateRBTree root, LiftStateRBTree x) {
  * @param s a lift state
  * @param G a lift grid
  */
-void insert_data(LiftStateRBTree root, LiftState s, const LiftGrid_t * const G) {
+void insert_data(LiftStateRBTree* root, LiftState s, const LiftGrid_t * const G) {
   LiftStateRBTree node = malloc(sizeof(LiftStateRBTreeNode_t));
   node->data = s;
+  insert_node(root, node, G);
+}
+
+void insert_tagged_data(LiftStateRBTree* root, LiftState s, int tag, const LiftGrid_t * const G) {
+  LiftStateRBTree node = malloc(sizeof(LiftStateRBTreeNode_t));
+  node->data = s;
+  node->tag = tag;
   insert_node(root, node, G);
 }
 
@@ -745,9 +758,9 @@ void insert_data(LiftStateRBTree root, LiftState s, const LiftGrid_t * const G) 
  * @param z the node to be inserted
  * @param G a lift grid
  */
-void insert_node(LiftStateRBTree root, LiftStateRBTree z, const LiftGrid_t * const G) {
+void insert_node(LiftStateRBTree* root, LiftStateRBTree z, const LiftGrid_t * const G) {
   LiftStateRBTree y = NULL;
-  LiftStateRBTree x = root;
+  LiftStateRBTree x = *root;
   while (NULL != x) {
     y = x;
     if (comp_lift_state(z->data, x->data, G) < 0) {
@@ -758,8 +771,11 @@ void insert_node(LiftStateRBTree root, LiftStateRBTree z, const LiftGrid_t * con
     }
   }
   z->parent = y;
-  if (NULL == y) {
-    *root = *z;
+  if(NULL == root) {
+    
+  }
+  else if (NULL == y) {
+    *root = z;
   }
   else if (comp_lift_state(z->data, y->data, G) < 0) {
     y->left = z;
@@ -778,7 +794,7 @@ void insert_node(LiftStateRBTree root, LiftStateRBTree z, const LiftGrid_t * con
  * @param root the root of the RBTree
  * @param z the node which is to be repaired about
  */
-void insert_fixup(LiftStateRBTree root, LiftStateRBTree z) {
+void insert_fixup(LiftStateRBTree* root, LiftStateRBTree z) {
   while (RED == z->parent->color) {
     if (z->parent == z->parent->parent->left) {
       LiftStateRBTree y = z->parent->parent->right;
@@ -817,7 +833,7 @@ void insert_fixup(LiftStateRBTree root, LiftStateRBTree z) {
       }
     }
   }
-  root->color = BLACK;
+  (*root)->color = BLACK;
 }
 
 /**
@@ -826,9 +842,9 @@ void insert_fixup(LiftStateRBTree root, LiftStateRBTree z) {
  * @param u a descendant node of root
  * @param v a descendant node of root
  */
-void transplant(LiftStateRBTree root, LiftStateRBTree u, LiftStateRBTree v) {
+void transplant(LiftStateRBTree* root, LiftStateRBTree u, LiftStateRBTree v) {
   if (NULL == u->parent) {
-    *root = *v;
+    *root = v;
   }
   else if (u == u->parent->left) {
     u->parent->left = v;
@@ -844,7 +860,7 @@ void transplant(LiftStateRBTree root, LiftStateRBTree u, LiftStateRBTree v) {
  * @param root the root of the RBTree
  * @param z the node to be deleted
  */
-void delete_node(LiftStateRBTree root, LiftStateRBTree z) {
+void delete_node(LiftStateRBTree* root, LiftStateRBTree z) {
   if(NULL == root || NULL == z) {
     return;
   }
@@ -862,7 +878,7 @@ void delete_node(LiftStateRBTree root, LiftStateRBTree z) {
     transplant(root, z, z->left);
   }
   else {
-    y = find_minimum_node(z->right);
+    y = find_minimum_node(&z->right);
     y_original_color = y->color;
     x = y->right;
     if (y->parent == z) {
@@ -888,8 +904,8 @@ void delete_node(LiftStateRBTree root, LiftStateRBTree z) {
  * @param root the root of the RBTree
  * @param x the node to be repaired about
  */
-void delete_fixup(LiftStateRBTree root, LiftStateRBTree x) {
-  while (x != root && x->color == BLACK) {
+void delete_fixup(LiftStateRBTree* root, LiftStateRBTree x) {
+  while (x != *root && x->color == BLACK) {
     LiftStateRBTree w;
     if (x == x->parent->left) {
       w = x->parent->right;
@@ -914,7 +930,7 @@ void delete_fixup(LiftStateRBTree root, LiftStateRBTree x) {
         x->parent->color = BLACK;
         w->right->color = BLACK;
         left_rotate(root, x->parent);
-        x = root;
+        x = *root;
       }
     }
     else {
@@ -940,7 +956,7 @@ void delete_fixup(LiftStateRBTree root, LiftStateRBTree x) {
         x->parent->color = BLACK;
         w->left->color = BLACK;
         right_rotate(root, x->parent);
-        x = root;
+        x = *root;
       }
     }
   }
@@ -953,7 +969,7 @@ void delete_fixup(LiftStateRBTree root, LiftStateRBTree x) {
  * @param s the lift state to be deleted
  * @param G a lift grid
  */
-void delete_data(LiftStateRBTree root, LiftState s, const LiftGrid_t * const G) {
+void delete_data(LiftStateRBTree* root, LiftState s, const LiftGrid_t * const G) {
   delete_node(root, find_node(root, s, G));
 }
 
@@ -962,11 +978,11 @@ void delete_data(LiftStateRBTree root, LiftState s, const LiftGrid_t * const G) 
  * @param root the root of the RBTree
  * @return the node containing the minimum value of root
  */
-LiftStateRBTree find_minimum_node(LiftStateRBTree root) {
-  if (NULL == root) {
+LiftStateRBTree find_minimum_node(LiftStateRBTree* root) {
+  if (NULL == *root) {
     return NULL;
   }
-  LiftStateRBTree iter = root;
+  LiftStateRBTree iter = *root;
   while (iter->left != NULL) {
     iter = iter->left;
   }
@@ -978,11 +994,11 @@ LiftStateRBTree find_minimum_node(LiftStateRBTree root) {
  * @param root the root of the RBTree
  * @return the node containing the maximum value of root
  */
-LiftStateRBTree find_maximum_node(LiftStateRBTree root) {
-  if (NULL == root) {
+LiftStateRBTree find_maximum_node(LiftStateRBTree* root) {
+  if (NULL == *root) {
     return NULL;
   }
-  LiftStateRBTree iter = root;
+  LiftStateRBTree iter = *root;
   while (iter->right != NULL) {
     iter = iter->right;
   }
@@ -994,7 +1010,7 @@ LiftStateRBTree find_maximum_node(LiftStateRBTree root) {
  * @param root the root of the RBTree
  * @return the minimal lift state in root
  */
-LiftState find_minimum(LiftStateRBTree root) {
+LiftState find_minimum(LiftStateRBTree* root) {
   LiftStateRBTree min_node = find_minimum_node(root);
   if (NULL == min_node) {
     return NULL;
@@ -1007,7 +1023,7 @@ LiftState find_minimum(LiftStateRBTree root) {
  * @param root the root of the RBTree
  * @return the maximal lift state in root
  */
-LiftState find_maximum(LiftStateRBTree root) {
+LiftState find_maximum(LiftStateRBTree* root) {
   LiftStateRBTree max_node = find_maximum_node(root);
   if (NULL == max_node) {
     return NULL;
@@ -1022,8 +1038,8 @@ LiftState find_maximum(LiftStateRBTree root) {
  * @param G a lift grid
  * @return the node containing s, returns NULL if not found
  */
-LiftStateRBTree find_node(LiftStateRBTree root, LiftState s, const LiftGrid_t * const G) {
-  LiftStateRBTree iter = root;
+LiftStateRBTree find_node(LiftStateRBTree* root, LiftState s, const LiftGrid_t * const G) {
+  LiftStateRBTree iter = *root;
   while (iter != NULL) {
     int comp = comp_lift_state(s, iter->data, G);
     if (0 == comp) {
@@ -1040,6 +1056,14 @@ LiftStateRBTree find_node(LiftStateRBTree root, LiftState s, const LiftGrid_t * 
   return NULL;
 }
 
+int find_tag(LiftStateRBTree *root, LiftState s, const LiftGrid_t * const G) {
+  LiftStateRBTree node = find_node(root, s, G);
+  if (NULL == node) {
+    return -1;
+  }
+  return node->tag;
+}
+
 /**
  * Determines whether a lift state is contained in root
  * @param root the root of the RBTree
@@ -1047,7 +1071,7 @@ LiftStateRBTree find_node(LiftStateRBTree root, LiftState s, const LiftGrid_t * 
  * @param G a lift grid
  * @return 1 if s is contained in some node of root, 0 otherwise
  */
-int is_member(LiftStateRBTree root, LiftState s, const LiftGrid_t * const G) {
+int is_member(LiftStateRBTree* root, LiftState s, const LiftGrid_t * const G) {
   return find_node(root, s, G) != NULL;
 }
 
@@ -1056,14 +1080,14 @@ int is_member(LiftStateRBTree root, LiftState s, const LiftGrid_t * const G) {
  * @param root the root of the RBTree
  * @param G a lift grid
  */
-void free_lift_state_rbtree(LiftStateRBTree root, const LiftGrid_t * const G) {
-  if(NULL == root) {
+void free_lift_state_rbtree(LiftStateRBTree* root, const LiftGrid_t * const G) {
+  if(NULL == *root) {
     return;
   }
-  free_lift_state_rbtree(root->left, G);
-  free_lift_state_rbtree(root->right, G);
-  free_lift_state(&root->data, G);
-  free(root);
+  free_lift_state_rbtree(&(*root)->left, G);
+  free_lift_state_rbtree(&(*root)->right, G);
+  free_lift_state(&(*root)->data, G);
+  free(*root);
 }
 
 /**
@@ -1071,7 +1095,7 @@ void free_lift_state_rbtree(LiftStateRBTree root, const LiftGrid_t * const G) {
  * @param root the root of the RBTree
  * @param x a descendent node of root
  */
-void s_left_rotate(StateRBTree root, StateRBTree x) {
+void s_left_rotate(StateRBTree* root, StateRBTree x) {
   StateRBTree y = x->right;
   x->right = y->left;
   if (NULL != y->left) {
@@ -1079,7 +1103,7 @@ void s_left_rotate(StateRBTree root, StateRBTree x) {
   }
   y->parent = x->parent;
   if (NULL == x->parent) {
-    *root = *y;
+    *root = y;
   }
   else if (x == x->parent->left) {
     x->parent->left = y;
@@ -1096,7 +1120,7 @@ void s_left_rotate(StateRBTree root, StateRBTree x) {
  * @param root the root of the RBTree
  * @param x a descendant node of root
  */
-void s_right_rotate(StateRBTree root, StateRBTree x) {
+void s_right_rotate(StateRBTree* root, StateRBTree x) {
   StateRBTree y = x->left;
   x->left = y->right;
   if (NULL != y->right) {
@@ -1104,7 +1128,7 @@ void s_right_rotate(StateRBTree root, StateRBTree x) {
   }
   y->parent = x->parent;
   if (NULL == x->parent) {
-    *root = *y;
+    *root = y;
   }
   else if (x == x->parent->right) {
     x->parent->right = y;
@@ -1122,9 +1146,16 @@ void s_right_rotate(StateRBTree root, StateRBTree x) {
  * @param s a lift state
  * @param G a lift grid
  */
-void s_insert_data(StateRBTree root, State s, const Grid_t * const G) {
+void s_insert_data(StateRBTree* root, State s, const Grid_t * const G) {
   StateRBTree node = malloc(sizeof(StateRBTreeNode_t));
   node->data = s;
+  s_insert_node(root, node, G);
+}
+
+void s_insert_tagged_data(StateRBTree* root, State s, int tag, const Grid_t * const G) {
+  StateRBTree node = malloc(sizeof(StateRBTreeNode_t));
+  node->data = s;
+  node->tag = tag;
   s_insert_node(root, node, G);
 }
 
@@ -1134,9 +1165,9 @@ void s_insert_data(StateRBTree root, State s, const Grid_t * const G) {
  * @param z the node to be inserted
  * @param G a lift grid
  */
-void s_insert_node(StateRBTree root, StateRBTree z, const Grid_t * const G) {
+void s_insert_node(StateRBTree* root, StateRBTree z, const Grid_t * const G) {
   StateRBTree y = NULL;
-  StateRBTree x = root;
+  StateRBTree x = *root;
   while (NULL != x) {
     y = x;
     if (comp_state(z->data, x->data, G) < 0) {
@@ -1148,7 +1179,7 @@ void s_insert_node(StateRBTree root, StateRBTree z, const Grid_t * const G) {
   }
   z->parent = y;
   if (NULL == y) {
-    *root = *z;
+    *root = z;
   }
   else if (comp_state(z->data, y->data, G) < 0) {
     y->left = z;
@@ -1167,7 +1198,7 @@ void s_insert_node(StateRBTree root, StateRBTree z, const Grid_t * const G) {
  * @param root the root of the RBTree
  * @param z the node which is to be repaired about
  */
-void s_insert_fixup(StateRBTree root, StateRBTree z) {
+void s_insert_fixup(StateRBTree* root, StateRBTree z) {
   while (RED == z->parent->color) {
     if (z->parent == z->parent->parent->left) {
       StateRBTree y = z->parent->parent->right;
@@ -1206,7 +1237,7 @@ void s_insert_fixup(StateRBTree root, StateRBTree z) {
       }
     }
   }
-  root->color = BLACK;
+  (*root)->color = BLACK;
 }
 
 /**
@@ -1215,9 +1246,9 @@ void s_insert_fixup(StateRBTree root, StateRBTree z) {
  * @param u a descendant node of root
  * @param v a descendant node of root
  */
-void s_transplant(StateRBTree root, StateRBTree u, StateRBTree v) {
+void s_transplant(StateRBTree* root, StateRBTree u, StateRBTree v) {
   if (NULL == u->parent) {
-    *root = *v;
+    *root = v;
   }
   else if (u == u->parent->left) {
     u->parent->left = v;
@@ -1233,7 +1264,7 @@ void s_transplant(StateRBTree root, StateRBTree u, StateRBTree v) {
  * @param root the root of the RBTree
  * @param z the node to be deleted
  */
-void s_delete_node(StateRBTree root, StateRBTree z) {
+void s_delete_node(StateRBTree* root, StateRBTree z) {
   if(NULL == root || NULL == z) {
     return;
   }
@@ -1251,7 +1282,7 @@ void s_delete_node(StateRBTree root, StateRBTree z) {
     s_transplant(root, z, z->left);
   }
   else {
-    y = s_find_minimum_node(z->right);
+    y = s_find_minimum_node(&z->right);
     y_original_color = y->color;
     x = y->right;
     if (y->parent == z) {
@@ -1277,8 +1308,8 @@ void s_delete_node(StateRBTree root, StateRBTree z) {
  * @param root the root of the RBTree
  * @param x the node to be repaired about
  */
-void s_delete_fixup(StateRBTree root, StateRBTree x) {
-  while (x != root && x->color == BLACK) {
+void s_delete_fixup(StateRBTree* root, StateRBTree x) {
+  while (x != *root && x->color == BLACK) {
     StateRBTree w;
     if (x == x->parent->left) {
       w = x->parent->right;
@@ -1303,7 +1334,7 @@ void s_delete_fixup(StateRBTree root, StateRBTree x) {
         x->parent->color = BLACK;
         w->right->color = BLACK;
         s_left_rotate(root, x->parent);
-        x = root;
+        x = *root;
       }
     }
     else {
@@ -1329,7 +1360,7 @@ void s_delete_fixup(StateRBTree root, StateRBTree x) {
         x->parent->color = BLACK;
         w->left->color = BLACK;
         s_right_rotate(root, x->parent);
-        x = root;
+        x = *root;
       }
     }
   }
@@ -1342,7 +1373,7 @@ void s_delete_fixup(StateRBTree root, StateRBTree x) {
  * @param s the lift state to be deleted
  * @param G a lift grid
  */
-void s_delete_data(StateRBTree root, State s, const Grid_t * const G) {
+void s_delete_data(StateRBTree* root, State s, const Grid_t * const G) {
   s_delete_node(root, s_find_node(root, s, G));
 }
 
@@ -1351,11 +1382,11 @@ void s_delete_data(StateRBTree root, State s, const Grid_t * const G) {
  * @param root the root of the RBTree
  * @return the node containing the minimum value of root
  */
-StateRBTree s_find_minimum_node(StateRBTree root) {
-  if (NULL == root) {
+StateRBTree s_find_minimum_node(StateRBTree* root) {
+  if (NULL == *root) {
     return NULL;
   }
-  StateRBTree iter = root;
+  StateRBTree iter = *root;
   while (iter->left != NULL) {
     iter = iter->left;
   }
@@ -1367,11 +1398,11 @@ StateRBTree s_find_minimum_node(StateRBTree root) {
  * @param root the root of the RBTree
  * @return the node containing the maximum value of root
  */
-StateRBTree s_find_maximum_node(StateRBTree root) {
-  if (NULL == root) {
+StateRBTree s_find_maximum_node(StateRBTree* root) {
+  if (NULL == *root) {
     return NULL;
   }
-  StateRBTree iter = root;
+  StateRBTree iter = *root;
   while (iter->right != NULL) {
     iter = iter->right;
   }
@@ -1383,7 +1414,7 @@ StateRBTree s_find_maximum_node(StateRBTree root) {
  * @param root the root of the RBTree
  * @return the minimal lift state in root
  */
-State s_find_minimum(StateRBTree root) {
+State s_find_minimum(StateRBTree* root) {
   StateRBTree min_node = s_find_minimum_node(root);
   if (NULL == min_node) {
     return NULL;
@@ -1396,7 +1427,7 @@ State s_find_minimum(StateRBTree root) {
  * @param root the root of the RBTree
  * @return the maximal lift state in root
  */
-State s_find_maximum(StateRBTree root) {
+State s_find_maximum(StateRBTree* root) {
   StateRBTree max_node = s_find_maximum_node(root);
   if (NULL == max_node) {
     return NULL;
@@ -1411,8 +1442,8 @@ State s_find_maximum(StateRBTree root) {
  * @param G a lift grid
  * @return the node containing s, returns NULL if not found
  */
-StateRBTree s_find_node(StateRBTree root, State s, const Grid_t * const G) {
-  StateRBTree iter = root;
+StateRBTree s_find_node(StateRBTree* root, State s, const Grid_t * const G) {
+  StateRBTree iter = *root;
   while (iter != NULL) {
     int comp = comp_state(s, iter->data, G);
     if (0 == comp) {
@@ -1429,6 +1460,14 @@ StateRBTree s_find_node(StateRBTree root, State s, const Grid_t * const G) {
   return NULL;
 }
 
+int s_find_tag(StateRBTree* root, State s, const Grid_t * const G) {
+  StateRBTree node = s_find_node(root, s, G);
+  if (NULL == node) {
+    return -1;
+  }
+  return node->tag;
+}
+
 /**
  * Determines whether a lift state is contained in root
  * @param root the root of the RBTree
@@ -1436,7 +1475,7 @@ StateRBTree s_find_node(StateRBTree root, State s, const Grid_t * const G) {
  * @param G a lift grid
  * @return 1 if s is contained in some node of root, 0 otherwise
  */
-int s_is_member(StateRBTree root, State s, const Grid_t * const G) {
+int s_is_member(StateRBTree* root, State s, const Grid_t * const G) {
   return s_find_node(root, s, G) != NULL;
 }
 
@@ -1445,12 +1484,12 @@ int s_is_member(StateRBTree root, State s, const Grid_t * const G) {
  * @param root the root of the RBTree
  * @param G a lift grid
  */
-void free_state_rbtree(StateRBTree root) {
+void free_state_rbtree(StateRBTree* root) {
   if(NULL == root) {
     return;
   }
-  free_state_rbtree(root->left);
-  free_state_rbtree(root->right);
-  free(root->data);
-  free(root);
+  free_state_rbtree(&(*root)->left);
+  free_state_rbtree(&(*root)->right);
+  free((*root)->data);
+  free(*root);
 }

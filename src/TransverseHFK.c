@@ -95,6 +95,12 @@ void print_lift_grid(const Grid_t *const G);
 void print_tb_r(const Grid_t *const G);
 void print_2AM(const Grid_t *const G, int plus);
 
+StateRBTree new_rectangles_out_of_tree(const StateRBTree prevs, const State incoming,
+                                       const Grid_t *const G);
+StateRBTree new_rectangles_into_tree(const StateRBTree prevs, const State incoming,
+                                     const Grid_t *const G);
+int null_homologous_D0Q_tree(const State init, const Grid_t *const G);
+
 static struct argp argp = {options, parse_opt, args_doc, doc, 0, 0, 0};
 struct arguments {
   int arc_index;
@@ -255,7 +261,7 @@ int main(int argc, char **argv) {
     print_state(G.Xs,&G);
     print_2AM(&G,0);
   }
-  if (null_homologous_D0Q(G.Xs, &G)) {
+  if (null_homologous_D0Q_tree(G.Xs, &G)) {
     (*print_ptr)("LL is null-homologous\n");
   } else {
     (*print_ptr)("LL is NOT null-homologous\n");
@@ -283,7 +289,7 @@ int main(int argc, char **argv) {
     print_2AM(&G,1);
   }
 
-  if (null_homologous_D0Q(UR, &G)) {
+  if (null_homologous_D0Q_tree(UR, &G)) {
     (*print_ptr)("UR is null-homologous\n");
   } else {
     (*print_ptr)("UR is NOT null-homologous\n");
@@ -768,12 +774,11 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
 }
 
 int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
-  StateRBTree new_ins, new_outs, last_new_in, last_new_out, temp;
+  StateRBTree new_ins, new_outs;
   StateRBTree prev_ins, prev_outs;
   StateRBTree really_new_outs = NULL, really_new_ins = NULL;
   int in_number, ans, prev_in_number;
   int out_number;
-  int i;
   int edge_count = 0;
   int num_ins = 0;
   int num_outs = 0;
@@ -783,11 +788,12 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
   EdgeList edge_list = prepend_edge(0, 1, NULL);
   prev_outs = NULL;
   prev_ins = NULL;
+  new_ins = NULL;
 
   State s = malloc(sizeof(char) * G->arc_index);
   copy_state(&s, &init, G);
 
-  s_insert_data(new_ins, s, G);
+  s_insert_data(&new_ins, s, G);
   
   ans = 0;
   int current_pos = 1;
@@ -800,46 +806,36 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
       (*print_ptr)("Gathering A_%d:\n", current_pos);
     }
     while (present_in != NULL) {
-      free_state_rbtree(really_new_outs);
+      free_state_rbtree(&really_new_outs);
       in_number++;
       really_new_outs = new_rectangles_into_tree(prev_outs, present_in->data, G);
       while (really_new_outs != NULL) {
-        out_number = get_number(really_new_outs->data, new_outs, G);
-        if (out_number == 0) {
-          if (num_new_outs == 0) {
-            new_outs = really_new_outs;
-            really_new_outs = really_new_outs->nextState;
-            new_outs->nextState = NULL;
-            last_new_out = new_outs;
-            num_new_outs++;
-            out_number = num_new_outs;
-          } else {
-            last_new_out->nextState = really_new_outs;
-            really_new_outs = really_new_outs->nextState;
-            last_new_out = last_new_out->nextState;
-            last_new_out->nextState = NULL;
-            num_new_outs++;
-            out_number = num_new_outs;
-          }
-        } else {
-          temp = really_new_outs;
-          s_delete_node(really_new_outs, really_new_outs);
-          free(temp->data); // Might not be valid
-          free(temp);
+        StateRBTree node = s_find_node(&new_outs, really_new_outs->data, G);
+        if(NULL == node) {
+          node = really_new_outs;
+          num_new_outs++;
+          s_delete_node(&really_new_outs, really_new_outs);
+          s_insert_tagged_data(&new_outs, node->data, num_new_outs, G);
+          free(node);
+          edge_list = append_ordered(num_new_outs + num_outs, in_number + num_ins, edge_list);
         }
-        edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
-                                   edge_list);
+        else {
+          edge_list = append_ordered(node->tag + num_outs, in_number + num_ins, edge_list);
+          node = really_new_outs;
+          s_delete_node(&really_new_outs, really_new_outs);
+          free(node);
+        }
         edge_count++;
       }
-      present_in = present_in->nextState;
+      s_delete_node(&present_in, present_in);
     }
+    
     if (get_verbosity() >= VERBOSE) {
       print_edges(edge_list);
       (*print_ptr)("\n");
     }
-    free_state_rbtree(prev_ins);
+    free_state_rbtree(&prev_ins);
     prev_ins = new_ins;
-    i = 1;
     num_ins = num_ins + in_number;
     prev_in_number = num_ins;
     num_new_ins = 0;
@@ -850,43 +846,34 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
       (*print_ptr)("Gathering B_%d:\n", current_pos);
     }
     while (present_out != NULL) {
+      free_state_rbtree(&really_new_ins);
       out_number++;
       really_new_ins = new_rectangles_out_of_tree(prev_ins, present_out->data, G);
       while (really_new_ins != NULL) {
-        in_number = get_number(really_new_ins->data, new_ins, G);
-        if (in_number == 0) {
-          if (num_new_ins == 0) {
-            new_ins = really_new_ins;
-            really_new_ins = really_new_ins->nextState;
-            new_ins->nextState = NULL;
-            last_new_in = new_ins;
-            num_new_ins++;
-            in_number = num_new_ins;
-          } else {
-            last_new_in->nextState = really_new_ins;
-            really_new_ins = really_new_ins->nextState;
-            last_new_in = last_new_in->nextState;
-            last_new_in->nextState = NULL;
-            num_new_ins++;
-            in_number = num_new_ins;
-          };
-        } else {
-          temp = really_new_ins;
-          s_delete_node(really_new_ins, really_new_ins);
-          free(temp->data);
-          free(temp);
+        StateRBTree node = s_find_node(&new_ins, really_new_ins->data, G);
+        if(NULL == node) {
+          node = really_new_ins;
+          num_new_ins++;
+          s_delete_node(&really_new_ins, really_new_ins);
+          s_insert_tagged_data(&new_ins, node->data, num_new_ins, G);
+          free(node);
+          edge_list = append_ordered(out_number + num_outs, num_new_ins + num_ins, edge_list);
         }
-        edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
-                                   edge_list);
+        else {
+          edge_list = append_ordered(out_number + num_outs, node->tag + num_ins, edge_list);
+          node = really_new_outs;
+          s_delete_node(&really_new_outs, really_new_outs);
+          free(node);
+        }
         edge_count++;
-      };
-      present_out = present_out->nextState;
-    };
+      }
+      s_delete_node(&present_out, present_out);
+    }
     if (get_verbosity() >= VERBOSE) {
       print_edges(edge_list);
       (*print_ptr)("\n");
     }
-    free_state_list(prev_outs);
+    free_state_rbtree(&prev_outs);
     prev_outs = new_outs;
     new_outs = NULL;
     if (get_verbosity() >= VERBOSE) {
@@ -902,8 +889,8 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
       if (get_verbosity() >= VERBOSE) {
         (*print_ptr)("No edges pointing out of A_0!\n");
       }
-      free_state_list(new_ins);
-      free_state_list(new_outs);
+      free_state_rbtree(&new_ins);
+      free_state_rbtree(&new_outs);
       new_ins = NULL;
     } else if (edge_list->end <= prev_in_number) {
       ans = 0;
@@ -912,8 +899,8 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
                      "contractions will remove this edge!\n",
                      current_pos - 1);
       }
-      free_state_list(new_ins);
-      free_state_list(new_outs);
+      free_state_rbtree(&new_ins);
+      free_state_rbtree(&new_outs);
       new_ins = NULL;
     } else {
       num_outs = num_outs + out_number;
@@ -1809,12 +1796,12 @@ StateRBTree new_rectangles_out_of_tree(const StateRBTree prevs, const State inco
       if (mod(incoming[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index) <= h) {
         temp_state[LL] = incoming[mod(LL + w, G->arc_index)];
         temp_state[mod(LL + w, G->arc_index)] = incoming[LL];
-        if (!s_is_member(prevs, temp_state, G)) {
-          if (s_is_member(ans, temp_state, G)) {
-            s_delete_data(ans, temp_state, G);
+        if (!s_is_member(&prevs, temp_state, G)) {
+          if (s_is_member(&ans, temp_state, G)) {
+            s_delete_data(&ans, temp_state, G);
           } else {
             temp = swap_cols_tree(LL, mod(LL + w, G->arc_index), incoming, G);
-            s_insert_data(ans, temp, G);
+            s_insert_data(&ans, temp, G);
           }
         };
         temp_state[LL] = incoming[LL];
@@ -1863,12 +1850,12 @@ StateRBTree new_rectangles_into_tree(const StateRBTree prevs, const State incomi
       if (mod_up(incoming[LL] - incoming[mod(LL + w, G->arc_index)], G->arc_index) < h) {
         temp_state[LL] = incoming[mod(LL + w, G->arc_index)];
         temp_state[mod(LL + w, G->arc_index)] = incoming[LL];
-        if (!s_is_member(prevs, temp_state, G)) {
-          if (s_is_member(ans, temp_state, G)) {
-            s_delete_data(ans, temp_state, G);
+        if (!s_is_member(&prevs, temp_state, G)) {
+          if (s_is_member(&ans, temp_state, G)) {
+            s_delete_data(&ans, temp_state, G);
           } else {
             temp = swap_cols_tree(LL, mod(LL + w, G->arc_index), incoming, G);
-            s_insert_data(ans, temp, G);
+            s_insert_data(&ans, temp, G);
           }
         };
         temp_state[LL] = incoming[LL];
