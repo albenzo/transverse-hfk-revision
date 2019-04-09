@@ -6,7 +6,7 @@ libs = []
 lib_dirs = []
 
 _transverseHFK_module = Extension('tHFK._tHFK',
-                                  sources = ['./tHFK/_transverseHFKmodule.c'],
+                                  sources = ['./tHFK/_transverseHFKmodule.c', 'src/states.c', 'src/TransverseHFK.c'],
                                   include_dirs = include,
                                   libraries = libs,
                                   library_dirs = lib_dirs)
