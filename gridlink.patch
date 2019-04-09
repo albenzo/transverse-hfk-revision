@@ -1,0 +1,48 @@
+--- gridlink_old.py	2019-04-09 10:51:50.149275759 -0500
++++ gridlink_new.py	2019-04-09 10:55:13.013274339 -0500
+@@ -33,6 +33,10 @@
+     from hfk import *
+ except:
+     TkHFK=None
++try:
++    from tHFK import *
++except:
++    Tk_tHFK=None
+ 
+ revision = '$Revision: 1.75 $'.replace('$','')
+ 
+@@ -201,10 +205,12 @@
+         movemenu.add_separator()
+         movemenu.add_command(label='Simplify', command=self.simplify)
+         menubar.add_cascade(label='Moves', menu=movemenu)
++        invariantmenu = Menu(menubar, tearoff=0)
+         if (TkHFK):
+-            invariantmenu = Menu(menubar, tearoff=0)
+             invariantmenu.add_command(label='HFK^', command=self.HFKhat)
+-            menubar.add_cascade(label='Invariants', menu=invariantmenu)
++        if (Tk_tHFK):
++            invariantmenu.add_command(label="transverseHFK", command=self.tHFK)
++        menubar.add_cascade(label='Invariants', menu=invariantmenu)
+         menubar.add_cascade(label='Windows', menu=self.app.windowmenu)
+         menubar.add_cascade(label='Help', menu=self.app.helpmenu)
+         self.window.config(menu=menubar)
+@@ -1078,6 +1084,19 @@
+         hfk_object = TkHFK(Xlist, Olist, name=self.window.title())
+         hfk_object.HFK_ranks()
+ 
++    def tHFK(self):
++        if self.components > 1:
++            showwarning('Knots only',
++                        'Sorry, I can only compute transverseHFK invariants for knots')
++            return
++        Olist, Xlist = self.get_XOlists()
++        nOlist = [len(Olist) - Olist.index(j) - 1 for j in Olist]
++        nXlist = [len(Xlist) - Xlist.index(j) - 1 for j in Xlist]
++        if 0 in nXlist:
++            nXlist = [x+1 for x in Xlist]
++            nOlist = [o+1 for o in Olist]
++        t_hfk_object = Tk_tHFK(nXlist, nOlist, name=self.window.title(), parent=self)
++
+     def winding_numbers(self):
+         result = []
+         for i in range(self.size):

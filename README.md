@@ -70,52 +70,13 @@ the `null_homologous_D0Q` and `null_homologous_D1Q` methods.
 Usage information can be found via `help(<class or method name>)`
 
 ### Gridlink
-To integrate tHFK with gridlink add the following lines to
-the file `gridlink/gridlink.py` in the package
-
-1. Add these lines to the list of imports
+To integrate tHFK with gridlink run the following command in the terminal
 
 ```
-try:
-    from tHFK import *
-except:
-    Tk_tHFK=None
+patch <path to gridlink/gridlink.py> gridlink.patch
 ```
 
-2. Within the `__init__` method for the class Gridlink change this
-```
-if (TkHFK):
-    invariantmenu = Menu(menubar, tearoff=0)
-    invariantmenu.add_command(label='HFK^', command=self.HFKhat)
-    menubar.add_cascade(label='Invariants', menu=invariantmenu)
-```
-to this
-```
-invariantmenu = Menu(menubar, tearoff=0)
-if (TkHFK):
-    invariantmenu.add_command(label='HFK^', command=self.HFKhat)
-if (Tk_tHFK):
-    invariantmenu.add_command(label="transverseHFK", command=self.tHFK)
-menubar.add_cascade(label='Invariants', menu=invariantmenu)
-```
-
-3. Add the following method to the gridlink class
-```
-def tHFK(self):
-    if self.components > 1:
-        showwarning('Knots only',
-                    'Sorry, I can only compute transverseHFK invariants for knots')
-        return
-    Olist, Xlist = self.get_XOlists()
-    nOlist = [len(Olist) - Olist.index(j) - 1 for j in Olist]
-    nXlist = [len(Xlist) - Xlist.index(j) - 1 for j in Xlist]
-    if 0 in nXlist:
-        nXlist = [x+1 for x in Xlist]
-        nOlist = [o+1 for o in Olist]
-    t_hfk_object = Tk_tHFK(nXlist, nOlist, name=self.window.title(), parent=self)
-```
-
-Now after installing gridlink via setup.py and installing the tHFK python
+Then after installing gridlink via setup.py as normal and installing the tHFK python
 library there will be a menu that allows you to run the transverseHFK 
 invariants.
 
