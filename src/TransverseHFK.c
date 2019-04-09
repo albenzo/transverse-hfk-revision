@@ -10,6 +10,7 @@
 
 #include "TransverseHFK.h"
 
+printf_t print_ptr = printf;
 static int verbosity = SILENT;
 static LiftStateList new_lift_rectangles_out_internal(const LiftStateList, const LiftState, const LiftGrid_t * const, int);
 

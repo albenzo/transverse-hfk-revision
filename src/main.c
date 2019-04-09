@@ -1,3 +1,4 @@
+#include <argp.h>
 #include "TransverseHFK.h"
 
 const char *argp_program_version = "transverseHFK revision 0.0.1";

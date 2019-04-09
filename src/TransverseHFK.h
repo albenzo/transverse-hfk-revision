@@ -1,6 +1,5 @@
 #ifndef TRANSVERSE_HFK_H
 #define TRANSVERSE_HFK_H
-#include <argp.h>
 #include <limits.h>
 #include <math.h>
 #include <signal.h>
@@ -12,12 +11,11 @@
 #include "states.h"
 
 typedef int (*printf_t)(const char *format, ...);
+printf_t print_ptr;
 
 #define SILENT 0
 #define QUIET 1
 #define VERBOSE 2
-
-printf_t print_ptr = printf;
 
 int get_verbosity(void);
 void set_verbosity(const int);

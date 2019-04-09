@@ -1,40 +1,59 @@
 CC=gcc
-SRC=src
-CFLAGS= -O3 -Wall -Wextra -Wundef -Wshadow -Wpointer-arith -Wcast-align -Wstrict-prototypes -Wwrite-strings -g
-LDFLAGS= 
+CFLAGS= -Wall -Wextra -Wundef -Wshadow -Wpointer-arith -Wcast-align -Wstrict-prototypes -Wwrite-strings -g -O3
+LDFLAGS=
+LIBS=
+INCLUDES=
+SRC_DIR=./src
+PY_DIR=./tHFK
 TEST_DIR=test
+BUILD_DIR=./build
+EXEC=transverseHFK
+
+SRCS= $(shell find $(SRC_DIR) -name *.c)
+OBJS= $(SRCS:%=$(BUILD_DIR)/%.o)
+DEPS= $(OBJS:.o=.d)
 
 UNAME_S= $(shell uname -s)
 
 ifeq ($(UNAME_S),Darwin)
-	CFLAGS += -I/usr/local/include/
-	LDFLAGS += -L/usr/local/lib/ -largp
+	INCLUDES += -I/usr/local/include/
+	LDFLAGS += -L/usr/local/lib/
+	LIBS += -largp
 endif
 
 ALL_TESTS := $(addsuffix .test, $(patsubst $(TEST_DIR)/%.in,%, $(wildcard $(TEST_DIR)/*.in)))
 
-all: transverseHFK
+all: $(BUILD_DIR)/$(EXEC)
 
-python-install: src/TransverseHFK.c tHFK/__init__.py tHFK/tHFK.py tHFK/_transverseHFKmodule.c setup.py
+python-install: $(SRC_DIR)/TransverseHFK.c $(PY_DIR)/__init__.py $(PY_DIR)/tHFK.py $(PY_DIR)/_transverseHFKmodule.c setup.py
 	python setup.py install
 
-install: transverseHFK
-	cp ./transverseHFK /usr/bin/transverseHFK
+install: $(EXEC)
+	cp ./$(EXEC) /usr/bin/$(EXEC)
 
 uninstall:
-	rm -rf /usr/bin/transverseHFK
+	rm /usr/bin/$(EXEC)
 
-transverseHFK: src/TransverseHFK.c src/states.c
-	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC)/TransverseHFK.c -o transverseHFK
+$(BUILD_DIR)/$(EXEC): $(OBJS)
+	$(CC) $(CFLAGS) $(INCLUDES) $(LDFLAGS) $(LIBS) $(OBJS) -o $@
 
-clean:
-	rm -f transverseHFK
+$(BUILD_DIR)/%.c.o: %.c
+	$(MKDIR_P) $(dir $@)
+	$(CC) $(CFLAGS) $(INCLUDES) $(LDFLAGS) $(LIBS) -c $< -o $@
+
+clean: clean-python
+	$(RM) -rf $(BUILD_DIR)
+
 clean-python:
 	python setup.py clean
 
 test: $(ALL_TESTS)
 
-%.test: transverseHFK $(TEST_DIR)/%.in $(TEST_DIR)/%.out
-	./transverseHFK `cat $(TEST_DIR)/$*.in` 2>&1 | diff -q $(TEST_DIR)/$*.out - > /dev/null || (echo "Target $@ failed" && exit 1)
+%.test: $(BUILD_DIR)/$(EXEC) $(TEST_DIR)/%.in $(TEST_DIR)/%.out
+	./$(BUILD_DIR)/$(EXEC) `cat $(TEST_DIR)/$*.in` 2>&1 | diff -q $(TEST_DIR)/$*.out - > /dev/null || (echo "Target $@ failed" && exit 1)
 
 .PHONY: clean test %.test python-install clean-python install uninstall
+
+-include $(DEPS)
+
+MKDIR_P = mkdir -p
