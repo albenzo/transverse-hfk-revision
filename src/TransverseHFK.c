@@ -1547,25 +1547,13 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
           clear = 0;
         }
         if (g_Xs[check_index] > height && g_Os[check_index] < start_y && clear) {
-          if (is_mirrored) {
-            jump = jump - G->arc_index;
-            jumped_down = 1;
-          }
-          else {
-            jump = jump + G->arc_index;
-            jumped_up = 1;
-          }
+          jump = jump + G->arc_index;
+          jumped_up = 1;
           check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index * G->sheets);
         }
         if (g_Os[check_index] > height && g_Xs[check_index] < start_y && clear) {
-          if (is_mirrored) {
-            jump = jump + G->arc_index;
-            jumped_up = 1;
-          }
-          else {
-            jump = jump - G->arc_index;
-            jumped_down = 1;
-          }
+          jump = jump - G->arc_index;
+          jumped_down = 1;
           check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index * G->sheets);
         }
         if (mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) < height && mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) > start_y && clear) {
