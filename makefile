@@ -28,8 +28,8 @@ all: $(BUILD_DIR)/$(EXEC)
 python-install: $(SRC_DIR)/TransverseHFK.c $(PY_DIR)/__init__.py $(PY_DIR)/tHFK.py $(PY_DIR)/_transverseHFKmodule.c setup.py
 	python setup.py install
 
-install: $(EXEC)
-	cp ./$(EXEC) /usr/bin/$(EXEC)
+install: $(BUILD_DIR)/$(EXEC)
+	cp ./$(BUILD_DIR)/$(EXEC) /usr/bin/$(EXEC)
 
 uninstall:
 	rm /usr/bin/$(EXEC)
