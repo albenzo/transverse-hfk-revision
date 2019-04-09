@@ -888,7 +888,7 @@ LiftState find_maximum(LiftStateRBTree* root) {
  * @param G a lift grid
  * @return the node containing s, returns NULL if not found
  */
-LiftStateRBTree find_node(LiftStateRBTree* root, LiftState s, const LiftGrid_t * const G) {
+LiftStateRBTree find_node(const LiftStateRBTree* const root, LiftState s, const LiftGrid_t * const G) {
   LiftStateRBTree iter = *root;
   while (iter != NULL) {
     int comp = comp_lift_state(s, iter->data, G);
@@ -921,7 +921,7 @@ int find_tag(LiftStateRBTree *root, LiftState s, const LiftGrid_t * const G) {
  * @param G a lift grid
  * @return 1 if s is contained in some node of root, 0 otherwise
  */
-int is_member(LiftStateRBTree* root, LiftState s, const LiftGrid_t * const G) {
+int is_member(const LiftStateRBTree* const root, LiftState s, const LiftGrid_t * const G) {
   return find_node(root, s, G) != NULL;
 }
 
@@ -1292,7 +1292,7 @@ State s_find_maximum(StateRBTree* root) {
  * @param G a lift grid
  * @return the node containing s, returns NULL if not found
  */
-StateRBTree s_find_node(StateRBTree* root, State s, const Grid_t * const G) {
+StateRBTree s_find_node(const StateRBTree* const root, State s, const Grid_t * const G) {
   StateRBTree iter = *root;
   while (iter != NULL) {
     int comp = comp_state(s, iter->data, G);
@@ -1325,7 +1325,7 @@ int s_find_tag(StateRBTree* root, State s, const Grid_t * const G) {
  * @param G a lift grid
  * @return 1 if s is contained in some node of root, 0 otherwise
  */
-int s_is_member(StateRBTree* root, State s, const Grid_t * const G) {
+int s_is_member(const StateRBTree* const root, State s, const Grid_t * const G) {
   return s_find_node(root, s, G) != NULL;
 }
 

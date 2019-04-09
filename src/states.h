@@ -129,9 +129,9 @@ LiftStateRBTree find_minimum_node(LiftStateRBTree*);
 LiftStateRBTree find_maximum_node(LiftStateRBTree*);
 LiftState find_minimum(LiftStateRBTree*);
 LiftState find_maximum(LiftStateRBTree*);
-LiftStateRBTree find_node(LiftStateRBTree*, LiftState, const LiftGrid_t * const);
+LiftStateRBTree find_node(const LiftStateRBTree* const, LiftState, const LiftGrid_t * const);
 int find_tag(LiftStateRBTree*, LiftState, const LiftGrid_t * const);
-int is_member(LiftStateRBTree*, LiftState, const LiftGrid_t * const);
+int is_member(const LiftStateRBTree * const, LiftState, const LiftGrid_t * const);
 void free_lift_state_rbtree(LiftStateRBTree*, const LiftGrid_t * const);
 
 void s_left_rotate(StateRBTree*, StateRBTree);
@@ -148,9 +148,9 @@ StateRBTree s_find_minimum_node(StateRBTree*);
 StateRBTree s_find_maximum_node(StateRBTree*);
 State s_find_minimum(StateRBTree*);
 State s_find_maximum(StateRBTree*);
-StateRBTree s_find_node(StateRBTree*, State, const Grid_t * const);
+StateRBTree s_find_node(const StateRBTree* const, State, const Grid_t * const);
 int s_find_tag(StateRBTree*, State, const Grid_t * const);
-int s_is_member(StateRBTree*, State, const Grid_t * const);
+int s_is_member(const StateRBTree * const, State, const Grid_t * const);
 void free_state_rbtree(StateRBTree*);
 
 #endif

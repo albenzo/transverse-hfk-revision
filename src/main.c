@@ -285,7 +285,7 @@ int main(int argc, char **argv) {
     print_state(G.Xs,&G);
     print_2AM(&G,0);
   }
-  if (null_homologous_D0Q(G.Xs, &G)) {
+  if (null_homologous_D0Q_tree(G.Xs, &G)) {
     (*print_ptr)("LL is null-homologous\n");
   } else {
     (*print_ptr)("LL is NOT null-homologous\n");
@@ -313,7 +313,7 @@ int main(int argc, char **argv) {
     print_2AM(&G,1);
   }
 
-  if (null_homologous_D0Q(UR, &G)) {
+  if (null_homologous_D0Q_tree(UR, &G)) {
     (*print_ptr)("UR is null-homologous\n");
   } else {
     (*print_ptr)("UR is NOT null-homologous\n");
