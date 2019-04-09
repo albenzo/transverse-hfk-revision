@@ -357,6 +357,9 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
   prev_outs = NULL;
   prev_ins = NULL;
   new_ins = fixed_wt_rectangles_out_of(1, init, G);
+  if (NULL == new_ins) {
+    return 1;
+  }
   EdgeList edge_list = prepend_edge(0, 1, NULL);
   temp = new_ins;
   i = 1;

@@ -104,7 +104,7 @@ Calculating graph for D1[LL] invariant
 
 2A(x^-) = M(x^-) = -4
 
-D1[LL] is NOT null-homologous
+D1[LL] is null-homologous
 
 Calculating graph for D1[UR] invariant
 *-------------------*
@@ -121,4 +121,4 @@ Calculating graph for D1[UR] invariant
 
 2A(x^+) = M(x^+) = sl(x^+)+1 = -6
 
-D1[UR] is NOT null-homologous
+D1[UR] is null-homologous
