@@ -5,11 +5,6 @@ include = ['./src']
 libs = []
 lib_dirs = []
 
-if os.name == 'posix':
-    include += ['/usr/local/include']
-    libs += ['argp']
-    lib_dirs += ['/usr/local/lib']
-
 _transverseHFK_module = Extension('tHFK._tHFK',
                                   sources = ['./tHFK/_transverseHFKmodule.c'],
                                   include_dirs = include,
