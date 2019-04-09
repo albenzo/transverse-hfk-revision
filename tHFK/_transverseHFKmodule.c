@@ -1,4 +1,4 @@
-#include "TransverseHFK.c"
+#include "TransverseHFK.h"
 #include <Python.h>
 #include <string.h>
 
@@ -107,7 +107,7 @@ static PyObject *null_homologous_D0Q_py(PyObject *self, PyObject *args,
     free(G.Os);
     free(state);
     return NULL;
-  } else if (verbosity < 0 || 2 < verbosity) {
+  } else if (py_verbosity < 0 || 2 < py_verbosity) {
     PyErr_SetString(error, "verbosity must be passed an integer 0, 1, or 2.");
     free(G.Xs);
     free(G.Os);
@@ -224,7 +224,7 @@ static PyObject *null_homologous_D1Q_py(PyObject *self, PyObject *args,
     free(G.Os);
     free(state);
     return NULL;
-  } else if (verbosity < 0 || 2 < verbosity) {
+  } else if (py_verbosity < 0 || 2 < py_verbosity) {
     PyErr_SetString(error, "verbosity must be passed an integer 0, 1, or 2.");
     free(G.Xs);
     free(G.Os);
@@ -358,7 +358,7 @@ static PyObject *null_homologous_lift_py(PyObject *self, PyObject *args,
     free(state);
     free_lift_state(&lift_state, &G);
     return NULL;
-  } else if (verbosity < 0 || 2 < verbosity) {
+  } else if (py_verbosity < 0 || 2 < py_verbosity) {
     PyErr_SetString(error, "verbosity must be passed an integer 0, 1, or 2.");
     free(G.Xs);
     free(G.Os);
