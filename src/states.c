@@ -621,10 +621,7 @@ void insert_node(LiftStateRBTree* root, LiftStateRBTree z, const LiftGrid_t * co
     }
   }
   z->parent = y;
-  if(NULL == root) {
-    
-  }
-  else if (NULL == y) {
+  if (NULL == y) {
     *root = z;
   }
   else if (comp_lift_state(z->data, y->data, G) < 0) {
@@ -645,41 +642,43 @@ void insert_node(LiftStateRBTree* root, LiftStateRBTree z, const LiftGrid_t * co
  * @param z the node which is to be repaired about
  */
 void insert_fixup(LiftStateRBTree* root, LiftStateRBTree z) {
-  while (RED == z->parent->color) {
-    if (z->parent == z->parent->parent->left) {
-      LiftStateRBTree y = z->parent->parent->right;
-      if (RED == y->color) {
-        z->parent->color = BLACK;
-        y->color = BLACK;
-        z->parent->parent->color = RED;
-        z = z->parent->parent;
-      }
-      else if (z == z->parent->right) {
-        z = z->parent;
-        left_rotate(root, z);
-      }
-      else {
-        z->parent->color = BLACK;
-        z->parent->parent->color = RED;
-        right_rotate(root, z->parent->parent);
-      }
-    }
-    else {
-      LiftStateRBTree y = z->parent->parent->left;
-      if (RED == y->color) {
-        z->parent->color = BLACK;
-        y->color = BLACK;
-        z->parent->parent->color = RED;
-        z = z->parent->parent;
-      }
-      else if (z == z->parent->left) {
-        z = z->parent;
-        right_rotate(root, z);
+  if(NULL != z->parent) {
+    while (RED == z->parent->color) {
+      if (z->parent == z->parent->parent->left) {
+        LiftStateRBTree y = z->parent->parent->right;
+        if (RED == y->color) {
+          z->parent->color = BLACK;
+          y->color = BLACK;
+          z->parent->parent->color = RED;
+          z = z->parent->parent;
+        }
+        else if (z == z->parent->right) {
+          z = z->parent;
+          left_rotate(root, z);
+        }
+        else {
+          z->parent->color = BLACK;
+          z->parent->parent->color = RED;
+          right_rotate(root, z->parent->parent);
+        }
       }
       else {
-        z->parent->color = BLACK;
-        z->parent->parent->color = RED;
-        left_rotate(root, z->parent->parent);
+        LiftStateRBTree y = z->parent->parent->left;
+        if (RED == y->color) {
+          z->parent->color = BLACK;
+          y->color = BLACK;
+          z->parent->parent->color = RED;
+          z = z->parent->parent;
+        }
+        else if (z == z->parent->left) {
+          z = z->parent;
+          right_rotate(root, z);
+        }
+        else {
+          z->parent->color = BLACK;
+          z->parent->parent->color = RED;
+          left_rotate(root, z->parent->parent);
+        }
       }
     }
   }
@@ -1049,41 +1048,43 @@ void s_insert_node(StateRBTree* root, StateRBTree z, const Grid_t * const G) {
  * @param z the node which is to be repaired about
  */
 void s_insert_fixup(StateRBTree* root, StateRBTree z) {
-  while (RED == z->parent->color) {
-    if (z->parent == z->parent->parent->left) {
-      StateRBTree y = z->parent->parent->right;
-      if (RED == y->color) {
-        z->parent->color = BLACK;
-        y->color = BLACK;
-        z->parent->parent->color = RED;
-        z = z->parent->parent;
-      }
-      else if (z == z->parent->right) {
-        z = z->parent;
-        s_left_rotate(root, z);
-      }
-      else {
-        z->parent->color = BLACK;
-        z->parent->parent->color = RED;
-        s_right_rotate(root, z->parent->parent);
-      }
-    }
-    else {
-      StateRBTree y = z->parent->parent->left;
-      if (RED == y->color) {
-        z->parent->color = BLACK;
-        y->color = BLACK;
-        z->parent->parent->color = RED;
-        z = z->parent->parent;
-      }
-      else if (z == z->parent->left) {
-        z = z->parent;
-        s_right_rotate(root, z);
+  if (NULL != z->parent) {
+    while (RED == z->parent->color) {
+      if (z->parent == z->parent->parent->left) {
+        StateRBTree y = z->parent->parent->right;
+        if (RED == y->color) {
+          z->parent->color = BLACK;
+          y->color = BLACK;
+          z->parent->parent->color = RED;
+          z = z->parent->parent;
+        }
+        else if (z == z->parent->right) {
+          z = z->parent;
+          s_left_rotate(root, z);
+        }
+        else {
+          z->parent->color = BLACK;
+          z->parent->parent->color = RED;
+          s_right_rotate(root, z->parent->parent);
+        }
       }
       else {
-        z->parent->color = BLACK;
-        z->parent->parent->color = RED;
-        s_left_rotate(root, z->parent->parent);
+        StateRBTree y = z->parent->parent->left;
+        if (RED == y->color) {
+          z->parent->color = BLACK;
+          y->color = BLACK;
+          z->parent->parent->color = RED;
+          z = z->parent->parent;
+        }
+        else if (z == z->parent->left) {
+          z = z->parent;
+          s_right_rotate(root, z);
+        }
+        else {
+          z->parent->color = BLACK;
+          z->parent->parent->color = RED;
+          s_left_rotate(root, z->parent->parent);
+        }
       }
     }
   }
@@ -1335,7 +1336,7 @@ int s_is_member(const StateRBTree* const root, State s, const Grid_t * const G) 
  * @param G a lift grid
  */
 void free_state_rbtree(StateRBTree* root) {
-  if(NULL == root) {
+  if(NULL == *root) {
     return;
   }
   free_state_rbtree(&(*root)->left);
