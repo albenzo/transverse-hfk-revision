@@ -353,7 +353,7 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
 int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
   StateRBTree new_ins, new_outs;
   StateRBTree prev_ins, prev_outs;
-  StateRBTree really_new_outs = NULL, really_new_ins = NULL;
+  StateRBTree really_new_outs = EMPTY_TREE, really_new_ins = EMPTY_TREE;
   int in_number, ans, prev_in_number;
   int out_number;
   int edge_count = 0;
@@ -363,9 +363,9 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
   int num_new_outs = 0;
   StateRBTree present_in, present_out;
   EdgeList edge_list = prepend_edge(0, 1, NULL);
-  prev_outs = NULL;
-  prev_ins = NULL;
-  new_ins = NULL;
+  prev_outs = EMPTY_TREE;
+  prev_ins = EMPTY_TREE;
+  new_ins = EMPTY_TREE;
 
   State s = malloc(sizeof(char) * G->arc_index);
   copy_state(&s, &init, G);
@@ -374,21 +374,21 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
   
   ans = 0;
   int current_pos = 1;
-  while (new_ins != NULL && !ans) {
+  while (new_ins != EMPTY_TREE && !ans) {
     present_in = new_ins;
     in_number = 0;
     num_new_outs = 0;
-    new_outs = NULL;
+    new_outs = EMPTY_TREE;
     if (get_verbosity() >= VERBOSE) {
       (*print_ptr)("Gathering A_%d:\n", current_pos);
     }
-    while (present_in != NULL) {
+    while (present_in != EMPTY_TREE) {
       free_state_rbtree(&really_new_outs);
       in_number++;
       really_new_outs = new_rectangles_into_tree(prev_outs, present_in->data, G);
-      while (really_new_outs != NULL) {
+      while (really_new_outs != EMPTY_TREE) {
         StateRBTree node = s_find_node(&new_outs, really_new_outs->data, G);
-        if(NULL == node) {
+        if(EMPTY_TREE == node) {
           node = really_new_outs;
           num_new_outs++;
           s_delete_node(&really_new_outs, really_new_outs);
@@ -416,19 +416,19 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
     num_ins = num_ins + in_number;
     prev_in_number = num_ins;
     num_new_ins = 0;
-    new_ins = NULL;
+    new_ins = EMPTY_TREE;
     out_number = 0;
     present_out = new_outs;
     if (get_verbosity() >= VERBOSE) {
       (*print_ptr)("Gathering B_%d:\n", current_pos);
     }
-    while (present_out != NULL) {
+    while (present_out != EMPTY_TREE) {
       free_state_rbtree(&really_new_ins);
       out_number++;
       really_new_ins = new_rectangles_out_of_tree(prev_ins, present_out->data, G);
-      while (really_new_ins != NULL) {
+      while (really_new_ins != EMPTY_TREE) {
         StateRBTree node = s_find_node(&new_ins, really_new_ins->data, G);
-        if(NULL == node) {
+        if(EMPTY_TREE == node) {
           node = really_new_ins;
           num_new_ins++;
           s_delete_node(&really_new_ins, really_new_ins);
@@ -452,7 +452,7 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
     }
     free_state_rbtree(&prev_outs);
     prev_outs = new_outs;
-    new_outs = NULL;
+    new_outs = EMPTY_TREE;
     if (get_verbosity() >= VERBOSE) {
       (*print_ptr)("Contracting edges from 0 to %d:\n", prev_in_number);
     }
@@ -468,7 +468,6 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
       }
       free_state_rbtree(&new_ins);
       free_state_rbtree(&new_outs);
-      new_ins = NULL;
     } else if (edge_list->end <= prev_in_number) {
       ans = 0;
       if (get_verbosity() >= VERBOSE) {
@@ -478,7 +477,6 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
       }
       free_state_rbtree(&new_ins);
       free_state_rbtree(&new_outs);
-      new_ins = NULL;
     } else {
       num_outs = num_outs + out_number;
       if (get_verbosity() >= VERBOSE) {
@@ -1362,7 +1360,7 @@ StateRBTree new_rectangles_out_of_tree(const StateRBTree prevs, const State inco
   State temp;
   int LL;
   int w, h, i;
-  ans = NULL;
+  ans = EMPTY_TREE;
   i = 0;
   while (i < G->arc_index) {
     temp_state[i] = incoming[i];
@@ -1415,7 +1413,7 @@ StateRBTree new_rectangles_into_tree(const StateRBTree prevs, const State incomi
   int LL;
   int w, h;
   int i;
-  ans = NULL;
+  ans = EMPTY_TREE;
   i = 0;
   while (i < G->arc_index) {
     temp_state[i] = incoming[i];

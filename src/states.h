@@ -39,6 +39,9 @@ struct LiftStateRBTreeNode {
   LiftStateRBTree parent;
 };
 
+LiftStateRBTreeNode_t LIFT_NIL_NODE;
+LiftStateRBTree LIFT_EMPTY_TREE;
+
 typedef struct StateRBTreeNode StateRBTreeNode_t;
 typedef StateRBTreeNode_t * StateRBTree;
 
@@ -50,6 +53,9 @@ struct StateRBTreeNode {
   StateRBTree right;
   StateRBTree parent;
 };
+
+StateRBTreeNode_t NIL_NODE;
+StateRBTree EMPTY_TREE;
 
 struct Vertex {
   int data;
