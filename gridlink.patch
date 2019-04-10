@@ -26,7 +26,7 @@
          menubar.add_cascade(label='Windows', menu=self.app.windowmenu)
          menubar.add_cascade(label='Help', menu=self.app.helpmenu)
          self.window.config(menu=menubar)
-@@ -1078,6 +1084,19 @@
+@@ -1078,6 +1084,21 @@
          hfk_object = TkHFK(Xlist, Olist, name=self.window.title())
          hfk_object.HFK_ranks()
  
@@ -35,12 +35,14 @@
 +            showwarning('Knots only',
 +                        'Sorry, I can only compute transverseHFK invariants for knots')
 +            return
-+        Olist, Xlist = self.get_XOlists()
-+        nOlist = [len(Olist) - Olist.index(j) - 1 for j in Olist]
-+        nXlist = [len(Xlist) - Xlist.index(j) - 1 for j in Xlist]
-+        if 0 in nXlist:
-+            nXlist = [x+1 for x in Xlist]
-+            nOlist = [o+1 for o in Olist]
++        self.reflect()
++        self.reflect()
++        self.reflect()
++        Xlist, Olist = self.get_XOlists()
++        self.reflect()
++        if 0 in Xlist:
++            Xlist = [x+1 for x in Xlist]
++            Olist = [o+1 for o in Olist]
 +        t_hfk_object = Tk_tHFK(nXlist, nOlist, name=self.window.title(), parent=self)
 +
      def winding_numbers(self):
