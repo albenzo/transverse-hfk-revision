@@ -411,7 +411,7 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
       print_edges(edge_list);
       (*print_ptr)("\n");
     }
-    free_state_rbtree(&prev_ins);
+    //free_state_rbtree(&prev_ins);
     prev_ins = new_ins;
     num_ins = num_ins + in_number;
     prev_in_number = num_ins;
@@ -438,8 +438,8 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
         }
         else {
           edge_list = append_ordered(out_number + num_outs, node->tag + num_ins, edge_list);
-          node = really_new_outs;
-          s_delete_node(&really_new_outs, really_new_outs);
+          node = really_new_ins;
+          s_delete_node(&really_new_ins, really_new_ins);
           free(node);
         }
         edge_count++;
@@ -450,7 +450,7 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
       print_edges(edge_list);
       (*print_ptr)("\n");
     }
-    free_state_rbtree(&prev_outs);
+    //free_state_rbtree(&prev_outs);
     prev_outs = new_outs;
     new_outs = EMPTY_TREE;
     if (get_verbosity() >= VERBOSE) {
