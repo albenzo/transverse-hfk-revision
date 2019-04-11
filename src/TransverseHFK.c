@@ -1815,6 +1815,16 @@ void print_states_tree(const StateRBTree states, const Grid_t * const G) {
   print_states_tree(states->right, G);  
 }
 
+void print_states_tags(const StateRBTree states, const Grid_t * const G) {
+  if(EMPTY_TREE == states) {
+    return;
+  }
+  (*print_ptr)("%d, ", states->tag);
+  print_state_short(states->data, G);
+  print_states_tags(states->left, G);
+  print_states_tags(states->right, G);
+}
+
 /**
  * Prints each edge in the passed EdgeList
  * @param edge_list an EdgeList
