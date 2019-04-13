@@ -349,18 +349,20 @@ class Tk_tHFK(tHFK):
         self.output_area.config(state=DISABLED)
 
     def sync_btn_cmd(self):
-        """ Syncs Xs and Os with parent window calling parent.get_XOlists"""
+        """ Syncs Xs and Os with parent window calling parent.get_XOlists and parent.reflect()"""
         if self.parent == None:
             self.write("No parent window to sync with.\n")
         else:
             self.write("Syncing...\n")
-            Olist, Xlist = self.parent.get_XOlists()
-            nOlist = [len(Olist) - Olist.index(j) - 1 for j in Olist]
-            nXlist = [len(Xlist) - Xlist.index(j) - 1 for j in Xlist]
-            if 0 in nXlist:
-                nXlist = [x+1 for x in Xlist]
-                nOlist = [o+1 for o in Olist]
-            self.Xs = nXlist
-            self.Os = nOlist
+            self.parent.reflect()
+            self.parent.reflect()
+            self.parent.reflect()
+            Xlist, Olist = self.parent.get_XOlists()
+            self.parent.reflect()
+            if 0 in Xlist:
+                Xlist = [x+1 for x in Xlist]
+                Olist = [o+1 for o in Olist]
+            self.Xs = Xlist
+            self.Os = Olist
             self.write("X: " + str(self.Xs) + '\n')
             self.write("O: " + str(self.Os) + '\n')
