@@ -14,6 +14,10 @@ printf_t print_ptr = printf;
 static int verbosity = SILENT;
 static LiftStateList new_lift_rectangles_out_internal(const LiftStateList, const LiftState, const LiftGrid_t * const, int);
 
+void set_print_fn(printf_t print_fn) {
+  print_ptr = print_fn;
+}
+
 int get_verbosity(){
   return verbosity;
 }
