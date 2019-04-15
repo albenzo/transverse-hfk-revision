@@ -88,7 +88,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
  */
 void timeout(const int sig) {
   if (SIGALRM == sig) {
-    (*print_ptr)("Timeout reached. Terminating\n");
+    printf("Timeout reached. Terminating\n");
     exit(0);
   }
 }
@@ -180,7 +180,7 @@ int main(int argc, char **argv) {
     }
 
     if(!is_lift_grid(&G)) {
-      (*print_ptr)("Invalid grid\n");
+      printf("Invalid grid\n");
       exit(1);
     }
 
@@ -213,7 +213,7 @@ int main(int argc, char **argv) {
     }
 
     if (QUIET <= get_verbosity()) {
-      (*print_ptr)("Calculating graph for lifted invariant.\n");
+      printf("Calculating graph for lifted invariant.\n");
       // These print statements are wrong
       //print_state(G.Xs, &G);
       //print_self_link(&G);
@@ -221,10 +221,10 @@ int main(int argc, char **argv) {
 
     // Change the content of these print statements
     if (null_homologous_lift(UR_lift, &G)) {
-      (*print_ptr)("theta_%d is null-homologous\n", G.sheets);
+      printf("theta_%d is null-homologous\n", G.sheets);
     }
     else {
-      (*print_ptr)("theta_%d is NOT null-homologous\n", G.sheets);
+      printf("theta_%d is NOT null-homologous\n", G.sheets);
     }
 
     free(G.Xs);
@@ -257,7 +257,7 @@ int main(int argc, char **argv) {
   int i;
 
   if (!is_grid(&G)) {
-    (*print_ptr)("Invalid grid\n");
+    printf("Invalid grid\n");
     free(G.Xs);
     free(G.Os);
     free(UR);
@@ -281,18 +281,18 @@ int main(int argc, char **argv) {
   }
 
   if (QUIET <= get_verbosity()) {
-    (*print_ptr)("\n \nCalculating graph for LL invariant\n");
+    printf("\n \nCalculating graph for LL invariant\n");
     print_state(G.Xs,&G);
     print_2AM(&G,0);
   }
   if (null_homologous_D0Q_tree(G.Xs, &G)) {
-    (*print_ptr)("LL is null-homologous\n");
+    printf("LL is null-homologous\n");
   } else {
-    (*print_ptr)("LL is NOT null-homologous\n");
+    printf("LL is NOT null-homologous\n");
   }
 
   if (QUIET <= get_verbosity()) {
-    (*print_ptr)("\nCalculating graph for UR invariant\n");
+    printf("\nCalculating graph for UR invariant\n");
   }
   if (G.Xs[G.arc_index - 1] == G.arc_index) {
     UR[0] = 1;
@@ -314,25 +314,25 @@ int main(int argc, char **argv) {
   }
 
   if (null_homologous_D0Q_tree(UR, &G)) {
-    (*print_ptr)("UR is null-homologous\n");
+    printf("UR is null-homologous\n");
   } else {
-    (*print_ptr)("UR is NOT null-homologous\n");
+    printf("UR is NOT null-homologous\n");
   };
 
   if (QUIET <= get_verbosity()) {
-    (*print_ptr)("\nCalculating graph for D1[LL] invariant\n");
+    printf("\nCalculating graph for D1[LL] invariant\n");
     print_state(G.Xs, &G);
     print_2AM(&G,0);
   }
 
   if (null_homologous_D1Q(G.Xs, &G)) {
-    (*print_ptr)("D1[LL] is null-homologous\n");
+    printf("D1[LL] is null-homologous\n");
   } else {
-    (*print_ptr)("D1[LL] is NOT null-homologous\n");
+    printf("D1[LL] is NOT null-homologous\n");
   }
 
   if (QUIET <= get_verbosity()) {
-    (*print_ptr)("\nCalculating graph for D1[UR] invariant\n");
+    printf("\nCalculating graph for D1[UR] invariant\n");
   }
 
   if (G.Xs[G.arc_index - 1] == G.arc_index) {
@@ -356,9 +356,9 @@ int main(int argc, char **argv) {
   }
 
   if (null_homologous_D1Q(UR, &G)) {
-    (*print_ptr)("D1[UR] is null-homologous\n");
+    printf("D1[UR] is null-homologous\n");
   } else {
-    (*print_ptr)("D1[UR] is NOT null-homologous\n");
+    printf("D1[UR] is NOT null-homologous\n");
   };
 
   free(G.Xs);

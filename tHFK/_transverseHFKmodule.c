@@ -484,5 +484,5 @@ PyMODINIT_FUNC init_tHFK(void) {
   error = PyErr_NewException((char *)tHFK_dot_error, NULL, NULL);
   PyDict_SetItemString(d, tHFK_error_name, error);
 
-  print_ptr = print_py;
+  set_print_fn(print_py);
 }

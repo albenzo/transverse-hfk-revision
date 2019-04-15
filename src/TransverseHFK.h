@@ -11,12 +11,12 @@
 #include "states.h"
 
 typedef int (*printf_t)(const char *format, ...);
-printf_t print_ptr;
 
 #define SILENT 0
 #define QUIET 1
 #define VERBOSE 2
 
+void set_print_fn(printf_t);
 int get_verbosity(void);
 void set_verbosity(const int);
 

@@ -19,6 +19,10 @@ StateRBTree new_rectangles_into_tree(const StateRBTree prevs, const State incomi
                                      const Grid_t *const G);
 int null_homologous_D0Q_tree(const State init, const Grid_t *const G);
 
+void set_print_fn(printf_t print_fn) {
+  print_ptr = print_fn;
+}
+
 int get_verbosity(){
   return verbosity;
 }
@@ -981,7 +985,24 @@ EdgeList add_mod_two_lists(const VertexList parents, const VertexList kids,
     } else {
       ans = NULL;
     }
+    
     prev = ans;
+
+    if (NULL == this_edge) {
+      while (this_parent != NULL) {
+        prev->nextEdge = create_edge(this_parent->data, this_kid->data);
+        prev = prev->nextEdge;
+        prev->nextEdge = NULL;
+        this_kid = this_kid->nextVertex;
+        if (this_kid == NULL) {
+          temp_vert = this_parent;
+          this_parent = this_parent->nextVertex;
+          free(temp_vert);
+          this_kid = kids;
+        }
+      }
+    }
+    
     while (this_edge != NULL && this_parent != NULL) {
       while (this_edge != NULL && ((this_edge->start < this_parent->data ||
                                     (this_edge->start == this_parent->data &&
