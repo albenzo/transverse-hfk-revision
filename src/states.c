@@ -590,6 +590,24 @@ void right_rotate(LiftStateRBTree* root, LiftStateRBTree x) {
   x->parent = y;
 }
 
+LiftStateRBTree copy_lift_tree(LiftStateRBTree orig, LiftStateRBTree parent, const LiftGrid_t* const G) {
+  if(LIFT_EMPTY_TREE == orig) {
+    return LIFT_EMPTY_TREE;
+  }
+  LiftState new_state;
+  init_lift_state(&new_state, G);
+  copy_lift_state(&new_state, &orig->data, G);
+
+  LiftStateRBTree new_tree = malloc(sizeof(LiftStateRBTreeNode_t));
+  new_tree->data = new_state;
+  new_tree->parent = parent;
+  new_tree->color = orig->color;
+  new_tree->left = copy_lift_tree(orig->left, new_tree, G);
+  new_tree->right = copy_lift_tree(orig->right, new_tree, G);
+
+  return new_tree;
+}
+
 /**
  * Takes a lift state and inserts it into the supplied RBTree
  * @param root an RBTree
@@ -991,6 +1009,23 @@ void s_right_rotate(StateRBTree* root, StateRBTree x) {
   }
   y->right = x;
   x->parent = y;
+}
+
+StateRBTree copy_tree(StateRBTree orig, StateRBTree parent, const Grid_t* const G) {
+  if(EMPTY_TREE == orig) {
+    return EMPTY_TREE;
+  }
+  State new_state = malloc(sizeof(char)*G->arc_index);
+  copy_state(&new_state, &orig->data, G);
+
+  StateRBTree new_tree = malloc(sizeof(StateRBTreeNode_t));
+  new_tree->data = new_state;
+  new_tree->parent = parent;
+  new_tree->color = orig->color;
+  new_tree->left = copy_tree(orig->left, new_tree, G);
+  new_tree->right = copy_tree(orig->right, new_tree, G);
+
+  return new_tree;
 }
 
 /**

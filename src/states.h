@@ -123,6 +123,7 @@ void free_lift_state_list(LiftStateList, const LiftGrid_t * const);
 
 void left_rotate(LiftStateRBTree*, LiftStateRBTree);
 void right_rotate(LiftStateRBTree*, LiftStateRBTree);
+LiftStateRBTree copy_lift_tree(LiftStateRBTree, LiftStateRBTree, const LiftGrid_t * const);
 void insert_data(LiftStateRBTree*, LiftState, const LiftGrid_t * const);
 void insert_tagged_data(LiftStateRBTree*, LiftState, int, const LiftGrid_t * const);
 void insert_node(LiftStateRBTree*, LiftStateRBTree, const LiftGrid_t * const);
@@ -142,6 +143,7 @@ void free_lift_state_rbtree(LiftStateRBTree*, const LiftGrid_t * const);
 
 void s_left_rotate(StateRBTree*, StateRBTree);
 void s_right_rotate(StateRBTree*, StateRBTree);
+StateRBTree copy_tree(StateRBTree, StateRBTree, const Grid_t * const);
 void s_insert_data(StateRBTree*, State, const Grid_t * const);
 void s_insert_tagged_data(StateRBTree*, State, int, const Grid_t * const);
 void s_insert_node(StateRBTree*, StateRBTree, const Grid_t * const);

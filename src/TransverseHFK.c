@@ -379,7 +379,7 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
   ans = 0;
   int current_pos = 1;
   while (new_ins != EMPTY_TREE && !ans) {
-    present_in = new_ins;
+    present_in = copy_tree(new_ins,EMPTY_TREE,G);
     in_number = 0;
     num_new_outs = 0;
     new_outs = EMPTY_TREE;
@@ -408,21 +408,24 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
         }
         edge_count++;
       }
-      s_delete_node(&present_in, present_in);
+      StateRBTree node = present_in;
+      s_delete_node(&present_in, node);
+      free(present_in->data);
+      free(node);
     }
     
     if (get_verbosity() >= VERBOSE) {
       print_edges(edge_list);
       (*print_ptr)("\n");
     }
-    //free_state_rbtree(&prev_ins);
+    free_state_rbtree(&prev_ins);
     prev_ins = new_ins;
     num_ins = num_ins + in_number;
     prev_in_number = num_ins;
     num_new_ins = 0;
     new_ins = EMPTY_TREE;
     out_number = 0;
-    present_out = new_outs;
+    present_out = copy_tree(new_outs,EMPTY_TREE,G);
     if (get_verbosity() >= VERBOSE) {
       (*print_ptr)("Gathering B_%d:\n", current_pos);
     }
@@ -448,13 +451,16 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
         }
         edge_count++;
       }
-      s_delete_node(&present_out, present_out);
+      StateRBTree node = present_out;
+      s_delete_node(&present_out, node);
+      free(node->data);
+      free(node);
     }
     if (get_verbosity() >= VERBOSE) {
       print_edges(edge_list);
       (*print_ptr)("\n");
     }
-    //free_state_rbtree(&prev_outs);
+    free_state_rbtree(&prev_outs);
     prev_outs = new_outs;
     new_outs = EMPTY_TREE;
     if (get_verbosity() >= VERBOSE) {
