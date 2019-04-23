@@ -602,6 +602,7 @@ LiftStateRBTree copy_lift_tree(LiftStateRBTree orig, LiftStateRBTree parent, con
   new_tree->data = new_state;
   new_tree->parent = parent;
   new_tree->color = orig->color;
+  new_tree->tag = orig->tag;
   new_tree->left = copy_lift_tree(orig->left, new_tree, G);
   new_tree->right = copy_lift_tree(orig->right, new_tree, G);
 
@@ -1022,6 +1023,7 @@ StateRBTree copy_tree(StateRBTree orig, StateRBTree parent, const Grid_t* const 
   new_tree->data = new_state;
   new_tree->parent = parent;
   new_tree->color = orig->color;
+  new_tree->tag = orig->tag;
   new_tree->left = copy_tree(orig->left, new_tree, G);
   new_tree->right = copy_tree(orig->right, new_tree, G);
 

@@ -410,7 +410,7 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
       }
       StateRBTree node = present_in;
       s_delete_node(&present_in, node);
-      free(present_in->data);
+      free(node->data);
       free(node);
     }
     
