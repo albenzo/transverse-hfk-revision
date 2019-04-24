@@ -374,7 +374,7 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
   State s = malloc(sizeof(char) * G->arc_index);
   copy_state(&s, &init, G);
 
-  s_insert_data(&new_ins, s, G);
+  s_insert_tagged_data(&new_ins, s, 1, G);
   
   ans = 0;
   int current_pos = 1;
