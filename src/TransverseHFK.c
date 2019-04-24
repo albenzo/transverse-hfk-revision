@@ -358,8 +358,7 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
   StateRBTree new_ins, new_outs;
   StateRBTree prev_ins, prev_outs;
   StateRBTree really_new_outs = EMPTY_TREE, really_new_ins = EMPTY_TREE;
-  int in_number, ans, prev_in_number;
-  int out_number;
+  int ans, prev_in_number, total_in, total_out;
   int edge_count = 0;
   int num_ins = 0;
   int num_outs = 0;
@@ -380,15 +379,15 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
   int current_pos = 1;
   while (new_ins != EMPTY_TREE && !ans) {
     present_in = copy_tree(new_ins,EMPTY_TREE,G);
-    in_number = 0;
     num_new_outs = 0;
+    total_in = 0;
     new_outs = EMPTY_TREE;
     if (get_verbosity() >= VERBOSE) {
       (*print_ptr)("Gathering A_%d:\n", current_pos);
     }
     while (present_in != EMPTY_TREE) {
       free_state_rbtree(&really_new_outs);
-      in_number++;
+      total_in++;
       really_new_outs = new_rectangles_into_tree(prev_outs, present_in->data, G);
       while (really_new_outs != EMPTY_TREE) {
         StateRBTree node = s_find_node(&new_outs, really_new_outs->data, G);
@@ -398,10 +397,10 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
           s_delete_node(&really_new_outs, really_new_outs);
           s_insert_tagged_data(&new_outs, node->data, num_new_outs, G);
           free(node);
-          edge_list = append_ordered(num_new_outs + num_outs, in_number + num_ins, edge_list);
+          edge_list = append_ordered(num_new_outs + num_outs, present_in->tag + num_ins, edge_list);
         }
         else {
-          edge_list = append_ordered(node->tag + num_outs, in_number + num_ins, edge_list);
+          edge_list = append_ordered(node->tag + num_outs, present_in->tag + num_ins, edge_list);
           node = really_new_outs;
           s_delete_node(&really_new_outs, really_new_outs);
           free(node);
@@ -420,18 +419,18 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
     }
     free_state_rbtree(&prev_ins);
     prev_ins = new_ins;
-    num_ins = num_ins + in_number;
+    num_ins = num_ins + total_in;
     prev_in_number = num_ins;
     num_new_ins = 0;
     new_ins = EMPTY_TREE;
-    out_number = 0;
+    total_out = 0;
     present_out = copy_tree(new_outs,EMPTY_TREE,G);
     if (get_verbosity() >= VERBOSE) {
       (*print_ptr)("Gathering B_%d:\n", current_pos);
     }
     while (present_out != EMPTY_TREE) {
       free_state_rbtree(&really_new_ins);
-      out_number++;
+      total_out++;
       really_new_ins = new_rectangles_out_of_tree(prev_ins, present_out->data, G);
       while (really_new_ins != EMPTY_TREE) {
         StateRBTree node = s_find_node(&new_ins, really_new_ins->data, G);
@@ -441,10 +440,10 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
           s_delete_node(&really_new_ins, really_new_ins);
           s_insert_tagged_data(&new_ins, node->data, num_new_ins, G);
           free(node);
-          edge_list = append_ordered(out_number + num_outs, num_new_ins + num_ins, edge_list);
+          edge_list = append_ordered(present_out->tag + num_outs, num_new_ins + num_ins, edge_list);
         }
         else {
-          edge_list = append_ordered(out_number + num_outs, node->tag + num_ins, edge_list);
+          edge_list = append_ordered(present_out->tag + num_outs, node->tag + num_ins, edge_list);
           node = really_new_ins;
           s_delete_node(&really_new_ins, really_new_ins);
           free(node);
@@ -488,7 +487,7 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
       free_state_rbtree(&new_ins);
       free_state_rbtree(&new_outs);
     } else {
-      num_outs = num_outs + out_number;
+      num_outs = num_outs + total_out;
       if (get_verbosity() >= VERBOSE) {
         (*print_ptr)("Total number of states in B_i up to B_%d (before any "
                      "contraction): %d \n",
@@ -498,7 +497,7 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
                      current_pos, num_outs);
         (*print_ptr)("Total number of states in B_i up to B_%d (before any "
                      "contraction): %d \n",
-                     current_pos, num_ins + in_number);
+                     current_pos, num_ins + total_in);
         (*print_ptr)("Total number of edges  up to A_%d and B_%d (before any "
                      "contraction): %d \n",
                      current_pos, current_pos, edge_count);
