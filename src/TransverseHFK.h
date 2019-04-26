@@ -24,7 +24,8 @@ int mod(const int, const int);
 int mod_up(const int, const int);
 int min(const int, const int);
 
-StateList swap_cols(const int, const int, const State, const Grid_t *const);
+State swap_cols(const int, const int, const State, const Grid_t *const);
+StateList swap_cols_list(const int, const int, const State, const Grid_t *const);
 int null_homologous_D0Q(const State, const Grid_t *const);
 int null_homologous_D1Q(const State, const Grid_t *const);
 int null_homologous_lift(const LiftState, const LiftGrid_t * const);
@@ -38,8 +39,8 @@ EdgeList append_ordered(const int, const int, const EdgeList);
 void special_homology(const int, const int, EdgeList *);
 void contract(const int, const int, EdgeList *);
 
-StateList new_rectangles_out_of(const StateList, const State, const Grid_t *const);
-StateList new_rectangles_into(const StateList, const State, const Grid_t *const);
+StateRBTree new_rectangles_out_of(const StateRBTree, const State, const Grid_t *const);
+StateRBTree new_rectangles_into(const StateRBTree, const State, const Grid_t *const);
 StateList fixed_wt_rectangles_out_of(const int, const State, const Grid_t *const);
 LiftStateList new_lift_rectangles_out_of(const LiftStateList, const LiftState, const LiftGrid_t * const);
 LiftStateList new_lift_rectangles_into(const LiftStateList, const LiftState, const LiftGrid_t * const);

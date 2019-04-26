@@ -285,7 +285,7 @@ int main(int argc, char **argv) {
     print_state(G.Xs,&G);
     print_2AM(&G,0);
   }
-  if (null_homologous_D0Q_tree(G.Xs, &G)) {
+  if (null_homologous_D0Q(G.Xs, &G)) {
     printf("LL is null-homologous\n");
   } else {
     printf("LL is NOT null-homologous\n");
@@ -313,7 +313,7 @@ int main(int argc, char **argv) {
     print_2AM(&G,1);
   }
 
-  if (null_homologous_D0Q_tree(UR, &G)) {
+  if (null_homologous_D0Q(UR, &G)) {
     printf("UR is null-homologous\n");
   } else {
     printf("UR is NOT null-homologous\n");
@@ -325,7 +325,7 @@ int main(int argc, char **argv) {
     print_2AM(&G,0);
   }
 
-  if (null_homologous_D1Q_tree(G.Xs, &G)) {
+  if (null_homologous_D1Q(G.Xs, &G)) {
     printf("D1[LL] is null-homologous\n");
   } else {
     printf("D1[LL] is NOT null-homologous\n");
@@ -355,7 +355,7 @@ int main(int argc, char **argv) {
     print_2AM(&G,1);
   }
 
-  if (null_homologous_D1Q_tree(UR, &G)) {
+  if (null_homologous_D1Q(UR, &G)) {
     printf("D1[UR] is null-homologous\n");
   } else {
     printf("D1[UR] is NOT null-homologous\n");
