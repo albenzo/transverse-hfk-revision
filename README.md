@@ -4,7 +4,7 @@ This project provides a cleaned up version to compute the invariant defined in
 P. S. Ozsvath, Z. Szabo, and D. P. Thurston. The original code written by P. Ozsvath 
 is based on the paper "Transverse knots distinguished by Knot Floer Homology" 
 by L. Ng, P. S. Ozsvath, and D. P. Thurston. The original code can be found
-[here][https://services.math.duke.edu/~ng/math/programs.html].
+[here](https://services.math.duke.edu/~ng/math/programs.html).
 
 In addition we provide support for computing a family of invariants described
 in the paper (place holder).
@@ -16,18 +16,18 @@ invariants directly in a Tk window or from the python interpreter.
 ## transverseHFK
 ### Usage
 To compile transverseHFK program run
-```bash
+```
 $ make
 ```
 The program will calculate whether or not x^-, x^+, delta_1(x^-), and delta_1(x^+) 
 are null-homologous for the supplied knot. 
 
 When used as
-```bash
+```
 $ transverseHFK -i <ArcIndex> -X <List of Xs> -O <List of Os>
 ```
 and for the new invariant is
-```bash
+```
 $ transverseHFK -i <arcIndex> -X <List of Xs> -O <List of Os> -n <# of sheets>
 ```
 where the three parameters specify a knot via its grid diagram. Currently the
@@ -37,11 +37,11 @@ For a full list of options run `transverseHFK --help`
 
 ### Installation and removal
 To install the program type 
-```bash
+```
 $ make install
 ```
 To remove type 
-```bash
+```
 $ make uninstall
 ```
 Which will copy and remove `transverseHFK` to `/usr/bin` respectively.
@@ -49,7 +49,7 @@ If you do not wish to (or cannot) install to this location you can
 install by copying the executable to somewhere on your `$PATH`.
 
 ### Sample Output
-```bash
+```
 $ transverseHFK -i 10 -X [10,5,8,6,3,7,2,4,9,1] -O [7,9,3,4,5,1,6,10,2,8]
     LL is null-homologous
     UR is NOT null-homologous
@@ -60,16 +60,16 @@ $ transverseHFK -i 10 -X [10,5,8,6,3,7,2,4,9,1] -O [7,9,3,4,5,1,6,10,2,8]
 ## tHFK
 ### Usage
 To build and install the python library run
-```bash
+```
 $ python setup.py install
 ```
 or
-```bash
+```
 $ make python-install
 ```
 
 Then it can be used by
-```python
+```
 $ python
 >>> from tHFK import *
 ```
@@ -80,7 +80,7 @@ Usage information can be found via `help(<class or method name>)`
 ### Gridlink
 To integrate tHFK with gridlink run the following command in the terminal
 
-```bash
+```
 patch <path to gridlink/gridlink.py> gridlink.patch
 ```
 
