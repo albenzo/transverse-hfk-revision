@@ -42,6 +42,21 @@ struct LiftStateRBTreeNode {
 LiftStateRBTreeNode_t LIFT_NIL_NODE;
 LiftStateRBTree LIFT_EMPTY_TREE;
 
+typedef struct LiftTreeListNode LiftTreeListNode_t;
+typedef LiftTreeListNode_t * LiftTreeList;
+
+struct LiftTreeListNode {
+  LiftStateRBTree data;
+  LiftTreeList next;
+};
+
+struct LiftTreeIter {
+  LiftStateRBTree cur_node;
+  LiftTreeList rest;
+};
+
+typedef struct LiftTreeIter LiftTreeIter_t;
+
 typedef struct StateRBTreeNode StateRBTreeNode_t;
 typedef StateRBTreeNode_t * StateRBTree;
 
@@ -56,6 +71,21 @@ struct StateRBTreeNode {
 
 StateRBTreeNode_t NIL_NODE;
 StateRBTree EMPTY_TREE;
+
+typedef struct TreeListNode TreeListNode_t;
+typedef TreeListNode_t * TreeList;
+
+struct TreeListNode {
+  StateRBTree data;
+  TreeList next;
+};
+
+struct StateTreeIter {
+  StateRBTree cur_node;
+  TreeList rest;
+};
+
+typedef struct StateTreeIter StateTreeIter_t;
 
 struct Vertex {
   int data;
@@ -140,6 +170,11 @@ LiftStateRBTree find_node(const LiftStateRBTree* const, LiftState, const LiftGri
 int find_tag(LiftStateRBTree*, LiftState, const LiftGrid_t * const);
 int is_member(const LiftStateRBTree * const, LiftState, const LiftGrid_t * const);
 void free_lift_state_rbtree(LiftStateRBTree*, const LiftGrid_t * const);
+LiftTreeIter_t * create_iter(LiftStateRBTree);
+LiftStateRBTree get_next(LiftTreeIter_t*);
+int has_next(LiftTreeIter_t*);
+int is_empty(LiftTreeIter_t*);
+void free_iter(LiftTreeIter_t *);
 
 void s_left_rotate(StateRBTree*, StateRBTree);
 void s_right_rotate(StateRBTree*, StateRBTree);
@@ -160,5 +195,10 @@ StateRBTree s_find_node(const StateRBTree* const, State, const Grid_t * const);
 int s_find_tag(StateRBTree*, State, const Grid_t * const);
 int s_is_member(const StateRBTree * const, State, const Grid_t * const);
 void free_state_rbtree(StateRBTree*);
+StateTreeIter_t * s_create_iter(StateRBTree);
+StateRBTree s_get_next(StateTreeIter_t*);
+int s_has_next(StateTreeIter_t*);
+int s_is_empty(StateTreeIter_t*);
+void s_free_iter(StateTreeIter_t *);
 
 #endif

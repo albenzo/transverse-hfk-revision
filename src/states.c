@@ -962,6 +962,77 @@ void free_lift_state_rbtree(LiftStateRBTree* root, const LiftGrid_t * const G) {
   *root = LIFT_EMPTY_TREE;
 }
 
+LiftTreeIter_t * create_iter(LiftStateRBTree root) {
+  LiftTreeIter_t * iter = malloc(sizeof(LiftTreeIter_t));
+  
+  iter->cur_node = root;
+  iter->rest = NULL;
+
+  
+  if(root->right != LIFT_EMPTY_TREE) {
+    LiftTreeList temp = malloc(sizeof(LiftTreeListNode_t));
+    temp->data = root->right;
+    temp->next = iter->rest;
+    iter->rest = temp;
+  }
+
+  if(root->left != LIFT_EMPTY_TREE) {
+    LiftTreeList temp = malloc(sizeof(LiftTreeListNode_t));
+    temp->data = root->left;
+    temp->next = iter->rest;
+    iter->rest = temp;
+  }
+  return iter;
+}
+
+LiftStateRBTree get_next(LiftTreeIter_t* iter) {
+  LiftStateRBTree ret_val = iter->cur_node;
+
+  if(iter->rest == NULL) {
+    iter->cur_node = LIFT_EMPTY_TREE;
+  }
+  else {
+    iter->cur_node = iter->rest->data;
+    
+    LiftTreeList temp;
+    temp = iter->rest;
+    iter->rest = iter->rest->next;
+    free(temp);
+
+    if(iter->cur_node->right != LIFT_EMPTY_TREE) {
+      temp = malloc(sizeof(TreeListNode_t));
+      temp->data = iter->cur_node->right;
+      temp->next = iter->rest;
+      iter->rest = temp;
+    }
+    
+    if(iter->cur_node->left != LIFT_EMPTY_TREE) {
+      temp = malloc(sizeof(TreeListNode_t));
+      temp->data = iter->cur_node->left;
+      temp->next = iter->rest;
+      iter->rest = temp;
+    }
+  }
+  return ret_val;
+}
+
+int has_next(LiftTreeIter_t* iter) {
+  return iter->cur_node != LIFT_EMPTY_TREE;
+}
+
+int is_empty(LiftTreeIter_t* iter) {
+  return iter->cur_node == LIFT_EMPTY_TREE;
+}
+
+void free_iter(LiftTreeIter_t * iter) {
+  while(iter->rest != NULL) {
+    LiftTreeList temp = iter->rest;
+    iter->rest = iter->rest->next;
+    free(temp);
+  }
+  free(iter);
+}
+
 /**
  * Left rotates the node x as a descendent of root
  * @param root the root of the RBTree
@@ -1381,4 +1452,75 @@ void free_state_rbtree(StateRBTree* root) {
   free((*root)->data);
   free(*root);
   *root = EMPTY_TREE;
+}
+
+StateTreeIter_t * s_create_iter(StateRBTree root) {
+  StateTreeIter_t * iter = malloc(sizeof(StateTreeIter_t));
+  
+  iter->cur_node = root;
+  iter->rest = NULL;
+
+  
+  if(root->right != EMPTY_TREE) {
+    TreeList temp = malloc(sizeof(TreeListNode_t));
+    temp->data = root->right;
+    temp->next = iter->rest;
+    iter->rest = temp;
+  }
+
+  if(root->left != EMPTY_TREE) {
+    TreeList temp = malloc(sizeof(TreeListNode_t));
+    temp->data = root->left;
+    temp->next = iter->rest;
+    iter->rest = temp;
+  }
+  return iter;
+}
+
+StateRBTree s_get_next(StateTreeIter_t* iter) {
+  StateRBTree ret_val = iter->cur_node;
+
+  if(iter->rest == NULL) {
+    iter->cur_node = EMPTY_TREE;
+  }
+  else {
+    iter->cur_node = iter->rest->data;
+    
+    TreeList temp;
+    temp = iter->rest;
+    iter->rest = iter->rest->next;
+    free(temp);
+
+    if(iter->cur_node->right != EMPTY_TREE) {
+      temp = malloc(sizeof(TreeListNode_t));
+      temp->data = iter->cur_node->right;
+      temp->next = iter->rest;
+      iter->rest = temp;
+    }
+    
+    if(iter->cur_node->left != EMPTY_TREE) {
+      temp = malloc(sizeof(TreeListNode_t));
+      temp->data = iter->cur_node->left;
+      temp->next = iter->rest;
+      iter->rest = temp;
+    }
+  }
+  return ret_val;
+}
+
+int s_has_next(StateTreeIter_t* iter) {
+  return iter->cur_node != EMPTY_TREE;
+}
+
+int s_is_empty(StateTreeIter_t* iter) {
+  return iter->cur_node == EMPTY_TREE;
+}
+
+void s_free_iter(StateTreeIter_t * iter) {
+  while(iter->rest != NULL) {
+    TreeList temp = iter->rest;
+    iter->rest = iter->rest->next;
+    free(temp);
+  }
+  free(iter);
 }

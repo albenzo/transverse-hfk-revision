@@ -358,14 +358,14 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
 int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
   StateRBTree new_ins, new_outs;
   StateRBTree prev_ins, prev_outs;
-  StateRBTree really_new_outs = EMPTY_TREE, really_new_ins = EMPTY_TREE;
+  StateRBTree potential_outs = EMPTY_TREE, really_new_ins = EMPTY_TREE;
   int ans, prev_in_number, total_in, total_out;
   int edge_count = 0;
   int num_ins = 0;
   int num_outs = 0;
   int num_new_ins = 0;
   int num_new_outs = 0;
-  StateRBTree present_in, present_out;
+  StateRBTree present_out;
   EdgeList edge_list = prepend_edge(0, 1, NULL);
   prev_outs = EMPTY_TREE;
   prev_ins = EMPTY_TREE;
@@ -379,40 +379,43 @@ int null_homologous_D0Q_tree(const State init, const Grid_t *const G) {
   ans = 0;
   int current_pos = 1;
   while (new_ins != EMPTY_TREE && !ans) {
-    present_in = copy_tree(new_ins,EMPTY_TREE,G);
     num_new_outs = 0;
     total_in = 0;
     new_outs = EMPTY_TREE;
     if (get_verbosity() >= VERBOSE) {
       (*print_ptr)("Gathering A_%d:\n", current_pos);
     }
-    while (present_in != EMPTY_TREE) {
-      free_state_rbtree(&really_new_outs);
+
+    StateTreeIter_t * present_iter;
+
+    for(present_iter = s_create_iter(new_ins); s_has_next(present_iter);) {
+      StateRBTree present_in = s_get_next(present_iter);
+      free_state_rbtree(&potential_outs);
       total_in++;
-      really_new_outs = new_rectangles_into_tree(prev_outs, present_in->data, G);
-      while (really_new_outs != EMPTY_TREE) {
-        StateRBTree node = s_find_node(&new_outs, really_new_outs->data, G);
+      potential_outs = new_rectangles_into_tree(prev_outs, present_in->data, G);
+
+      if(potential_outs == EMPTY_TREE) {
+        continue;
+      }
+      StateTreeIter_t * potential_iter;
+      for(potential_iter = s_create_iter(potential_outs); s_has_next(potential_iter);) {
+        StateRBTree potential_out = s_get_next(potential_iter);
+        StateRBTree node = s_find_node(&new_outs, potential_out->data, G);
         if(EMPTY_TREE == node) {
-          node = really_new_outs;
+          State t = malloc(sizeof(char)*G->arc_index);
+          copy_state(&t,&(potential_out->data),G);
           num_new_outs++;
-          s_delete_node(&really_new_outs, really_new_outs);
-          s_insert_tagged_data(&new_outs, node->data, num_new_outs, G);
-          free(node);
+          s_insert_tagged_data(&new_outs, t, num_new_outs, G);
           edge_list = append_ordered(num_new_outs + num_outs, present_in->tag + num_ins, edge_list);
         }
         else {
           edge_list = append_ordered(node->tag + num_outs, present_in->tag + num_ins, edge_list);
-          node = really_new_outs;
-          s_delete_node(&really_new_outs, really_new_outs);
-          free(node);
         }
         edge_count++;
       }
-      StateRBTree node = present_in;
-      s_delete_node(&present_in, node);
-      free(node->data);
-      free(node);
+      s_free_iter(potential_iter);
     }
+    s_free_iter(present_iter);
     
     if (get_verbosity() >= VERBOSE) {
       print_edges(edge_list);
