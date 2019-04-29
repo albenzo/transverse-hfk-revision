@@ -473,130 +473,113 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
 }
 
 int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
-  LiftStateList new_ins, new_outs, last_new_in, last_new_out, temp;
-  LiftStateList prev_ins, prev_outs;
-  LiftStateList really_new_outs = NULL, really_new_ins = NULL;
-  int in_number, ans, prev_in_number;
-  int out_number;
+  LiftStateRBTree new_ins, new_outs;
+  LiftStateRBTree prev_ins, prev_outs;
+  LiftStateRBTree potential_outs = LIFT_EMPTY_TREE, potential_ins = LIFT_EMPTY_TREE;
+  int ans, prev_in_number, total_in, total_out;
   int edge_count = 0;
   int num_ins = 0;
   int num_outs = 0;
   int num_new_ins = 0;
   int num_new_outs = 0;
-  LiftStateList present_in, present_out;
-  EdgeList edge_list = prepend_edge(0, 1, NULL);
-  prev_outs = NULL;
-  prev_ins = NULL;
+  prev_outs = LIFT_EMPTY_TREE;
+  prev_ins = LIFT_EMPTY_TREE;
+  new_ins = LIFT_EMPTY_TREE;
+  
+  LiftState s;
+  init_lift_state(&s, G);
 
-  new_ins = malloc(sizeof(LiftStateNode_t));
-  init_lift_state(&new_ins->data, G);
-  for (int i = 0; i < G->sheets; ++i) {
-    for (int j = 0; j < G->arc_index; ++j) {
-      new_ins->data[i][j] = init[i][j];
-    }
-  }
-  new_ins->nextState = NULL;
+  copy_lift_state(&s, &init, G);
+
+  insert_tagged_data(&new_ins, s, 1, G);
+  EdgeList edge_list = prepend_edge(0, 1, NULL);
 
   ans = 0;
   int current_pos = 1;
-  while (new_ins != NULL && !ans) {
-    present_in = new_ins;
-    in_number = 0;
+  while (new_ins != LIFT_EMPTY_TREE && !ans) {
     num_new_outs = 0;
-    new_outs = NULL;
+    total_in = 0;
+    new_outs = LIFT_EMPTY_TREE;
     if (get_verbosity() >= VERBOSE) {
       (*print_ptr)("Gathering A_%d:\n", current_pos);
     }
-    while (present_in != NULL) {
-      free_lift_state_list(really_new_outs, G);
-      in_number++;
-      really_new_outs = new_lift_rectangles_into(prev_outs, present_in->data, G);
-      while (really_new_outs != NULL) {
-        out_number = get_lift_number(really_new_outs->data, new_outs, G);
-        if (out_number == 0) {
-          if (num_new_outs == 0) {
-            new_outs = really_new_outs;
-            really_new_outs = really_new_outs->nextState;
-            new_outs->nextState = NULL;
-            last_new_out = new_outs;
-            num_new_outs++;
-            out_number = num_new_outs;
-          } else {
-            last_new_out->nextState = really_new_outs;
-            really_new_outs = really_new_outs->nextState;
-            last_new_out = last_new_out->nextState;
-            last_new_out->nextState = NULL;
-            num_new_outs++;
-            out_number = num_new_outs;
-          };
-        } else {
-          temp = really_new_outs;
-          really_new_outs = really_new_outs->nextState;
-          free_lift_state(&temp->data, G);
-          free(temp);
-        }
-        edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
-                                   edge_list);
 
+    LiftTreeIter_t * present_iter;
+    for(present_iter = create_iter(new_ins); has_next(present_iter);) {
+      LiftStateRBTree present_in = get_next(present_iter);
+      free_lift_state_rbtree(&potential_outs, G);
+      total_in++;
+      potential_outs = new_lift_rectangles_into(prev_outs, present_in->data, G);
+
+      LiftTreeIter_t * potential_iter;
+      for(potential_iter = create_iter(potential_outs); has_next(potential_iter);) {
+        LiftStateRBTree potential_out = get_next(potential_iter);
+        LiftStateRBTree node = find_node(&new_outs, potential_out->data, G);
+        if (LIFT_EMPTY_TREE == node) {
+          LiftState t;
+          init_lift_state(&t, G);
+          copy_lift_state(&t,&(potential_out->data),G);
+          insert_tagged_data(&new_outs, t, num_new_outs, G);
+          edge_list = append_ordered(num_new_outs + num_outs, present_in->tag + num_ins, edge_list);
+        }
+        else {
+          edge_list = append_ordered(node->tag + num_outs, present_in->tag + num_ins, edge_list);
+        }
         edge_count++;
       }
-      present_in = present_in->nextState;
-    };
+      free_iter(potential_iter);
+    }
+    free_iter(present_iter);
+    
     if (get_verbosity() >= VERBOSE) {
       print_edges(edge_list);
       (*print_ptr)("\n");
     }
-    free_lift_state_list(prev_ins, G);
+    free_lift_state_rbtree(&prev_ins, G);
     prev_ins = new_ins;
-    num_ins = num_ins + in_number;
+    num_ins = num_ins + total_in;
     prev_in_number = num_ins;
     num_new_ins = 0;
-    new_ins = NULL;
-    out_number = 0;
-    present_out = new_outs;
+    new_ins = LIFT_EMPTY_TREE;
+    total_out = 0;
     if (get_verbosity() >= VERBOSE) {
       (*print_ptr)("Gathering B_%d:\n", current_pos);
     }
-    while (present_out != NULL) {
-      out_number++;
-      really_new_ins = new_lift_rectangles_out_of(prev_ins, present_out->data, G);
-      while (really_new_ins != NULL) {
-        in_number = get_lift_number(really_new_ins->data, new_ins, G);
-        if (in_number == 0) {
-          if (num_new_ins == 0) {
-            new_ins = really_new_ins;
-            really_new_ins = really_new_ins->nextState;
-            new_ins->nextState = NULL;
-            last_new_in = new_ins;
-            num_new_ins++;
-            in_number = num_new_ins;
-          } else {
-            last_new_in->nextState = really_new_ins;
-            really_new_ins = really_new_ins->nextState;
-            last_new_in = last_new_in->nextState;
-            last_new_in->nextState = NULL;
-            num_new_ins++;
-            in_number = num_new_ins;
-          };
-        } else {
-          temp = really_new_ins;
-          really_new_ins = really_new_ins->nextState;
-          free_lift_state(&temp->data, G);
-          free(temp);
+
+    for(present_iter = create_iter(new_outs); has_next(present_iter);) {
+      LiftStateRBTree present_out = get_next(present_iter);
+      free_lift_state_rbtree(&potential_ins, G);
+      total_out++;
+      potential_ins = new_lift_rectangles_out_of(prev_ins, present_out->data, G);
+
+      LiftTreeIter_t * potential_iter;
+      for(potential_iter = create_iter(potential_ins); has_next(potential_iter);) {
+        LiftStateRBTree potential_in = get_next(potential_iter);
+        LiftStateRBTree node = find_node(&new_ins, potential_in->data, G);
+        if(LIFT_EMPTY_TREE == node) {
+          LiftState t;
+          init_lift_state(&t, G);
+          copy_lift_state(&t,&(potential_in->data),G);
+          insert_tagged_data(&new_ins, t, num_new_ins, G);
+          edge_list = append_ordered(present_out->tag + num_outs, node->tag + num_ins, edge_list);
         }
-        edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
-                                   edge_list);
+        else {
+          edge_list = append_ordered(present_out->tag + num_outs, node->tag + num_ins, edge_list);
+        }
         edge_count++;
-      };
-      present_out = present_out->nextState;
-    };
+      }
+      free_iter(potential_iter);
+    }
+    free_iter(present_iter);
+    
     if (get_verbosity() >= VERBOSE) {
       print_edges(edge_list);
       (*print_ptr)("\n");
     }
-    free_lift_state_list(prev_outs, G);
+    
+    free_lift_state_rbtree(&prev_outs, G);
     prev_outs = new_outs;
-    new_outs = NULL;
+    new_outs = LIFT_EMPTY_TREE;
     if (get_verbosity() >= VERBOSE) {
       (*print_ptr)("Contracting edges from 0 to %d:\n", prev_in_number);
     }
@@ -610,8 +593,8 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
       if (get_verbosity() >= VERBOSE) {
         (*print_ptr)("No edges pointing out of A_0!\n");
       }
-      free_lift_state_list(new_ins, G);
-      free_lift_state_list(new_outs, G);
+      free_lift_state_rbtree(&new_ins, G);
+      free_lift_state_rbtree(&new_outs, G);
       new_ins = NULL;
     } else if (edge_list->end <= prev_in_number) {
       ans = 0;
@@ -620,11 +603,11 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
                      "contractions will remove this edge!\n",
                      current_pos - 1);
       }
-      free_lift_state_list(new_ins, G);
-      free_lift_state_list(new_outs, G);
+      free_lift_state_rbtree(&new_ins, G);
+      free_lift_state_rbtree(&new_outs, G);
       new_ins = NULL;
     } else {
-      num_outs = num_outs + out_number;
+      num_outs = num_outs + total_out;
       if (get_verbosity() >= VERBOSE) {
         (*print_ptr)("Total number of states in B_i up to B_%d (before any "
                      "contraction): %d \n",
@@ -634,7 +617,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
                      current_pos, num_outs);
         (*print_ptr)("Total number of states in B_i up to B_%d (before any "
                      "contraction): %d \n",
-                     current_pos, num_ins + in_number);
+                     current_pos, num_ins + total_in);
         (*print_ptr)("Total number of edges  up to A_%d and B_%d (before any "
                      "contraction): %d \n",
                      current_pos, current_pos, edge_count);
