@@ -50,7 +50,7 @@ clean-python:
 test: $(ALL_TESTS)
 
 %.test: $(BUILD_DIR)/$(EXEC) $(TEST_DIR)/%.in $(TEST_DIR)/%.out
-	./$(BUILD_DIR)/$(EXEC) `cat $(TEST_DIR)/$*.in` 2>&1 | diff -q $(TEST_DIR)/$*.out - > /dev/null || (echo "Target $@ failed" && exit 1)
+	xargs -L1 -a $(TEST_DIR)/$*.in ./$(BUILD_DIR)/$(EXEC) 2>&1 | diff -q $(TEST_DIR)/$*.out - > /dev/null || (echo "Target $@ failed" && exit 1)
 
 .PHONY: clean test %.test python-install clean-python install uninstall
 
