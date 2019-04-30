@@ -42,8 +42,8 @@ void contract(const int, const int, EdgeList *);
 StateRBTree new_rectangles_out_of(const StateRBTree, const State, const Grid_t *const);
 StateRBTree new_rectangles_into(const StateRBTree, const State, const Grid_t *const);
 StateList fixed_wt_rectangles_out_of(const int, const State, const Grid_t *const);
-LiftStateList new_lift_rectangles_out_of(const LiftStateList, const LiftState, const LiftGrid_t * const);
-LiftStateList new_lift_rectangles_into(const LiftStateList, const LiftState, const LiftGrid_t * const);
+LiftStateRBTree new_lift_rectangles_out_of(const LiftStateRBTree, const LiftState, const LiftGrid_t * const);
+LiftStateRBTree new_lift_rectangles_into(const LiftStateRBTree, const LiftState, const LiftGrid_t * const);
 
 void print_state(const State, const Grid_t *const);
 void print_lift_state(const LiftState, const LiftGrid_t * const);
