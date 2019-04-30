@@ -563,7 +563,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
           copy_lift_state(&t,&(potential_in->data),G);
           num_new_ins++;
           insert_tagged_data(&new_ins, t, num_new_ins, G);
-          edge_list = append_ordered(present_out->tag + num_outs, node->tag + num_ins, edge_list);
+          edge_list = append_ordered(present_out->tag + num_outs, num_new_ins + num_ins, edge_list);
         }
         else {
           edge_list = append_ordered(present_out->tag + num_outs, node->tag + num_ins, edge_list);
