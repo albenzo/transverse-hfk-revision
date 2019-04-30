@@ -595,7 +595,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
       }
       free_lift_state_rbtree(&new_ins, G);
       free_lift_state_rbtree(&new_outs, G);
-      new_ins = NULL;
+      new_ins = LIFT_EMPTY_TREE;
     } else if (edge_list->end <= prev_in_number) {
       ans = 0;
       if (get_verbosity() >= VERBOSE) {
@@ -605,7 +605,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
       }
       free_lift_state_rbtree(&new_ins, G);
       free_lift_state_rbtree(&new_outs, G);
-      new_ins = NULL;
+      new_ins = LIFT_EMPTY_TREE;
     } else {
       num_outs = num_outs + total_out;
       if (get_verbosity() >= VERBOSE) {
