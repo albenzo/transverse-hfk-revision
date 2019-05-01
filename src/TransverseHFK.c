@@ -746,11 +746,13 @@ EdgeList merge_edges(EdgeList list1, EdgeList list2) {
     new_list = list1;
     tail = list1;
     list1 = list1->nextEdge;
+    tail->nextEdge = NULL;
   }
   else {
     new_list = list2;
     tail = list2;
     list2 = list2->nextEdge;
+    tail->nextEdge = NULL;
   }
 
   while(NULL != list1 && NULL != list2) {
@@ -758,11 +760,13 @@ EdgeList merge_edges(EdgeList list1, EdgeList list2) {
       tail->nextEdge = list1;
       tail = tail->nextEdge;
       list1 = list1->nextEdge;
+      tail->nextEdge = NULL;
     }
     else {
       tail->nextEdge = list2;
       tail = tail->nextEdge;
       list2 = list2->nextEdge;
+      tail->nextEdge = NULL;
     }
   }
 
@@ -793,23 +797,27 @@ EdgeList merge_sort_edges(EdgeList edge_list) {
   list1 = edge_list;
   tail1 = edge_list;
   edge_list = edge_list->nextEdge;
+  tail1->nextEdge = NULL;
   list2 = edge_list;
   tail2 = edge_list;
   edge_list = edge_list->nextEdge;
+  tail2->nextEdge = NULL;
 
   int which_list = 1;
   while(NULL != edge_list) {
     if (which_list) {
       tail1->nextEdge = edge_list;
       tail1 = tail1->nextEdge;
+      tail1->nextEdge = NULL;
     }
     else {
       tail2->nextEdge = edge_list;
       tail2 = tail2->nextEdge;
+      tail2->nextEdge = NULL;
     }
 
     edge_list = edge_list->nextEdge;
-    which_list = which_list ? 0 : 1;
+    which_list = !which_list;
   }
 
   merge_sort_edges(list1);
