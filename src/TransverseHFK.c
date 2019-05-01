@@ -14,13 +14,27 @@ printf_t print_ptr = printf;
 static int verbosity = SILENT;
 static LiftStateRBTree new_lift_rectangles_out_internal(const LiftStateRBTree, const LiftState, const LiftGrid_t * const, int);
 
+/**
+ * Sets the print function to the passed in function pointer
+ * @param print_fn a function pointer to a print function with the
+ * same type as printf
+ */
 void set_print_fn(printf_t print_fn) {
   print_ptr = print_fn;
 }
 
+/**
+ * Returns the current level of verbosity
+ * @return the verbosity
+ */
 int get_verbosity(){
   return verbosity;
 }
+
+/**
+ * Set the level of verbosity to SILENT, QUIET, or VERBOSE
+ * @param val the verbosity level
+ */
 void set_verbosity(const int val) {
   verbosity = val;
 }
@@ -491,6 +505,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
 
   copy_lift_state(&s, &init, G);
 
+  // Create sentinal edge from A_0
   insert_tagged_data(&new_ins, s, 1, G);
   EdgeList edge_list = prepend_edge(0, 1, NULL);
 
@@ -504,6 +519,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
       (*print_ptr)("Gathering A_%d:\n", current_pos);
     }
 
+    // Build A_i by looking for states into B_(i-1) that are not in A_(i-1) 
     LiftTreeIter_t * present_iter;
     for(present_iter = create_iter(new_ins); has_next(present_iter);) {
       LiftStateRBTree present_in = get_next(present_iter);
@@ -547,6 +563,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
       (*print_ptr)("Gathering B_%d:\n", current_pos);
     }
 
+    // Build B_i by finding states out of A_i that are not in B_(i-1)
     for(present_iter = create_iter(new_outs); has_next(present_iter);) {
       LiftStateRBTree present_out = get_next(present_iter);
       free_lift_state_rbtree(&potential_ins, G);
@@ -591,6 +608,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
       (*print_ptr)("\n");
     }
     if ((edge_list == NULL) || (edge_list->start != 0)) {
+      // If there are no edges out of A_0 (sentinal is gone) after contraction init is null-homologous
       ans = 1;
       if (get_verbosity() >= VERBOSE) {
         (*print_ptr)("No edges pointing out of A_0!\n");
@@ -599,6 +617,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
       free_lift_state_rbtree(&new_outs, G);
       new_ins = EMPTY_LIFT_TREE;
     } else if (edge_list->end <= prev_in_number) {
+      // If edges out of A_0 cannot be removed anymore (sentinal will never vanish) init is not null-homologous
       ans = 0;
       if (get_verbosity() >= VERBOSE) {
         (*print_ptr)("There exist edges pointing from A_0 to B_%d! No future "
@@ -1443,6 +1462,12 @@ void print_state_short(const State state, const Grid_t *const G) {
   (*print_ptr)("%d}\n", state[G->arc_index - 1]);
 }
 
+/**
+ * Calls print_state on each sheet of the lift state
+ * @param state a lift state
+ * @param G a lift grid
+ * @see print_state
+ */
 void print_lift_state(const LiftState state, const LiftGrid_t * const G) {
   Grid_t H;
   H.arc_index = G->arc_index;
@@ -1497,6 +1522,12 @@ void print_states(const StateList states, const Grid_t *const G) {
   (*print_ptr)("}");
 }
 
+/**
+ * Prints states in the form "{<state>,...}" up to the first 500,000 states.
+ * @param states a LiftStateList
+ * @param G a lift grid
+ * @see print_states
+ */
 void print_lift_states(const LiftStateList states, const LiftGrid_t *const G) {
   LiftStateList temp;
   int c;
@@ -1517,6 +1548,12 @@ void print_lift_states(const LiftStateList states, const LiftGrid_t *const G) {
   (*print_ptr)("}");
 }
 
+/**
+ * Prints all states in the supplied tree using print_state_short
+ * @param states a StateRBTree
+ * @param G a grid
+ * @see print_state_short
+ */
 void print_states_tree(const StateRBTree states, const Grid_t * const G) {
   if(EMPTY_TREE == states) {
     return;
@@ -1526,6 +1563,12 @@ void print_states_tree(const StateRBTree states, const Grid_t * const G) {
   print_states_tree(states->right, G);  
 }
 
+/**
+ * Prints all lift states in the supplied tree using print_lift_state_short
+ * @param states a LiftStateRBTree
+ * @param G a lift grid
+ * @see print_lift_state_short
+ */
 void print_states_lift_tree(const LiftStateRBTree states, const LiftGrid_t * const G) {
   if(EMPTY_LIFT_TREE == states) {
     return;
@@ -1535,6 +1578,12 @@ void print_states_lift_tree(const LiftStateRBTree states, const LiftGrid_t * con
   print_states_lift_tree(states->right, G);
 }
 
+/**
+ * As print_states_tree but also prints the tags attatched to each state
+ * @param states a StateRBTree
+ * @param G a grid
+ * @see print_states_tree
+ */
 void print_states_tags(const StateRBTree states, const Grid_t * const G) {
   if(EMPTY_TREE == states) {
     return;
@@ -1545,6 +1594,12 @@ void print_states_tags(const StateRBTree states, const Grid_t * const G) {
   print_states_tags(states->right, G);
 }
 
+/**
+ * As print_lift_states_tree but also prints the tags attatched to each lift state
+ * @param states a LiftStateRBTree
+ * @param G a lift grid
+ * @see print_lift_states_tree
+ */
 void print_states_lift_tags(const LiftStateRBTree states, const LiftGrid_t * const G) {
   if(EMPTY_LIFT_TREE == states) {
     return;
