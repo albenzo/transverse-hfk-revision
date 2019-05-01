@@ -12,7 +12,7 @@
 
 printf_t print_ptr = printf;
 static int verbosity = SILENT;
-static LiftStateList new_lift_rectangles_out_internal(const LiftStateList, const LiftState, const LiftGrid_t * const, int);
+static LiftStateRBTree new_lift_rectangles_out_internal(const LiftStateRBTree, const LiftState, const LiftGrid_t * const, int);
 
 void set_print_fn(printf_t print_fn) {
   print_ptr = print_fn;
@@ -519,6 +519,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
           LiftState t;
           init_lift_state(&t, G);
           copy_lift_state(&t,&(potential_out->data),G);
+          num_new_outs++;
           insert_tagged_data(&new_outs, t, num_new_outs, G);
           edge_list = append_ordered(num_new_outs + num_outs, present_in->tag + num_ins, edge_list);
         }
@@ -560,8 +561,9 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
           LiftState t;
           init_lift_state(&t, G);
           copy_lift_state(&t,&(potential_in->data),G);
+          num_new_ins++;
           insert_tagged_data(&new_ins, t, num_new_ins, G);
-          edge_list = append_ordered(present_out->tag + num_outs, node->tag + num_ins, edge_list);
+          edge_list = append_ordered(present_out->tag + num_outs, num_new_ins + num_ins, edge_list);
         }
         else {
           edge_list = append_ordered(present_out->tag + num_outs, node->tag + num_ins, edge_list);
@@ -595,7 +597,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
       }
       free_lift_state_rbtree(&new_ins, G);
       free_lift_state_rbtree(&new_outs, G);
-      new_ins = NULL;
+      new_ins = LIFT_EMPTY_TREE;
     } else if (edge_list->end <= prev_in_number) {
       ans = 0;
       if (get_verbosity() >= VERBOSE) {
@@ -605,7 +607,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
       }
       free_lift_state_rbtree(&new_ins, G);
       free_lift_state_rbtree(&new_outs, G);
-      new_ins = NULL;
+      new_ins = LIFT_EMPTY_TREE;
     } else {
       num_outs = num_outs + total_out;
       if (get_verbosity() >= VERBOSE) {
@@ -1185,8 +1187,8 @@ StateList fixed_wt_rectangles_out_of(const int wt, const State incoming,
  * @param is_mirrored pass 1 if the grid has been mirrored, 0 otherwise
  * @return a lift state list containing lift states that can be reached from incoming that are not in prevs
  */
-static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G, int is_mirrored) {
-  LiftStateList ans = NULL;
+static LiftStateRBTree new_lift_rectangles_out_internal(const LiftStateRBTree prevs, const LiftState incoming, const LiftGrid_t *const G, int is_mirrored) {
+  LiftStateRBTree ans = LIFT_EMPTY_TREE;
   double *g_Xs, *g_Os;
 
   g_Xs = malloc(sizeof(double)*G->arc_index);
@@ -1250,18 +1252,20 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
             if (is_mirrored) {
               mirror_lift_state(&new_state, G);
             }
-            if (0 == get_lift_number(new_state, prevs, G)) {
-              if (0 == get_lift_number(new_state, ans, G)) {
-                LiftStateNode_t* new_node = malloc(sizeof(LiftStateNode_t));
-                new_node->data = new_state;
-                new_node->nextState = ans;
-                ans = new_node;
+
+            if(!is_member(&prevs, new_state, G)) {
+              if(!is_member(&ans, new_state, G)) {
+                insert_data(&ans, new_state,G);
               }
               else {
-                ans = remove_lift_state(new_state, ans, G);
+                LiftStateRBTree temp = find_node(&ans, new_state, G);
+                delete_node(&ans, temp);
+                free_lift_state(&(temp->data), G);
+                free(temp);
                 free_lift_state(&new_state, G);
               }
             }
+            
             height = mod((height - 1) % G->arc_index, G->arc_index);
           }
           step = step + 1;
@@ -1292,18 +1296,20 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
             if (is_mirrored) {
               mirror_lift_state(&new_state, G);
             }
-            if (0 == get_lift_number(new_state, prevs, G)) {
-              if (0 == get_lift_number(new_state, ans, G)) {
-                LiftStateNode_t* new_node = malloc(sizeof(LiftStateNode_t));
-                new_node->data = new_state;
-                new_node->nextState = ans;
-                ans = new_node;
+
+            if(!is_member(&prevs, new_state, G)) {
+              if(!is_member(&ans, new_state, G)) {
+                insert_data(&ans, new_state,G);
               }
               else {
-                ans = remove_lift_state(new_state, ans, G);
+                LiftStateRBTree temp = find_node(&ans, new_state, G);
+                delete_node(&ans, temp);
+                free_lift_state(&(temp->data), G);
+                free(temp);
                 free_lift_state(&new_state, G);
               }
             }
+
             height = mod((height -1) % G->arc_index,G->arc_index);
           }
           step = step + 1;
@@ -1328,7 +1334,7 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
  * @param G working grid
  * @return LiftStateList containing states with a rectangle to incoming.
  */
-LiftStateList new_lift_rectangles_out_of(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G) {
+LiftStateRBTree new_lift_rectangles_out_of(const LiftStateRBTree prevs, const LiftState incoming, const LiftGrid_t *const G) {
   return new_lift_rectangles_out_internal(prevs, incoming, G, 0);
 }
 
@@ -1340,13 +1346,13 @@ LiftStateList new_lift_rectangles_out_of(const LiftStateList prevs, const LiftSt
  * @param G working grid
  * @return LiftStateList containing states with a rectangle to incoming.
  */
-LiftStateList new_lift_rectangles_into(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G) {
+LiftStateRBTree new_lift_rectangles_into(const LiftStateRBTree prevs, const LiftState incoming, const LiftGrid_t *const G) {
   LiftGrid_t* G_mirror = mirror_lift_grid(G);
   LiftState incoming_mirror;
   init_lift_state(&incoming_mirror, G);
   copy_lift_state(&incoming_mirror, &incoming, G);
   mirror_lift_state(&incoming_mirror, G);
-  LiftStateList ans = new_lift_rectangles_out_internal(prevs, incoming_mirror, G_mirror, 1);
+  LiftStateRBTree ans = new_lift_rectangles_out_internal(prevs, incoming_mirror, G_mirror, 1);
 
   free(G_mirror);
   free_lift_state(&incoming_mirror, G);
