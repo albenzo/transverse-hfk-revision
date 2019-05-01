@@ -815,20 +815,20 @@ EdgeList merge_sort_edges(EdgeList edge_list) {
     if (which_list) {
       tail1->nextEdge = edge_list;
       tail1 = tail1->nextEdge;
+      edge_list = edge_list->nextEdge;
       tail1->nextEdge = NULL;
     }
     else {
       tail2->nextEdge = edge_list;
       tail2 = tail2->nextEdge;
+      edge_list = edge_list->nextEdge;
       tail2->nextEdge = NULL;
     }
-
-    edge_list = edge_list->nextEdge;
     which_list = !which_list;
   }
 
-  merge_sort_edges(list1);
-  merge_sort_edges(list2);
+  list1 = merge_sort_edges(list1);
+  list2 = merge_sort_edges(list2);
   
   return merge_edges(list1, list2);
 }
