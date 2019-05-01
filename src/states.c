@@ -19,12 +19,24 @@ void init_lift_state(LiftState *s, const LiftGrid_t * const G) {
   }
 }
 
+/**
+ * Copies the contents of origin to dest.
+ * @param dest a pointer to a state
+ * @param origin a pointer to a state
+ * @param G a grid
+ */
 void copy_state(State* dest, const State * const origin, const Grid_t * const G) {
   for(int i = 0; i < G->arc_index; ++i) {
     (*dest)[i] = (*origin)[i];
   }
 }
 
+/**
+ * Copies the contents of origin to dest
+ * @param dest a pointer to a lift state
+ * @param origin a pointer to a lift state
+ * @param G a lift grid
+ */
 void copy_lift_state(LiftState* dest, const LiftState * const origin, const LiftGrid_t * const G) {
   for(int i = 0; i < G->sheets; ++i) {
     for(int j = 0; j < G->arc_index; ++j) {
@@ -625,6 +637,13 @@ void right_rotate(LiftStateRBTree* root, LiftStateRBTree x) {
   x->parent = y;
 }
 
+/**
+ * Returns a copy of the tree orig.
+ * @param orig a LiftStateRBTree
+ * @param parent the desired parent of the copied tree
+ * @param G a lift grid
+ * @param a LiftStateRBTree with the contents of orig.
+ */
 LiftStateRBTree copy_lift_tree(LiftStateRBTree orig, LiftStateRBTree parent, const LiftGrid_t* const G) {
   if(EMPTY_LIFT_TREE == orig) {
     return EMPTY_LIFT_TREE;
@@ -657,6 +676,14 @@ void insert_data(LiftStateRBTree* root, LiftState s, const LiftGrid_t * const G)
   insert_node(root, node, G);
 }
 
+/**
+ * As insert but attaches a tag to the state.
+ * @param root an lift RBTree
+ * @param s a lift state
+ * @param tag a non-negative int
+ * @param G a lift grid
+ * @see insert_data
+ */
 void insert_tagged_data(LiftStateRBTree* root, LiftState s, int tag, const LiftGrid_t * const G) {
   LiftStateRBTree node = malloc(sizeof(LiftStateRBTreeNode_t));
   node->data = s;
@@ -961,6 +988,13 @@ LiftStateRBTree find_node(const LiftStateRBTree* const root, LiftState s, const 
   return EMPTY_LIFT_TREE;
 }
 
+/**
+ * Gets the tag associated with the state s in root
+ * @param root a pointer to a lift rbtree
+ * @param s a lift state
+ * @param G a lift grid
+ * @return the tag associated to s in root.
+ */
 int get_tag(LiftStateRBTree *root, LiftState s, const LiftGrid_t * const G) {
   LiftStateRBTree node = find_node(root, s, G);
   if (EMPTY_LIFT_TREE == *root) {
@@ -997,6 +1031,13 @@ void free_lift_state_rbtree(LiftStateRBTree* root, const LiftGrid_t * const G) {
   *root = EMPTY_LIFT_TREE;
 }
 
+/**
+ * Allocates and returns an iterator for the lift tree root.
+ * @param root a lift rbtree
+ * @return a pointer to a lift tree iterator
+ * @warning mutating the structure of root while the iterator is
+ * in use will lead to undefined behavior
+ */
 LiftTreeIter_t * create_iter(LiftStateRBTree root) {
   LiftTreeIter_t * iter = malloc(sizeof(LiftTreeIter_t));
   
@@ -1020,6 +1061,11 @@ LiftTreeIter_t * create_iter(LiftStateRBTree root) {
   return iter;
 }
 
+/**
+ * Returns the next node of the lift rbtree
+ * @param iter a pointer to a lift tree iterator
+ * @return the next node in the iterator.
+ */
 LiftStateRBTree get_next(LiftTreeIter_t* iter) {
   LiftStateRBTree ret_val = iter->cur_node;
 
@@ -1051,14 +1097,28 @@ LiftStateRBTree get_next(LiftTreeIter_t* iter) {
   return ret_val;
 }
 
+/**
+ * Returns 1 if the iterator has another node, 0 otherwise
+ * @param iter a pointer to an iterator
+ * @return if the iterator has another node
+ */
 int has_next(LiftTreeIter_t* iter) {
   return iter->cur_node != EMPTY_LIFT_TREE;
 }
 
+/**
+ * Returns 1 if the iterator is empty, 0 otherwise
+ * @param iter a pointer to an iterator
+ * @return if the iterator is empty
+ */
 int is_empty(LiftTreeIter_t* iter) {
   return iter->cur_node == EMPTY_LIFT_TREE;
 }
 
+/**
+ * Frees the supplied iterator
+ * @param iter a pointer to an iterator
+ */
 void free_iter(LiftTreeIter_t * iter) {
   while(iter->rest != NULL) {
     LiftTreeList temp = iter->rest;
@@ -1149,6 +1209,14 @@ void s_insert_data(StateRBTree* root, State s, const Grid_t * const G) {
   s_insert_node(root, node, G);
 }
 
+/**
+ * As insert but attaches a tag to the state.
+ * @param root an RBTree
+ * @param s a state
+ * @param tag a non-negative int
+ * @param G a grid
+ * @see insert_data
+ */
 void s_insert_tagged_data(StateRBTree* root, State s, int tag, const Grid_t * const G) {
   StateRBTree node = malloc(sizeof(StateRBTreeNode_t));
   node->data = s;
@@ -1453,6 +1521,13 @@ StateRBTree s_find_node(const StateRBTree* const root, State s, const Grid_t * c
   return EMPTY_TREE;
 }
 
+/**
+ * Gets the tag associated with the state s in root
+ * @param root a pointer to a rbtree
+ * @param s a state
+ * @param G a grid
+ * @return the tag associated to s in root.
+ */
 int s_get_tag(StateRBTree* root, State s, const Grid_t * const G) {
   StateRBTree node = s_find_node(root, s, G);
   if (NULL == node || EMPTY_TREE == *root) {
@@ -1489,6 +1564,13 @@ void free_state_rbtree(StateRBTree* root) {
   *root = EMPTY_TREE;
 }
 
+/**
+ * Allocates and returns an iterator for the tree root.
+ * @param root a rbtree
+ * @return a pointer to a tree iterator
+ * @warning mutating the structure of root while the iterator is
+ * in use will lead to undefined behavior
+ */
 StateTreeIter_t * s_create_iter(StateRBTree root) {
   StateTreeIter_t * iter = malloc(sizeof(StateTreeIter_t));
   
@@ -1512,6 +1594,11 @@ StateTreeIter_t * s_create_iter(StateRBTree root) {
   return iter;
 }
 
+/**
+ * Returns the next node of the rbtree
+ * @param iter a pointer to a tree iterator
+ * @return the next node in the iterator.
+ */
 StateRBTree s_get_next(StateTreeIter_t* iter) {
   StateRBTree ret_val = iter->cur_node;
 
@@ -1543,14 +1630,28 @@ StateRBTree s_get_next(StateTreeIter_t* iter) {
   return ret_val;
 }
 
+/**
+ * Returns 1 if the iterator has another node, 0 otherwise
+ * @param iter a pointer to an iterator
+ * @return if the iterator has another node
+ */
 int s_has_next(StateTreeIter_t* iter) {
   return iter->cur_node != EMPTY_TREE;
 }
 
+/**
+ * Returns 1 if the iterator is empty, 0 otherwise
+ * @param iter a pointer to an iterator
+ * @return if the iterator is empty
+ */
 int s_is_empty(StateTreeIter_t* iter) {
   return iter->cur_node == EMPTY_TREE;
 }
 
+/**
+ * Frees the supplied iterator
+ * @param iter a pointer to an iterator
+ */
 void s_free_iter(StateTreeIter_t * iter) {
   while(iter->rest != NULL) {
     TreeList temp = iter->rest;
