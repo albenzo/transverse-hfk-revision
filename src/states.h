@@ -77,6 +77,7 @@ void free_lift_state(LiftState*, const LiftGrid_t * const G);
 
 int is_state(const State, const Grid_t *const);
 int is_lift_state(const LiftState, const LiftGrid_t * const);
+int net_jump(int, int, int, const LiftGrid_t * const);
 void mirror_lift_state(LiftState *, const LiftGrid_t * const);
 int eq_state(const State a, const State b, const Grid_t * const G);
 int eq_lift_state(const LiftState a, const LiftState b, const LiftGrid_t * const G);
