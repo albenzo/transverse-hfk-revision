@@ -763,7 +763,7 @@ EdgeList merge_edges(EdgeList list1, EdgeList list2) {
   }
 
   while(NULL != list1 && NULL != list2) {
-    if(compare_edge(list1,list2) > 0) {
+    if(compare_edge(list1,list2) < 0) {
       tail->nextEdge = list1;
       tail = tail->nextEdge;
       list1 = list1->nextEdge;
