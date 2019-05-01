@@ -475,16 +475,16 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
 int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
   LiftStateRBTree new_ins, new_outs;
   LiftStateRBTree prev_ins, prev_outs;
-  LiftStateRBTree potential_outs = LIFT_EMPTY_TREE, potential_ins = LIFT_EMPTY_TREE;
+  LiftStateRBTree potential_outs = EMPTY_LIFT_TREE, potential_ins = EMPTY_LIFT_TREE;
   int ans, prev_in_number, total_in, total_out;
   int edge_count = 0;
   int num_ins = 0;
   int num_outs = 0;
   int num_new_ins = 0;
   int num_new_outs = 0;
-  prev_outs = LIFT_EMPTY_TREE;
-  prev_ins = LIFT_EMPTY_TREE;
-  new_ins = LIFT_EMPTY_TREE;
+  prev_outs = EMPTY_LIFT_TREE;
+  prev_ins = EMPTY_LIFT_TREE;
+  new_ins = EMPTY_LIFT_TREE;
   
   LiftState s;
   init_lift_state(&s, G);
@@ -496,10 +496,10 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
 
   ans = 0;
   int current_pos = 1;
-  while (new_ins != LIFT_EMPTY_TREE && !ans) {
+  while (new_ins != EMPTY_LIFT_TREE && !ans) {
     num_new_outs = 0;
     total_in = 0;
-    new_outs = LIFT_EMPTY_TREE;
+    new_outs = EMPTY_LIFT_TREE;
     if (get_verbosity() >= VERBOSE) {
       (*print_ptr)("Gathering A_%d:\n", current_pos);
     }
@@ -515,7 +515,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
       for(potential_iter = create_iter(potential_outs); has_next(potential_iter);) {
         LiftStateRBTree potential_out = get_next(potential_iter);
         LiftStateRBTree node = find_node(&new_outs, potential_out->data, G);
-        if (LIFT_EMPTY_TREE == node) {
+        if (EMPTY_LIFT_TREE == node) {
           LiftState t;
           init_lift_state(&t, G);
           copy_lift_state(&t,&(potential_out->data),G);
@@ -541,7 +541,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
     num_ins = num_ins + total_in;
     prev_in_number = num_ins;
     num_new_ins = 0;
-    new_ins = LIFT_EMPTY_TREE;
+    new_ins = EMPTY_LIFT_TREE;
     total_out = 0;
     if (get_verbosity() >= VERBOSE) {
       (*print_ptr)("Gathering B_%d:\n", current_pos);
@@ -557,7 +557,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
       for(potential_iter = create_iter(potential_ins); has_next(potential_iter);) {
         LiftStateRBTree potential_in = get_next(potential_iter);
         LiftStateRBTree node = find_node(&new_ins, potential_in->data, G);
-        if(LIFT_EMPTY_TREE == node) {
+        if(EMPTY_LIFT_TREE == node) {
           LiftState t;
           init_lift_state(&t, G);
           copy_lift_state(&t,&(potential_in->data),G);
@@ -581,7 +581,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
     
     free_lift_state_rbtree(&prev_outs, G);
     prev_outs = new_outs;
-    new_outs = LIFT_EMPTY_TREE;
+    new_outs = EMPTY_LIFT_TREE;
     if (get_verbosity() >= VERBOSE) {
       (*print_ptr)("Contracting edges from 0 to %d:\n", prev_in_number);
     }
@@ -597,7 +597,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
       }
       free_lift_state_rbtree(&new_ins, G);
       free_lift_state_rbtree(&new_outs, G);
-      new_ins = LIFT_EMPTY_TREE;
+      new_ins = EMPTY_LIFT_TREE;
     } else if (edge_list->end <= prev_in_number) {
       ans = 0;
       if (get_verbosity() >= VERBOSE) {
@@ -607,7 +607,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
       }
       free_lift_state_rbtree(&new_ins, G);
       free_lift_state_rbtree(&new_outs, G);
-      new_ins = LIFT_EMPTY_TREE;
+      new_ins = EMPTY_LIFT_TREE;
     } else {
       num_outs = num_outs + total_out;
       if (get_verbosity() >= VERBOSE) {
@@ -1188,7 +1188,7 @@ StateList fixed_wt_rectangles_out_of(const int wt, const State incoming,
  * @return a lift state list containing lift states that can be reached from incoming that are not in prevs
  */
 static LiftStateRBTree new_lift_rectangles_out_internal(const LiftStateRBTree prevs, const LiftState incoming, const LiftGrid_t *const G, int is_mirrored) {
-  LiftStateRBTree ans = LIFT_EMPTY_TREE;
+  LiftStateRBTree ans = EMPTY_LIFT_TREE;
   double *g_Xs, *g_Os;
 
   g_Xs = malloc(sizeof(double)*G->arc_index);
@@ -1443,6 +1443,17 @@ void print_state_short(const State state, const Grid_t *const G) {
   (*print_ptr)("%d}\n", state[G->arc_index - 1]);
 }
 
+void print_lift_state(const LiftState state, const LiftGrid_t * const G) {
+  Grid_t H;
+  H.arc_index = G->arc_index;
+  H.Xs = G->Xs;
+  H.Os = G->Os;
+
+  for(int i=0; i < G->sheets; ++i) {
+    print_state(state[i], &H);
+  }
+}
+
 /**
  * Prints the permutations of a lift state
  * @param state a lift state
@@ -1516,7 +1527,7 @@ void print_states_tree(const StateRBTree states, const Grid_t * const G) {
 }
 
 void print_states_lift_tree(const LiftStateRBTree states, const LiftGrid_t * const G) {
-  if(LIFT_EMPTY_TREE == states) {
+  if(EMPTY_LIFT_TREE == states) {
     return;
   }
   print_lift_state(states->data, G);
@@ -1535,7 +1546,7 @@ void print_states_tags(const StateRBTree states, const Grid_t * const G) {
 }
 
 void print_states_lift_tags(const LiftStateRBTree states, const LiftGrid_t * const G) {
-  if(LIFT_EMPTY_TREE == states) {
+  if(EMPTY_LIFT_TREE == states) {
     return;
   }
   (*print_ptr)("%d, ", states->tag);

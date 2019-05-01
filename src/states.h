@@ -39,8 +39,8 @@ struct LiftStateRBTreeNode {
   LiftStateRBTree parent;
 };
 
-LiftStateRBTreeNode_t LIFT_NIL_NODE;
-LiftStateRBTree LIFT_EMPTY_TREE;
+LiftStateRBTreeNode_t NIL_LIFT_NODE;
+LiftStateRBTree EMPTY_LIFT_TREE;
 
 typedef struct LiftTreeListNode LiftTreeListNode_t;
 typedef LiftTreeListNode_t * LiftTreeList;
