@@ -84,9 +84,8 @@ int is_state(const State state, const Grid_t *const G) {
 int is_lift_state(const LiftState state, const LiftGrid_t * const G) {
   for(int i=0; i < G->sheets; ++i) {
     for(int j=0; j < G->arc_index; ++j) {
-      int jump = 0;
       for(int k=(j+1) % G->arc_index; k != j; k = (k+1) % G->arc_index) {
-        jump = net_jump(j, k, state[i][j], G);
+        int jump = net_jump(j, k, state[i][j], G);
         jump = jump >= 0 ? jump : (jump + G->sheets);
         if(state[i][j] == state[(i+jump) % G->sheets][k]) {
           return 0;

@@ -1486,6 +1486,26 @@ void print_states(const StateList states, const Grid_t *const G) {
   (*print_ptr)("}");
 }
 
+void print_lift_states(const LiftStateList states, const LiftGrid_t *const G) {
+  LiftStateList temp;
+  int c;
+  temp = states;
+  (*print_ptr)("{");
+  c = 0;
+  while ((temp != NULL) && c < 500000) {
+    print_lift_state_short(temp->data, G);
+    temp = temp->nextState;
+    if (temp != NULL) {
+      (*print_ptr)(",");
+    };
+    c++;
+  };
+  if (c == 500000) {
+    (*print_ptr)("...");
+  };
+  (*print_ptr)("}");
+}
+
 void print_states_tree(const StateRBTree states, const Grid_t * const G) {
   if(EMPTY_TREE == states) {
     return;
@@ -1493,6 +1513,15 @@ void print_states_tree(const StateRBTree states, const Grid_t * const G) {
   print_state_short(states->data, G);
   print_states_tree(states->left, G);
   print_states_tree(states->right, G);  
+}
+
+void print_states_lift_tree(const LiftStateRBTree states, const LiftGrid_t * const G) {
+  if(LIFT_EMPTY_TREE == states) {
+    return;
+  }
+  print_lift_state(states->data, G);
+  print_states_lift_tree(states->left, G);
+  print_states_lift_tree(states->right, G);
 }
 
 void print_states_tags(const StateRBTree states, const Grid_t * const G) {
@@ -1503,6 +1532,16 @@ void print_states_tags(const StateRBTree states, const Grid_t * const G) {
   print_state_short(states->data, G);
   print_states_tags(states->left, G);
   print_states_tags(states->right, G);
+}
+
+void print_states_lift_tags(const LiftStateRBTree states, const LiftGrid_t * const G) {
+  if(LIFT_EMPTY_TREE == states) {
+    return;
+  }
+  (*print_ptr)("%d, ", states->tag);
+  print_lift_state(states->data, G);
+  print_states_lift_tree(states->left, G);
+  print_states_lift_tree(states->right, G);
 }
 
 /**
