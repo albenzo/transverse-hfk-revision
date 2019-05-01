@@ -82,7 +82,43 @@ int is_state(const State state, const Grid_t *const G) {
  * @return 1 if the state is valid, 0 otherwise
  */
 int is_lift_state(const LiftState state, const LiftGrid_t * const G) {
+  for(int i=0; i < G->sheets; ++i) {
+    for(int j=0; j < G->arc_index; ++j) {
+      int jump = 0;
+      for(int k=(j+1) % G->arc_index; k != j; k = (k+1) % G->arc_index) {
+        jump = net_jump(j, k, state[i][j], G);
+        jump = jump >= 0 ? jump : (jump + G->sheets);
+        if(state[i][j] == state[(i+jump) % G->sheets][k]) {
+          return 0;
+        }
+      }
+    }
+  }
   return 1;
+}
+
+/**
+ * Calculates the jump going from index i to j in the grid from
+ * right to left wrapping around.
+ * @param start starting index in [0, G->arc_index)
+ * @param end final index in [0, G->arc_index)
+ * @param line the line we are on in the grid
+ * @param G a lift grid
+ * @return the jump from the current sheet to the new sheet
+ */
+int net_jump(int start, int end, int line, const LiftGrid_t * const G) {
+  int jump = 0;
+
+  for(int i=start; i != end; i = (i+1) % G->arc_index) {
+    if(G->Xs[i] >= line && G->Os[i] < line) {
+      ++jump;
+    }
+    else if (G->Os[i] >= line && G->Xs[i] < line) {
+      --jump;
+    }
+  }
+
+  return jump;
 }
 
 
