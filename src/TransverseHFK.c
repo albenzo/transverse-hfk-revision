@@ -742,6 +742,13 @@ EdgeList merge_edges(EdgeList list1, EdgeList list2) {
   EdgeList new_list;
   EdgeList tail;
 
+  if (NULL == list1) {
+    return list2;
+  }
+  else if (NULL == list2) {
+    return list1;
+  }
+
   if(compare_edge(list1,list2) < 0) {
     new_list = list1;
     tail = list1;
