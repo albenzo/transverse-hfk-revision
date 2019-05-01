@@ -727,7 +727,7 @@ int compare_edge(EdgeList e1, EdgeList e2) {
   if (e1->start == e2->start) {
     return e1->end - e2->end;
   }
-  return e1->start - e2->end;
+  return e1->start - e2->start;
 }
 
 /**
