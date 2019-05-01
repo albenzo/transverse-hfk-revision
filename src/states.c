@@ -961,7 +961,7 @@ LiftStateRBTree find_node(const LiftStateRBTree* const root, LiftState s, const 
   return EMPTY_LIFT_TREE;
 }
 
-int find_tag(LiftStateRBTree *root, LiftState s, const LiftGrid_t * const G) {
+int get_tag(LiftStateRBTree *root, LiftState s, const LiftGrid_t * const G) {
   LiftStateRBTree node = find_node(root, s, G);
   if (EMPTY_LIFT_TREE == *root) {
     return -1;
@@ -1453,7 +1453,7 @@ StateRBTree s_find_node(const StateRBTree* const root, State s, const Grid_t * c
   return EMPTY_TREE;
 }
 
-int s_find_tag(StateRBTree* root, State s, const Grid_t * const G) {
+int s_get_tag(StateRBTree* root, State s, const Grid_t * const G) {
   StateRBTree node = s_find_node(root, s, G);
   if (NULL == node || EMPTY_TREE == *root) {
     return -1;
