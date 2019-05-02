@@ -168,6 +168,7 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
     num_new_outs = 0;
     total_in = 0;
     new_outs = EMPTY_TREE;
+    EdgeList new_edges = NULL;
     if (get_verbosity() >= VERBOSE) {
       (*print_ptr)("Gathering A_%d:\n", current_pos);
     }
@@ -189,10 +190,10 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
           copy_state(&t,&(potential_out->data),G);
           num_new_outs++;
           s_insert_tagged_data(&new_outs, t, num_new_outs, G);
-          edge_list = append_ordered(num_new_outs + num_outs, present_in->tag + num_ins, edge_list);
+          new_edges = prepend_edge(num_new_outs + num_outs, present_in->tag + num_ins, new_edges);
         }
         else {
-          edge_list = append_ordered(node->tag + num_outs, present_in->tag + num_ins, edge_list);
+          new_edges = prepend_edge(node->tag + num_outs, present_in->tag + num_ins, new_edges);
         }
         edge_count++;
       }
@@ -201,7 +202,7 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
     s_free_iter(present_iter);
     
     if (get_verbosity() >= VERBOSE) {
-      print_edges(edge_list);
+      print_edges(new_edges);
       (*print_ptr)("\n");
     }
     free_state_rbtree(&prev_ins);
@@ -231,10 +232,10 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
           copy_state(&t,&(potential_in->data),G);
           num_new_ins++;
           s_insert_tagged_data(&new_ins, t, num_new_ins, G);
-          edge_list = append_ordered(present_out->tag + num_outs, num_new_ins + num_ins, edge_list);
+          new_edges = prepend_edge(present_out->tag + num_outs, num_new_ins + num_ins, new_edges);
         }
         else {
-          edge_list = append_ordered(present_out->tag + num_outs, node->tag + num_ins, edge_list);
+          new_edges = prepend_edge(present_out->tag + num_outs, node->tag + num_ins, new_edges);
         }
         edge_count++;
       }
@@ -243,17 +244,23 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
     s_free_iter(present_iter);
     
     if (get_verbosity() >= VERBOSE) {
-      print_edges(edge_list);
+      print_edges(new_edges);
       (*print_ptr)("\n");
     }
     free_state_rbtree(&prev_outs);
     prev_outs = new_outs;
     new_outs = EMPTY_TREE;
+
+    new_edges = merge_sort_edges(new_edges);
+    edge_list = merge_edges(edge_list, new_edges);
+
     if (get_verbosity() >= VERBOSE) {
+      (*print_ptr)("Full edge list:\n");
+      print_edges(edge_list);
+      (*print_ptr)("\n");
       (*print_ptr)("Contracting edges from 0 to %d:\n", prev_in_number);
     }
-
-
+    
     special_homology(0, prev_in_number, &edge_list);
     if (get_verbosity() >= VERBOSE) {
       print_edges(edge_list);
@@ -355,6 +362,7 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
     num_new_outs = 0;
     total_in = 0;
     new_outs = EMPTY_TREE;
+    EdgeList new_edges = NULL;
     if (get_verbosity() >= VERBOSE) {
       (*print_ptr)("Gathering A_%d:\n", current_pos);
     }
@@ -376,10 +384,10 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
           copy_state(&t,&(potential_out->data),G);
           num_new_outs++;
           s_insert_tagged_data(&new_outs, t, num_new_outs, G);
-          edge_list = append_ordered(num_new_outs + num_outs, present_in->tag + num_ins, edge_list);
+          new_edges = prepend_edge(num_new_outs + num_outs, present_in->tag + num_ins, new_edges);
         }
         else {
-          edge_list = append_ordered(node->tag + num_outs, present_in->tag + num_ins, edge_list);
+          new_edges = prepend_edge(node->tag + num_outs, present_in->tag + num_ins, new_edges);
         }
         edge_count++;
       }
@@ -388,7 +396,7 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
     s_free_iter(present_iter);
     
     if (get_verbosity() >= VERBOSE) {
-      print_edges(edge_list);
+      print_edges(new_edges);
       (*print_ptr)("\n");
     }
     free_state_rbtree(&prev_ins);
@@ -418,10 +426,10 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
           copy_state(&t,&(potential_in->data),G);
           num_new_ins++;
           s_insert_tagged_data(&new_ins, t, num_new_ins, G);
-          edge_list = append_ordered(present_out->tag + num_outs, num_new_ins + num_ins, edge_list);
+          new_edges = prepend_edge(present_out->tag + num_outs, num_new_ins + num_ins, new_edges);
         }
         else {
-          edge_list = append_ordered(present_out->tag + num_outs, node->tag + num_ins, edge_list);
+          new_edges = prepend_edge(present_out->tag + num_outs, node->tag + num_ins, new_edges);
         }
         edge_count++;
       }
@@ -430,15 +438,24 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
     s_free_iter(present_iter);
     
     if (get_verbosity() >= VERBOSE) {
-      print_edges(edge_list);
+      print_edges(new_edges);
       (*print_ptr)("\n");
     }
     free_state_rbtree(&prev_outs);
     prev_outs = new_outs;
     new_outs = EMPTY_TREE;
+
     if (get_verbosity() >= VERBOSE) {
+      (*print_ptr)("Full edge list:\n");
+      print_edges(edge_list);
+      (*print_ptr)("\n");
       (*print_ptr)("Contracting edges from 0 to %d:\n", prev_in_number);
     }
+
+    
+    new_edges = merge_sort_edges(new_edges);
+    edge_list = merge_edges(edge_list, new_edges);
+    
     special_homology(0, prev_in_number, &edge_list);
     
     if (get_verbosity() >= VERBOSE) {
@@ -515,6 +532,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
     num_new_outs = 0;
     total_in = 0;
     new_outs = EMPTY_LIFT_TREE;
+    EdgeList new_edges = NULL;
     if (get_verbosity() >= VERBOSE) {
       (*print_ptr)("Gathering A_%d:\n", current_pos);
     }
@@ -537,10 +555,10 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
           copy_lift_state(&t,&(potential_out->data),G);
           num_new_outs++;
           insert_tagged_data(&new_outs, t, num_new_outs, G);
-          edge_list = append_ordered(num_new_outs + num_outs, present_in->tag + num_ins, edge_list);
+          new_edges = prepend_edge(num_new_outs + num_outs, present_in->tag + num_ins, new_edges);
         }
         else {
-          edge_list = append_ordered(node->tag + num_outs, present_in->tag + num_ins, edge_list);
+          new_edges = prepend_edge(node->tag + num_outs, present_in->tag + num_ins, new_edges);
         }
         edge_count++;
       }
@@ -549,7 +567,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
     free_iter(present_iter);
     
     if (get_verbosity() >= VERBOSE) {
-      print_edges(edge_list);
+      print_edges(new_edges);
       (*print_ptr)("\n");
     }
     free_lift_state_rbtree(&prev_ins, G);
@@ -580,10 +598,10 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
           copy_lift_state(&t,&(potential_in->data),G);
           num_new_ins++;
           insert_tagged_data(&new_ins, t, num_new_ins, G);
-          edge_list = append_ordered(present_out->tag + num_outs, num_new_ins + num_ins, edge_list);
+          new_edges = prepend_edge(present_out->tag + num_outs, num_new_ins + num_ins, new_edges);
         }
         else {
-          edge_list = append_ordered(present_out->tag + num_outs, node->tag + num_ins, edge_list);
+          new_edges = prepend_edge(present_out->tag + num_outs, node->tag + num_ins, new_edges);
         }
         edge_count++;
       }
@@ -592,16 +610,24 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
     free_iter(present_iter);
     
     if (get_verbosity() >= VERBOSE) {
-      print_edges(edge_list);
+      print_edges(new_edges);
       (*print_ptr)("\n");
     }
     
     free_lift_state_rbtree(&prev_outs, G);
     prev_outs = new_outs;
     new_outs = EMPTY_LIFT_TREE;
+
     if (get_verbosity() >= VERBOSE) {
+      (*print_ptr)("Full edge list:\n");
+      print_edges(edge_list);
+      (*print_ptr)("\n");
       (*print_ptr)("Contracting edges from 0 to %d:\n", prev_in_number);
     }
+
+    new_edges = merge_sort_edges(new_edges);
+    edge_list = merge_edges(edge_list, new_edges);
+    
     special_homology(0, prev_in_number, &edge_list);
     if (get_verbosity() >= VERBOSE) {
       print_edges(edge_list);
@@ -694,6 +720,124 @@ EdgeList create_edge(const int a, const int b) {
   new_ptr->end = b;
   new_ptr->nextEdge = NULL;
   return (new_ptr);
+}
+
+/**
+ * Returns a number less than 0, equal to 0, or greater than zero
+ * if respectively the head of e1 is less than, equal to, or greater than
+ * the head of e2 in dictionary order by start then end.
+ * @param e1 a nonempty edge list
+ * @param e2 a nonempty edge list
+ * @return a comparison of the heads of e1 and e2
+ */
+int compare_edge(EdgeList e1, EdgeList e2) {
+  if (e1->start == e2->start) {
+    return e1->end - e2->end;
+  }
+  return e1->start - e2->start;
+}
+
+/**
+ * Merges two sorted ascending order edge lists into an ascending order sorted
+ * edge list
+ * @param list1 a sorted edge list
+ * @param list2 a sorted edge list
+ * @return a sorted edge list
+ * @warning destructively modifies list1 and list2
+ */
+EdgeList merge_edges(EdgeList list1, EdgeList list2) {
+  EdgeList new_list;
+  EdgeList tail;
+
+  if (NULL == list1) {
+    return list2;
+  }
+  else if (NULL == list2) {
+    return list1;
+  }
+
+  if(compare_edge(list1,list2) < 0) {
+    new_list = list1;
+    tail = list1;
+    list1 = list1->nextEdge;
+    tail->nextEdge = NULL;
+  }
+  else {
+    new_list = list2;
+    tail = list2;
+    list2 = list2->nextEdge;
+    tail->nextEdge = NULL;
+  }
+
+  while(NULL != list1 && NULL != list2) {
+    if(compare_edge(list1,list2) < 0) {
+      tail->nextEdge = list1;
+      tail = tail->nextEdge;
+      list1 = list1->nextEdge;
+      tail->nextEdge = NULL;
+    }
+    else {
+      tail->nextEdge = list2;
+      tail = tail->nextEdge;
+      list2 = list2->nextEdge;
+      tail->nextEdge = NULL;
+    }
+  }
+
+  if(NULL != list1) {
+    tail->nextEdge = list1;
+  }
+  else {
+    tail->nextEdge = list2;
+  }
+  
+  return new_list;
+}
+
+/**
+ * Sorts an edge list into ascending order in dictionary order by
+ * start and then end
+ * @param an edge list
+ * @return the sorted version of edge_list
+ * @warning destructively modifies edge_list
+ */
+EdgeList merge_sort_edges(EdgeList edge_list) {
+  EdgeList list1, list2, tail1, tail2;
+
+  if(NULL == edge_list || NULL == edge_list->nextEdge) {
+    return edge_list;
+  }
+
+  list1 = edge_list;
+  tail1 = edge_list;
+  edge_list = edge_list->nextEdge;
+  tail1->nextEdge = NULL;
+  list2 = edge_list;
+  tail2 = edge_list;
+  edge_list = edge_list->nextEdge;
+  tail2->nextEdge = NULL;
+
+  int which_list = 1;
+  while(NULL != edge_list) {
+    if (which_list) {
+      tail1->nextEdge = edge_list;
+      tail1 = tail1->nextEdge;
+      edge_list = edge_list->nextEdge;
+      tail1->nextEdge = NULL;
+    }
+    else {
+      tail2->nextEdge = edge_list;
+      tail2 = tail2->nextEdge;
+      edge_list = edge_list->nextEdge;
+      tail2->nextEdge = NULL;
+    }
+    which_list = !which_list;
+  }
+
+  list1 = merge_sort_edges(list1);
+  list2 = merge_sort_edges(list2);
+  
+  return merge_edges(list1, list2);
 }
 
 /**
