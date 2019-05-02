@@ -257,9 +257,7 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
     if (get_verbosity() >= VERBOSE) {
       (*print_ptr)("Full edge list:\n");
       print_edges(edge_list);
-    }
-
-    if (get_verbosity() >= VERBOSE) {
+      (*print_ptr)("\n");
       (*print_ptr)("Contracting edges from 0 to %d:\n", prev_in_number);
     }
     
@@ -398,7 +396,7 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
     s_free_iter(present_iter);
     
     if (get_verbosity() >= VERBOSE) {
-      print_edges(edge_list);
+      print_edges(new_edges);
       (*print_ptr)("\n");
     }
     free_state_rbtree(&prev_ins);
@@ -440,16 +438,21 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
     s_free_iter(present_iter);
     
     if (get_verbosity() >= VERBOSE) {
-      print_edges(edge_list);
+      print_edges(new_edges);
       (*print_ptr)("\n");
     }
     free_state_rbtree(&prev_outs);
     prev_outs = new_outs;
     new_outs = EMPTY_TREE;
+
     if (get_verbosity() >= VERBOSE) {
+      (*print_ptr)("Full edge list:\n");
+      print_edges(edge_list);
+      (*print_ptr)("\n");
       (*print_ptr)("Contracting edges from 0 to %d:\n", prev_in_number);
     }
 
+    
     new_edges = merge_sort_edges(new_edges);
     edge_list = merge_edges(edge_list, new_edges);
     
@@ -564,7 +567,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
     free_iter(present_iter);
     
     if (get_verbosity() >= VERBOSE) {
-      print_edges(edge_list);
+      print_edges(new_edges);
       (*print_ptr)("\n");
     }
     free_lift_state_rbtree(&prev_ins, G);
@@ -607,14 +610,18 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
     free_iter(present_iter);
     
     if (get_verbosity() >= VERBOSE) {
-      print_edges(edge_list);
+      print_edges(new_edges);
       (*print_ptr)("\n");
     }
     
     free_lift_state_rbtree(&prev_outs, G);
     prev_outs = new_outs;
     new_outs = EMPTY_LIFT_TREE;
+
     if (get_verbosity() >= VERBOSE) {
+      (*print_ptr)("Full edge list:\n");
+      print_edges(edge_list);
+      (*print_ptr)("\n");
       (*print_ptr)("Contracting edges from 0 to %d:\n", prev_in_number);
     }
 
