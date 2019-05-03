@@ -177,7 +177,6 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
     StateTreeIter_t * present_iter;
     for(present_iter = s_create_iter(new_ins); s_has_next(present_iter);) {
       StateRBTree present_in = s_get_next(present_iter);
-      free_state_rbtree(&potential_outs);
       total_in++;
       potential_outs = new_rectangles_into(prev_outs, present_in->data, G);
 
@@ -197,6 +196,8 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
         }
         edge_count++;
       }
+
+      free_state_rbtree(&potential_outs);
       s_free_iter(potential_iter);
     }
     s_free_iter(present_iter);
@@ -219,7 +220,6 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
     // Build B_i by finding states out of A_i that are not in B_(i-1)
     for(present_iter = s_create_iter(new_outs); s_has_next(present_iter);) {
       StateRBTree present_out = s_get_next(present_iter);
-      free_state_rbtree(&potential_ins);
       total_out++;
       potential_ins = new_rectangles_out_of(prev_ins, present_out->data, G);
 
@@ -239,6 +239,8 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
         }
         edge_count++;
       }
+
+      free_state_rbtree(&potential_ins);
       s_free_iter(potential_iter);
     }
     s_free_iter(present_iter);
@@ -275,6 +277,8 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
       }
       free_state_rbtree(&new_ins);
       free_state_rbtree(&new_outs);
+      free_state_rbtree(&prev_ins);
+      free_state_rbtree(&prev_outs);
     } else if (edge_list->end <= prev_in_number) {
       // If edges out of A_0 cannot be removed anymore (sentinal will never vanish) init is not null-homologous
       ans = 0;
@@ -285,6 +289,8 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
       }
       free_state_rbtree(&new_ins);
       free_state_rbtree(&new_outs);
+      free_state_rbtree(&prev_ins);
+      free_state_rbtree(&prev_outs);
     } else {
       num_outs = num_outs + total_out;
       if (get_verbosity() >= VERBOSE) {
@@ -371,7 +377,6 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
     StateTreeIter_t * present_iter;
     for(present_iter = s_create_iter(new_ins); s_has_next(present_iter);) {
       StateRBTree present_in = s_get_next(present_iter);
-      free_state_rbtree(&potential_outs);
       total_in++;
       potential_outs = new_rectangles_into(prev_outs, present_in->data, G);
 
@@ -391,6 +396,8 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
         }
         edge_count++;
       }
+
+      free_state_rbtree(&potential_outs);
       s_free_iter(potential_iter);
     }
     s_free_iter(present_iter);
@@ -413,7 +420,6 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
     // Build B_i by finding states out of A_i that are not in B_(i-1)
     for(present_iter = s_create_iter(new_outs); s_has_next(present_iter);) {
       StateRBTree present_out = s_get_next(present_iter);
-      free_state_rbtree(&potential_ins);
       total_out++;
       potential_ins = new_rectangles_out_of(prev_ins, present_out->data, G);
 
@@ -433,6 +439,8 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
         }
         edge_count++;
       }
+
+      free_state_rbtree(&potential_ins);
       s_free_iter(potential_iter);
     }
     s_free_iter(present_iter);
@@ -470,6 +478,8 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
       }
       free_state_rbtree(&new_ins);
       free_state_rbtree(&new_outs);
+      free_state_rbtree(&prev_ins);
+      free_state_rbtree(&prev_outs);
     } else if (edge_list->end <= prev_in_number) {
       // If edges out of A_0 cannot be removed anymore (sentinal will never vanish) init is not null-homologous
       ans = 0;
@@ -480,6 +490,8 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
       }
       free_state_rbtree(&new_ins);
       free_state_rbtree(&new_outs);
+      free_state_rbtree(&prev_ins);
+      free_state_rbtree(&prev_outs);
     } else {
       num_outs = num_outs + total_out;
       if (get_verbosity() >= VERBOSE) {
@@ -541,7 +553,6 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
     LiftTreeIter_t * present_iter;
     for(present_iter = create_iter(new_ins); has_next(present_iter);) {
       LiftStateRBTree present_in = get_next(present_iter);
-      free_lift_state_rbtree(&potential_outs, G);
       total_in++;
       potential_outs = new_lift_rectangles_into(prev_outs, present_in->data, G);
 
@@ -562,6 +573,8 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
         }
         edge_count++;
       }
+
+      free_lift_state_rbtree(&potential_outs, G);
       free_iter(potential_iter);
     }
     free_iter(present_iter);
@@ -584,7 +597,6 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
     // Build B_i by finding states out of A_i that are not in B_(i-1)
     for(present_iter = create_iter(new_outs); has_next(present_iter);) {
       LiftStateRBTree present_out = get_next(present_iter);
-      free_lift_state_rbtree(&potential_ins, G);
       total_out++;
       potential_ins = new_lift_rectangles_out_of(prev_ins, present_out->data, G);
 
@@ -605,6 +617,8 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
         }
         edge_count++;
       }
+
+      free_lift_state_rbtree(&potential_ins, G);
       free_iter(potential_iter);
     }
     free_iter(present_iter);
@@ -642,6 +656,8 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
       }
       free_lift_state_rbtree(&new_ins, G);
       free_lift_state_rbtree(&new_outs, G);
+      free_lift_state_rbtree(&prev_ins, G);
+      free_lift_state_rbtree(&prev_outs, G);
       new_ins = EMPTY_LIFT_TREE;
     } else if (edge_list->end <= prev_in_number) {
       // If edges out of A_0 cannot be removed anymore (sentinal will never vanish) init is not null-homologous
@@ -653,6 +669,8 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
       }
       free_lift_state_rbtree(&new_ins, G);
       free_lift_state_rbtree(&new_outs, G);
+      free_lift_state_rbtree(&prev_ins, G);
+      free_lift_state_rbtree(&prev_outs, G);
       new_ins = EMPTY_LIFT_TREE;
     } else {
       num_outs = num_outs + total_out;
@@ -1286,6 +1304,8 @@ StateRBTree new_rectangles_into(const StateRBTree prevs, const State incoming,
     };
     LL++;
   };
+
+  free(temp_state);
   return ans;
 }
 
@@ -1518,6 +1538,8 @@ LiftStateRBTree new_lift_rectangles_into(const LiftStateRBTree prevs, const Lift
   mirror_lift_state(&incoming_mirror, G);
   LiftStateRBTree ans = new_lift_rectangles_out_internal(prevs, incoming_mirror, G_mirror, 1);
 
+  free(G_mirror->Xs);
+  free(G_mirror->Os);
   free(G_mirror);
   free_lift_state(&incoming_mirror, G);
 
