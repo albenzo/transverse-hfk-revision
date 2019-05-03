@@ -1001,25 +1001,20 @@ EdgeList add_mod_two_lists(const VertexList parents, const VertexList kids,
  * @param edge_list the EdgeList
  */
 void special_homology(const int init, const int final, EdgeList *edge_list) {
-  int i, j;
   EdgeList temp;
-  i = 0;
-  j = 0;
   temp = *edge_list;
   while ((*edge_list != NULL) && (temp != NULL)) {
     while ((temp != NULL) && (temp->start == init)) {
       temp = temp->nextEdge;
-    };
+    }
     while ((temp != NULL) && (temp->end > final)) {
       temp = temp->nextEdge;
-    };
-    i++;
-    j++;
+    }
     if (temp != NULL) {
       contract(temp->start, temp->end, edge_list);
       temp = *edge_list;
-    };
-  };
+    }
+  }
 }
 
 /**
