@@ -618,15 +618,16 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
     prev_outs = new_outs;
     new_outs = EMPTY_LIFT_TREE;
 
+    new_edges = merge_sort_edges(new_edges);
+    edge_list = merge_edges(edge_list, new_edges);
+
+
     if (get_verbosity() >= VERBOSE) {
       (*print_ptr)("Full edge list:\n");
       print_edges(edge_list);
       (*print_ptr)("\n");
       (*print_ptr)("Contracting edges from 0 to %d:\n", prev_in_number);
     }
-
-    new_edges = merge_sort_edges(new_edges);
-    edge_list = merge_edges(edge_list, new_edges);
     
     special_homology(0, prev_in_number, &edge_list);
     if (get_verbosity() >= VERBOSE) {
