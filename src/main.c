@@ -229,7 +229,7 @@ int main(int argc, char **argv) {
 
     free(G.Xs);
     free(G.Os);
-    free(UR_lift);
+    free_lift_state(&UR_lift, &G);
     
     exit(0);
   }

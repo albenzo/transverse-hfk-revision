@@ -896,13 +896,16 @@ void delete_fixup(LiftStateRBTree* root, LiftStateRBTree x) {
 }
 
 /**
- * Deletes the supplied lift state once from root.
+ * Deletes and frees the supplied lift state once from root.
  * @param root the root of the RBTree
  * @param s the lift state to be deleted
  * @param G a lift grid
  */
 void delete_data(LiftStateRBTree* root, LiftState s, const LiftGrid_t * const G) {
-  delete_node(root, find_node(root, s, G));
+  LiftStateRBTree node = find_node(root, s, G);
+  delete_node(root, node);
+  free_lift_state(&(node->data),G);
+  free(node);
 }
 
 /**
@@ -1429,13 +1432,16 @@ void s_delete_fixup(StateRBTree* root, StateRBTree x) {
 }
 
 /**
- * Deletes the supplied lift state once from root.
+ * Deletes and frees the supplied lift state once from root.
  * @param root the root of the RBTree
  * @param s the lift state to be deleted
  * @param G a lift grid
  */
 void s_delete_data(StateRBTree* root, State s, const Grid_t * const G) {
-  s_delete_node(root, s_find_node(root, s, G));
+  StateRBTree node = s_find_node(root, s, G);
+  s_delete_node(root, node);
+  free(node->data);
+  free(node);
 }
 
 /**
