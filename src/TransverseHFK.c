@@ -1051,18 +1051,17 @@ EdgeList append_ordered(const int a, const int b, const EdgeList edges) {
 }
 
 /**
- * contracts the edge specified by the input within global_edge_list
+ * contracts the edge specified by the input within edge_list
  * @param a the parent vertex of the edge
  * @param b the child vertex of the edge
  * @param edge_list the EdgeList
  */
 void contract(const int a, const int b, EdgeList *edge_list) {
-  // Initialization
   EdgeList temp;
   EdgeList prev;
   VertexList parents, kids, temp_kids, temp_parents;
   VertexList last_parent, last_kid;
-  prev = *edge_list; // Multiple equal initializations
+  prev = *edge_list;
   parents = NULL;
   kids = NULL;
   temp_kids = NULL;
