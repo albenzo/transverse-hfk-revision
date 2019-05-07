@@ -212,14 +212,23 @@ int main(int argc, char **argv) {
       }
     }
 
+    if(QUIET <= get_verbosity()) {
+      Grid_t H;
+      H.arc_index = G.arc_index;
+      H.Xs = G.Xs;
+      H.Os = G.Os;
+
+      print_grid(&H);
+      print_tb_r(&H);
+      printf("\n");
+  }
+
     if (QUIET <= get_verbosity()) {
       printf("Calculating graph for lifted invariant.\n");
-      // These print statements are wrong
-      //print_state(G.Xs, &G);
-      //print_self_link(&G);
+      print_lift_state(UR_lift, &G);
+      printf("\n");
     }
 
-    // Change the content of these print statements
     if (null_homologous_lift(UR_lift, &G)) {
       printf("theta_%d is null-homologous\n", G.sheets);
     }
