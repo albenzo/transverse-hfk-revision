@@ -52,6 +52,7 @@ void print_state(const State, const Grid_t *const);
 void print_lift_state(const LiftState, const LiftGrid_t * const);
 void print_state_short(const State, const Grid_t *const);
 void print_lift_state_short(const LiftState, const LiftGrid_t * const);
+void print_lift_state_long(const LiftState, const LiftGrid_t * const);
 void print_states(const StateList, const Grid_t *const);
 void print_lift_states(const LiftStateList, const LiftGrid_t * const);
 void print_states_tree(const StateRBTree, const Grid_t * const);

@@ -1630,10 +1630,12 @@ void print_state_short(const State state, const Grid_t *const G) {
 }
 
 /**
- * Calls print_state on each sheet of the lift state
+ * Calls print_state on the first sheet and print_state_short and the rest of
+ * the sheets of the lift state
  * @param state a lift state
  * @param G a lift grid
  * @see print_state
+ * @see print_state_short
  */
 void print_lift_state(const LiftState state, const LiftGrid_t * const G) {
   Grid_t H;
@@ -1641,8 +1643,12 @@ void print_lift_state(const LiftState state, const LiftGrid_t * const G) {
   H.Xs = G->Xs;
   H.Os = G->Os;
 
-  for(int i=0; i < G->sheets; ++i) {
-    print_state(state[i], &H);
+  (*print_ptr)("Sheet 0:\n");
+  print_state(state[0], &H);
+
+  for(int i=1; i < G->sheets; ++i) {
+    (*print_ptr)("Sheet %d: ", i);
+    print_state_short(state[i], &H);
   }
 }
 
@@ -1658,7 +1664,26 @@ void print_lift_state_short(const LiftState state, const LiftGrid_t * const G) {
   G_p.Xs = G->Xs;
   G_p.Os = G->Os;
   for(int i = 0; i < G->sheets; ++i) {
+    (*print_ptr)("Sheet %d: ", i);
     print_state_short(state[i], &G_p);
+  }
+}
+
+/**
+ * Prints each sheet of a lift state using print_state
+ * @param state a lift state
+ * @param G a lift grid
+ * @see print_state
+ */
+void print_lift_state_long(const LiftState state, const LiftGrid_t * const G) {
+  Grid_t H;
+  H.arc_index = G->arc_index;
+  H.Xs = G->Xs;
+  H.Os = G->Os;
+  
+  for(int i=0; i < G->sheets; ++i) {
+    (*print_ptr)("Sheet %d:\n", i);
+    print_state(state[i], &H);
   }
 }
 
