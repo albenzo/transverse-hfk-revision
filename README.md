@@ -57,7 +57,7 @@ $ transverseHFK -i 10 -X [10,5,8,6,3,7,2,4,9,1] -O [7,9,3,4,5,1,6,10,2,8]
     D1[UR] is NOT null-homologous
 ```
 
-## tHFK
+## transHFK
 ### Usage
 To build and install the python library run
 ```
@@ -71,20 +71,20 @@ $ make python-install
 Then it can be used by
 ```
 $ python
->>> from tHFK import *
+>>> from transHFK import *
 ```
-which exposes the `tHFK` and `Tk_tHFK` classes as well as
+which exposes the `transHFK` and `Tk_transHFK` classes as well as
 the `null_homologous_D0Q` and `null_homologous_D1Q` methods.
 Usage information can be found via `help(<class or method name>)`
 
 ### Gridlink
-To integrate tHFK with gridlink run the following command in the terminal
+To integrate transHFK with gridlink run the following command in the terminal
 
 ```
 patch <path to gridlink/gridlink.py> gridlink.patch
 ```
 
-Then after installing gridlink via setup.py as normal and installing the tHFK python
+Then after installing gridlink via setup.py as normal and installing the transHFK python
 library there will be a menu that allows you to run the transverseHFK 
 invariants.
 

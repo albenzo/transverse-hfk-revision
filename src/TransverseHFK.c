@@ -18,15 +18,29 @@
 
 printf_t print_ptr = printf;
 static int verbosity = SILENT;
-static LiftStateList new_lift_rectangles_out_internal(const LiftStateList, const LiftState, const LiftGrid_t * const, int);
+static LiftStateRBTree new_lift_rectangles_out_internal(const LiftStateRBTree, const LiftState, const LiftGrid_t * const, int);
 
+/**
+ * Sets the print function to the passed in function pointer
+ * @param print_fn a function pointer to a print function with the
+ * same type as printf
+ */
 void set_print_fn(printf_t print_fn) {
   print_ptr = print_fn;
 }
 
+/**
+ * Returns the current level of verbosity
+ * @return the verbosity
+ */
 int get_verbosity(){
   return verbosity;
 }
+
+/**
+ * Set the level of verbosity to SILENT, QUIET, or VERBOSE
+ * @param val the verbosity level
+ */
 void set_verbosity(const int val) {
   verbosity = val;
 }
@@ -78,17 +92,38 @@ int min(const int a, const int b) {
   }
 }
 
+
+/**
+ * Creates a new state equivalent to incoming with indices x1 and x2 swapped
+ * @param x1 a non negative int below the arc index of G
+ * @param x2 a non negative int below the arc index of G
+ * @param incoming a permutation
+ * @param G a grid
+ * @return a new state equivalent to incoming with indices x1 and x2 swapped
+ */
+State swap_cols(const int x1, const int x2, const State incoming, const Grid_t *const G) {
+  State ans = malloc(sizeof(char)*G->arc_index);
+
+  for(int i=0; i< G->arc_index; ++i) {
+    ans[i] = incoming[i];
+  }
+  ans[x1] = incoming[x2];
+  ans[x2] = incoming[x1];
+
+  return ans;
+}
+
 /**
  * Returns a single element statelist containing
  * the permutation incoming with x1 and x2 swapped
- * @param x1 an integer between 0 and MAX_INDEX
- * @param x2 an integer between 0 and MAX_INDEX
+ * @param x1 a non negative int below the arc index of G
+ * @param x2 a non negative int below the arc index of G
  * @param incoming a permutation
  * @param G working grid
  * @return a single element StateList containing a copy of
  * the permutation incoming with entries x1 and x2 swapped
  */
-StateList swap_cols(const int x1, const int x2, const State incoming,
+StateList swap_cols_list(const int x1, const int x2, const State incoming,
                     const Grid_t *const G) {
   StateList ans;
   int i;
@@ -113,215 +148,157 @@ StateList swap_cols(const int x1, const int x2, const State incoming,
  * @return nonzero if nullhomologous and zero otherwise.
  */
 int null_homologous_D0Q(const State init, const Grid_t *const G) {
-  // Initialization of variables
-  StateList new_ins, new_outs, last_new_in, last_new_out, temp;
-  StateList prev_ins, prev_outs;
-  StateList really_new_outs = NULL, really_new_ins = NULL;
-  int in_number, ans, prev_in_number;
-  int out_number;
-  int i;
+  StateRBTree new_ins, new_outs;
+  StateRBTree prev_ins, prev_outs;
+  StateRBTree potential_outs = EMPTY_TREE, potential_ins = EMPTY_TREE;
+  int ans, prev_in_number, total_in, total_out;
   int edge_count = 0;
   int num_ins = 0;
   int num_outs = 0;
   int num_new_ins = 0;
   int num_new_outs = 0;
-  StateList present_in, present_out;
-  // Creates first edge for edge list pointing from A_0 to init
+  prev_outs = EMPTY_TREE;
+  prev_ins = EMPTY_TREE;
+  new_ins = EMPTY_TREE;
+
+  State s = malloc(sizeof(char) * G->arc_index);
+  copy_state(&s, &init, G);
+
+  // Create sentinal edge from A_0
+  s_insert_tagged_data(&new_ins, s, 1, G);
   EdgeList edge_list = prepend_edge(0, 1, NULL);
-  // More initialization
-  prev_outs = NULL;
-  prev_ins = NULL;
-  new_ins = malloc(sizeof(StateNode_t));
-  new_ins->data = malloc(sizeof(char) * G->arc_index);
-  i = 0;
-  // sets new_ins to be initial state (IE initialize B_0)
-  while (i < G->arc_index) {
-    // sets new_ins to be init state
-    new_ins->data[i] = init[i];
-    i++;
-  };
-  new_ins->nextState = NULL;
-  // This loop goes until either new_ins is empty or we have an answer(ans)
-  // The ith loop creates the A_i and B_i sets from A_i-1 and B_i-1 and then
-  // contracts edges
-  // new_ins is empty implies that there is no more contracting to affect A_0
-  // connected edges
-  //
-  // THIS IS THE ACTUAL ALGORITHM LOOP
+  
   ans = 0;
   int current_pos = 1;
-  while (new_ins != NULL && !ans) {
-    // sets the present_in states to current working states (B_i-1)
-    present_in = new_ins;
-    // resets variables from last loop
-    in_number = 0;
+  while (new_ins != EMPTY_TREE && !ans) {
     num_new_outs = 0;
-    new_outs = NULL;
-    // loop until there are no in states left to look at in B_i-1
-    // this is to make (A_i)
+    total_in = 0;
+    new_outs = EMPTY_TREE;
+    EdgeList new_edges = NULL;
     if (get_verbosity() >= VERBOSE) {
       (*print_ptr)("Gathering A_%d:\n", current_pos);
     }
-    while (present_in != NULL) {
-      free_state_list(really_new_outs);
-      in_number++;
-      // sets really_new_outs to be the states with rectangles pointing into
-      // present_in (B_i-1)
-      // that is not in prev_outs (A_i-1) (this is part of A_i coming from the
-      // current
-      // working state, present_in)
-      really_new_outs = new_rectangles_into(prev_outs, present_in->data, G);
-      // loop through all really_new_outs
-      while (really_new_outs != NULL) {
-        // get position of really_new_outs in new_outs (ie position of current
-        // A_i state in the set of all A_i if it is not in it yet it sets
-        // to 0)
-        out_number = get_number(really_new_outs->data, new_outs, G);
-        // if really_new_outs state is not in list this adds it to
-        // the statelist new_outs
-        if (out_number == 0) {
-          // creates new_outs if empty
-          if (num_new_outs == 0) {
-            new_outs = really_new_outs;
-            really_new_outs = really_new_outs->nextState;
-            new_outs->nextState = NULL;
-            last_new_out = new_outs;
-            num_new_outs++;
-            out_number = num_new_outs;
-          } else {
-            // appends to new_outs if non-empty
-            last_new_out->nextState = really_new_outs;
-            really_new_outs = really_new_outs->nextState;
-            last_new_out = last_new_out->nextState;
-            last_new_out->nextState = NULL;
-            num_new_outs++;
-            out_number = num_new_outs;
-          };
-        } else {
-          // removing data and skipping state if its already in the list
-          temp = really_new_outs;
-          really_new_outs = really_new_outs->nextState;
-          free(temp->data);
-          free(temp);
-        }
-        // Appends edge to edge_list and then increments edge count
-        edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
-                                   edge_list);
 
+    // Build A_i by looking for states into B_(i-1) that are not in A_(i-1)
+    StateTreeIter_t * present_iter;
+    for(present_iter = s_create_iter(new_ins); s_has_next(present_iter);) {
+      StateRBTree present_in = s_get_next(present_iter);
+      total_in++;
+      potential_outs = new_rectangles_into(prev_outs, present_in->data, G);
+
+      StateTreeIter_t * potential_iter;
+      for(potential_iter = s_create_iter(potential_outs); s_has_next(potential_iter);) {
+        StateRBTree potential_out = s_get_next(potential_iter);
+        StateRBTree node = s_find_node(&new_outs, potential_out->data, G);
+        if(EMPTY_TREE == node) {
+          State t = malloc(sizeof(char)*G->arc_index);
+          copy_state(&t,&(potential_out->data),G);
+          num_new_outs++;
+          s_insert_tagged_data(&new_outs, t, num_new_outs, G);
+          new_edges = prepend_edge(num_new_outs + num_outs, present_in->tag + num_ins, new_edges);
+        }
+        else {
+          new_edges = prepend_edge(node->tag + num_outs, present_in->tag + num_ins, new_edges);
+        }
         edge_count++;
       }
-      // goes to the next state in B_i-1 to look for rectangles into it
-      present_in = present_in->nextState;
-    };
+
+      free_state_rbtree(&potential_outs);
+      s_free_iter(potential_iter);
+    }
+    s_free_iter(present_iter);
+    
     if (get_verbosity() >= VERBOSE) {
-      print_edges(edge_list);
+      print_edges(new_edges);
       (*print_ptr)("\n");
     }
-    // Initialize things to calculate B_i from A_i
-    free_state_list(prev_ins);
+    free_state_rbtree(&prev_ins);
     prev_ins = new_ins;
-    i = 1;
-    num_ins = num_ins + in_number;
+    num_ins = num_ins + total_in;
     prev_in_number = num_ins;
     num_new_ins = 0;
-    new_ins = NULL;
-    out_number = 0;
-    present_out = new_outs;
-    // loop until there is no states left to look at in A_i to make B_i
+    new_ins = EMPTY_TREE;
+    total_out = 0;
     if (get_verbosity() >= VERBOSE) {
       (*print_ptr)("Gathering B_%d:\n", current_pos);
     }
-    while (present_out != NULL) {
-      out_number++;
-      // set really_new_ins to be states with rectangles pointing into them from
-      // the current state in present_out (ie really_new_ins is the part of B_i
-      // that the current state in A_i has a recangle pointing to)
-      really_new_ins = new_rectangles_out_of(prev_ins, present_out->data, G);
-      // loops through really_new_ins
-      while (really_new_ins != NULL) {
-        // Checks position of current really_new_ins state in new_ins (B_i),
-        // initializes to 0 if it is not yet in the set
-        in_number = get_number(really_new_ins->data, new_ins, G);
-        // if really_new_ins state is not in new_ins this checks to add it to
-        // new_ins (B_i)
-        if (in_number == 0) {
-          if (num_new_ins == 0) {
-            // creats new_ins if it does not yet exist
-            new_ins = really_new_ins;
-            really_new_ins = really_new_ins->nextState;
-            new_ins->nextState = NULL;
-            last_new_in = new_ins;
-            num_new_ins++;
-            in_number = num_new_ins;
-          } else {
-            // appends really_new_ins state to new_ins (B_i)
-            last_new_in->nextState = really_new_ins;
-            really_new_ins = really_new_ins->nextState;
-            last_new_in = last_new_in->nextState;
-            last_new_in->nextState = NULL;
-            num_new_ins++;
-            in_number = num_new_ins;
-          };
-        } else {
-          // Frees memory and goes to next state if already in new_ins
-          temp = really_new_ins;
-          really_new_ins = really_new_ins->nextState;
-          free(temp->data);
-          free(temp);
+
+    // Build B_i by finding states out of A_i that are not in B_(i-1)
+    for(present_iter = s_create_iter(new_outs); s_has_next(present_iter);) {
+      StateRBTree present_out = s_get_next(present_iter);
+      total_out++;
+      potential_ins = new_rectangles_out_of(prev_ins, present_out->data, G);
+
+      StateTreeIter_t * potential_iter;
+      for(potential_iter = s_create_iter(potential_ins); s_has_next(potential_iter);) {
+        StateRBTree potential_in = s_get_next(potential_iter);
+        StateRBTree node = s_find_node(&new_ins, potential_in->data, G);
+        if(EMPTY_TREE == node) {
+          State t = malloc(sizeof(char)*G->arc_index);
+          copy_state(&t,&(potential_in->data),G);
+          num_new_ins++;
+          s_insert_tagged_data(&new_ins, t, num_new_ins, G);
+          new_edges = prepend_edge(present_out->tag + num_outs, num_new_ins + num_ins, new_edges);
         }
-        // appends the edge found btw A_i and B_i to edge_list
-        edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
-                                   edge_list);
+        else {
+          new_edges = prepend_edge(present_out->tag + num_outs, node->tag + num_ins, new_edges);
+        }
         edge_count++;
-      };
-      // Goes to next state in A_i to check for new states that rectangles in
-      // A_i
-      // point to
-      present_out = present_out->nextState;
-    };
+      }
+
+      free_state_rbtree(&potential_ins);
+      s_free_iter(potential_iter);
+    }
+    s_free_iter(present_iter);
+    
     if (get_verbosity() >= VERBOSE) {
-      print_edges(edge_list);
+      print_edges(new_edges);
       (*print_ptr)("\n");
     }
-    // Clears memory of unneccary info (A_i-1) and initializes things for next
-    // iteration of the algorithm
-    free_state_list(prev_outs);
+    free_state_rbtree(&prev_outs);
     prev_outs = new_outs;
-    new_outs = NULL;
-    // Contract edges in edge list
+    new_outs = EMPTY_TREE;
+
+    new_edges = merge_sort_edges(new_edges);
+    edge_list = merge_edges(edge_list, new_edges);
+
     if (get_verbosity() >= VERBOSE) {
+      (*print_ptr)("Full edge list:\n");
+      print_edges(edge_list);
+      (*print_ptr)("\n");
       (*print_ptr)("Contracting edges from 0 to %d:\n", prev_in_number);
     }
+    
     special_homology(0, prev_in_number, &edge_list);
     if (get_verbosity() >= VERBOSE) {
       print_edges(edge_list);
       (*print_ptr)("\n");
     }
-    // calculates answer (ie if nullhomologous or not) if it can be calculated
+    
     if ((edge_list == NULL) || (edge_list->start != 0)) {
-      // nullhomologous if edge_list is empty or A_0 no longer points to
-      // anything
+      // If there are no edges out of A_0 (sentinal is gone) after contraction init is null-homologous
       ans = 1;
       if (get_verbosity() >= VERBOSE) {
         (*print_ptr)("No edges pointing out of A_0!\n");
       }
-      free_state_list(new_ins);
-      free_state_list(new_outs);
-      new_ins = NULL;
+      free_state_rbtree(&new_ins);
+      free_state_rbtree(&new_outs);
+      free_state_rbtree(&prev_ins);
+      free_state_rbtree(&prev_outs);
     } else if (edge_list->end <= prev_in_number) {
-      // not nullhomologous if edge still pointing from A_0 to B_i-1
+      // If edges out of A_0 cannot be removed anymore (sentinal will never vanish) init is not null-homologous
       ans = 0;
       if (get_verbosity() >= VERBOSE) {
         (*print_ptr)("There exist edges pointing from A_0 to B_%d! No future "
                      "contractions will remove this edge!\n",
                      current_pos - 1);
       }
-      free_state_list(new_ins);
-      free_state_list(new_outs);
-      new_ins = NULL;
+      free_state_rbtree(&new_ins);
+      free_state_rbtree(&new_outs);
+      free_state_rbtree(&prev_ins);
+      free_state_rbtree(&prev_outs);
     } else {
-      // set num_out for next loop through algorithm
-      num_outs = num_outs + out_number;
+      num_outs = num_outs + total_out;
       if (get_verbosity() >= VERBOSE) {
         (*print_ptr)("Total number of states in B_i up to B_%d (before any "
                      "contraction): %d \n",
@@ -331,7 +308,7 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
                      current_pos, num_outs);
         (*print_ptr)("Total number of states in B_i up to B_%d (before any "
                      "contraction): %d \n",
-                     current_pos, num_ins + in_number);
+                     current_pos, num_ins + total_in);
         (*print_ptr)("Total number of edges  up to A_%d and B_%d (before any "
                      "contraction): %d \n",
                      current_pos, current_pos, edge_count);
@@ -350,180 +327,190 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
  * @return nonzero if nullhomologous and zero otherwise
  */
 int null_homologous_D1Q(const State init, const Grid_t *const G) {
-  // Initialization of variables
-  StateList new_ins, new_outs, last_new_in, last_new_out, temp;
-  StateList prev_ins, prev_outs;
-  StateList really_new_outs = NULL, really_new_ins = NULL;
-  EdgeList last_edge;
-  int in_number, ans, prev_in_number;
-  int out_number;
-  int i;
+  StateRBTree new_ins, new_outs;
+  StateRBTree prev_ins, prev_outs;
+  StateRBTree potential_outs = EMPTY_TREE, potential_ins = EMPTY_TREE;
+  int ans, prev_in_number, total_in, total_out;
   int edge_count = 0;
   int num_ins = 0;
   int num_outs = 0;
   int num_new_ins = 0;
   int num_new_outs = 0;
-  StateList present_in, present_out;
-  prev_outs = NULL;
-  prev_ins = NULL;
-  new_ins = fixed_wt_rectangles_out_of(1, init, G);
-  if (NULL == new_ins) {
+  EdgeList edge_list = prepend_edge(0, 1, NULL);
+  prev_outs = EMPTY_TREE;
+  prev_ins = EMPTY_TREE;
+  new_ins = EMPTY_TREE;
+
+  State s = malloc(sizeof(char) * G->arc_index);
+  copy_state(&s, &init, G);
+
+  // Calculate D1(init) and terminate if null. Otherwise build sentinal edges out of A_0
+  StateList temp = fixed_wt_rectangles_out_of(1, init, G);
+    
+  if (NULL == temp) {
+    free_state_list(temp);
+    free(s);
+    free_edge_list(edge_list);
     return 1;
   }
-  EdgeList edge_list = prepend_edge(0, 1, NULL);
-  temp = new_ins;
-  i = 1;
-  last_edge = NULL;
+
   if (temp != NULL) {
-    i = 1;
+    int i = 1;
     edge_list = create_edge(0, 1);
-    last_edge = edge_list;
+    s_insert_tagged_data(&new_ins, temp->data, 1, G);
     temp = temp->nextState;
     while (temp != NULL) {
       i++;
-      last_edge->nextEdge = create_edge(0, i);
-      last_edge = last_edge->nextEdge;
+      edge_list = append_ordered(0, i, edge_list);
+      s_insert_tagged_data(&new_ins, temp->data, i, G);
       temp = temp->nextState;
-    };
-  };
+    }
+  }
+  
   ans = 0;
   int current_pos = 1;
-  while (new_ins != NULL && !ans) {
-    present_in = new_ins;
-    in_number = 0;
+  
+  while (new_ins != EMPTY_TREE && !ans) {
     num_new_outs = 0;
-    new_outs = NULL;
-    if(get_verbosity() >= VERBOSE) {
-      (*print_ptr)("Gathering A_%d:\n",current_pos);
+    total_in = 0;
+    new_outs = EMPTY_TREE;
+    EdgeList new_edges = NULL;
+    if (get_verbosity() >= VERBOSE) {
+      (*print_ptr)("Gathering A_%d:\n", current_pos);
     }
-    while (present_in != NULL) {
-      free_state_list(really_new_outs);
-      in_number++;
-      really_new_outs = new_rectangles_into(prev_outs, present_in->data, G);
-      while (really_new_outs != NULL) {
-        out_number = get_number(really_new_outs->data, new_outs, G);
-        if (out_number == 0) {
-          if (num_new_outs == 0) {
-            new_outs = really_new_outs;
-            really_new_outs = really_new_outs->nextState;
-            new_outs->nextState = NULL;
-            last_new_out = new_outs;
-            num_new_outs++;
-            out_number = num_new_outs;
-          } else {
-            last_new_out->nextState = really_new_outs;
-            really_new_outs = really_new_outs->nextState;
-            last_new_out = last_new_out->nextState;
-            last_new_out->nextState = NULL;
-            num_new_outs++;
-            out_number = num_new_outs;
-          };
-        } else {
-          temp = really_new_outs;
-          really_new_outs = really_new_outs->nextState;
-          free(temp->data);
-          free(temp);
+
+    // Build A_i by looking for states into B_(i-1) that are not in A_(i-1)
+    StateTreeIter_t * present_iter;
+    for(present_iter = s_create_iter(new_ins); s_has_next(present_iter);) {
+      StateRBTree present_in = s_get_next(present_iter);
+      total_in++;
+      potential_outs = new_rectangles_into(prev_outs, present_in->data, G);
+
+      StateTreeIter_t * potential_iter;
+      for(potential_iter = s_create_iter(potential_outs); s_has_next(potential_iter);) {
+        StateRBTree potential_out = s_get_next(potential_iter);
+        StateRBTree node = s_find_node(&new_outs, potential_out->data, G);
+        if(EMPTY_TREE == node) {
+          State t = malloc(sizeof(char)*G->arc_index);
+          copy_state(&t,&(potential_out->data),G);
+          num_new_outs++;
+          s_insert_tagged_data(&new_outs, t, num_new_outs, G);
+          new_edges = prepend_edge(num_new_outs + num_outs, present_in->tag + num_ins, new_edges);
         }
-        edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
-                                   edge_list);
+        else {
+          new_edges = prepend_edge(node->tag + num_outs, present_in->tag + num_ins, new_edges);
+        }
         edge_count++;
       }
-      present_in = present_in->nextState;
-    };
-    if(get_verbosity() >= VERBOSE) {
-      print_edges(edge_list);
+
+      free_state_rbtree(&potential_outs);
+      s_free_iter(potential_iter);
+    }
+    s_free_iter(present_iter);
+    
+    if (get_verbosity() >= VERBOSE) {
+      print_edges(new_edges);
       (*print_ptr)("\n");
     }
-    free_state_list(prev_ins);
+    free_state_rbtree(&prev_ins);
     prev_ins = new_ins;
-    i = 1;
-    num_ins = num_ins + in_number;
+    num_ins = num_ins + total_in;
     prev_in_number = num_ins;
     num_new_ins = 0;
-    new_ins = NULL;
-    out_number = 0;
-    present_out = new_outs;
-    if(get_verbosity() >= VERBOSE) {
+    new_ins = EMPTY_TREE;
+    total_out = 0;
+    if (get_verbosity() >= VERBOSE) {
       (*print_ptr)("Gathering B_%d:\n", current_pos);
     }
-    while (present_out != NULL) {
-      out_number++;
-      really_new_ins = new_rectangles_out_of(prev_ins, present_out->data, G);
-      while (really_new_ins != NULL) {
-        in_number = get_number(really_new_ins->data, new_ins, G);
-        if (in_number == 0) {
-          if (num_new_ins == 0) {
-            new_ins = really_new_ins;
-            really_new_ins = really_new_ins->nextState;
-            new_ins->nextState = NULL;
-            last_new_in = new_ins;
-            num_new_ins++;
-            in_number = num_new_ins;
-          } else {
-            last_new_in->nextState = really_new_ins;
-            really_new_ins = really_new_ins->nextState;
-            last_new_in = last_new_in->nextState;
-            last_new_in->nextState = NULL;
-            num_new_ins++;
-            in_number = num_new_ins;
-          };
-        } else {
-          temp = really_new_ins;
-          really_new_ins = really_new_ins->nextState;
-          free(temp->data);
-          free(temp);
+    
+    // Build B_i by finding states out of A_i that are not in B_(i-1)
+    for(present_iter = s_create_iter(new_outs); s_has_next(present_iter);) {
+      StateRBTree present_out = s_get_next(present_iter);
+      total_out++;
+      potential_ins = new_rectangles_out_of(prev_ins, present_out->data, G);
+
+      StateTreeIter_t * potential_iter;
+      for(potential_iter = s_create_iter(potential_ins); s_has_next(potential_iter);) {
+        StateRBTree potential_in = s_get_next(potential_iter);
+        StateRBTree node = s_find_node(&new_ins, potential_in->data, G);
+        if(EMPTY_TREE == node) {
+          State t = malloc(sizeof(char)*G->arc_index);
+          copy_state(&t,&(potential_in->data),G);
+          num_new_ins++;
+          s_insert_tagged_data(&new_ins, t, num_new_ins, G);
+          new_edges = prepend_edge(present_out->tag + num_outs, num_new_ins + num_ins, new_edges);
         }
-        edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
-                                   edge_list);
+        else {
+          new_edges = prepend_edge(present_out->tag + num_outs, node->tag + num_ins, new_edges);
+        }
         edge_count++;
-      };
-      present_out = present_out->nextState;
-    };
-    if(get_verbosity() >= VERBOSE) {
-      print_edges(edge_list);
+      }
+
+      free_state_rbtree(&potential_ins);
+      s_free_iter(potential_iter);
+    }
+    s_free_iter(present_iter);
+    
+    if (get_verbosity() >= VERBOSE) {
+      print_edges(new_edges);
       (*print_ptr)("\n");
     }
-    free_state_list(prev_outs);
+    free_state_rbtree(&prev_outs);
     prev_outs = new_outs;
-    new_outs = NULL;
-    if(get_verbosity() >= VERBOSE) {
+    new_outs = EMPTY_TREE;
+
+    if (get_verbosity() >= VERBOSE) {
+      (*print_ptr)("Full edge list:\n");
+      print_edges(edge_list);
+      (*print_ptr)("\n");
       (*print_ptr)("Contracting edges from 0 to %d:\n", prev_in_number);
     }
+
+    
+    new_edges = merge_sort_edges(new_edges);
+    edge_list = merge_edges(edge_list, new_edges);
+    
     special_homology(0, prev_in_number, &edge_list);
-    if(get_verbosity() >= VERBOSE) {
+    
+    if (get_verbosity() >= VERBOSE) {
       print_edges(edge_list);
       (*print_ptr)("\n");
     }
     if ((edge_list == NULL) || (edge_list->start != 0)) {
+      // If there are no edges out of A_0 (sentinal is gone) after contraction init is null-homologous
       ans = 1;
-      if(get_verbosity() >= VERBOSE) {
+      if (get_verbosity() >= VERBOSE) {
         (*print_ptr)("No edges pointing out of A_0!\n");
       }
-      free_state_list(new_ins);
-      free_state_list(new_outs);
-      new_ins = NULL;
+      free_state_rbtree(&new_ins);
+      free_state_rbtree(&new_outs);
+      free_state_rbtree(&prev_ins);
+      free_state_rbtree(&prev_outs);
     } else if (edge_list->end <= prev_in_number) {
+      // If edges out of A_0 cannot be removed anymore (sentinal will never vanish) init is not null-homologous
       ans = 0;
-      if(get_verbosity() >= VERBOSE) {
+      if (get_verbosity() >= VERBOSE) {
         (*print_ptr)("There exist edges pointing from A_0 to B_%d! No future "
-                     "contractions will remove this edge!\n", current_pos - 1);
+                     "contractions will remove this edge!\n",
+                     current_pos - 1);
       }
-      free_state_list(new_ins);
-      free_state_list(new_outs);
-      new_ins = NULL;
+      free_state_rbtree(&new_ins);
+      free_state_rbtree(&new_outs);
+      free_state_rbtree(&prev_ins);
+      free_state_rbtree(&prev_outs);
     } else {
-      num_outs = num_outs + out_number;
+      num_outs = num_outs + total_out;
       if (get_verbosity() >= VERBOSE) {
         (*print_ptr)("Total number of states in B_i up to B_%d (before any "
-                     "contraction): %d \n", 
+                     "contraction): %d \n",
                      current_pos - 1, prev_in_number);
         (*print_ptr)("Total number of states in A_i up to A_%d (before any "
                      "contraction): %d \n",
                      current_pos, num_outs);
         (*print_ptr)("Total number of states in B_i up to B_%d (before any "
                      "contraction): %d \n",
-                     current_pos, num_ins + in_number);
-        (*print_ptr)("Total number of edges up to A_%d and B_%d (before any "
+                     current_pos, num_ins + total_in);
+        (*print_ptr)("Total number of edges  up to A_%d and B_%d (before any "
                      "contraction): %d \n",
                      current_pos, current_pos, edge_count);
         (*print_ptr)("\n");
@@ -535,158 +522,164 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
 }
 
 int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
-  LiftStateList new_ins, new_outs, last_new_in, last_new_out, temp;
-  LiftStateList prev_ins, prev_outs;
-  LiftStateList really_new_outs = NULL, really_new_ins = NULL;
-  int in_number, ans, prev_in_number;
-  int out_number;
+  LiftStateRBTree new_ins, new_outs;
+  LiftStateRBTree prev_ins, prev_outs;
+  LiftStateRBTree potential_outs = EMPTY_LIFT_TREE, potential_ins = EMPTY_LIFT_TREE;
+  int ans, prev_in_number, total_in, total_out;
   int edge_count = 0;
   int num_ins = 0;
   int num_outs = 0;
   int num_new_ins = 0;
   int num_new_outs = 0;
-  LiftStateList present_in, present_out;
-  EdgeList edge_list = prepend_edge(0, 1, NULL);
-  prev_outs = NULL;
-  prev_ins = NULL;
+  prev_outs = EMPTY_LIFT_TREE;
+  prev_ins = EMPTY_LIFT_TREE;
+  new_ins = EMPTY_LIFT_TREE;
+  
+  LiftState s;
+  init_lift_state(&s, G);
 
-  new_ins = malloc(sizeof(LiftStateNode_t));
-  init_lift_state(&new_ins->data, G);
-  for (int i = 0; i < G->sheets; ++i) {
-    for (int j = 0; j < G->arc_index; ++j) {
-      new_ins->data[i][j] = init[i][j];
-    }
-  }
-  new_ins->nextState = NULL;
+  copy_lift_state(&s, &init, G);
+
+  // Create sentinal edge from A_0
+  insert_tagged_data(&new_ins, s, 1, G);
+  EdgeList edge_list = prepend_edge(0, 1, NULL);
 
   ans = 0;
   int current_pos = 1;
-  while (new_ins != NULL && !ans) {
-    present_in = new_ins;
-    in_number = 0;
+  while (new_ins != EMPTY_LIFT_TREE && !ans) {
     num_new_outs = 0;
-    new_outs = NULL;
+    total_in = 0;
+    new_outs = EMPTY_LIFT_TREE;
+    EdgeList new_edges = NULL;
     if (get_verbosity() >= VERBOSE) {
       (*print_ptr)("Gathering A_%d:\n", current_pos);
     }
-    while (present_in != NULL) {
-      free_lift_state_list(really_new_outs, G);
-      in_number++;
-      really_new_outs = new_lift_rectangles_into(prev_outs, present_in->data, G);
-      while (really_new_outs != NULL) {
-        out_number = get_lift_number(really_new_outs->data, new_outs, G);
-        if (out_number == 0) {
-          if (num_new_outs == 0) {
-            new_outs = really_new_outs;
-            really_new_outs = really_new_outs->nextState;
-            new_outs->nextState = NULL;
-            last_new_out = new_outs;
-            num_new_outs++;
-            out_number = num_new_outs;
-          } else {
-            last_new_out->nextState = really_new_outs;
-            really_new_outs = really_new_outs->nextState;
-            last_new_out = last_new_out->nextState;
-            last_new_out->nextState = NULL;
-            num_new_outs++;
-            out_number = num_new_outs;
-          };
-        } else {
-          temp = really_new_outs;
-          really_new_outs = really_new_outs->nextState;
-          free_lift_state(&temp->data, G);
-          free(temp);
-        }
-        edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
-                                   edge_list);
 
+    // Build A_i by looking for states into B_(i-1) that are not in A_(i-1) 
+    LiftTreeIter_t * present_iter;
+    for(present_iter = create_iter(new_ins); has_next(present_iter);) {
+      LiftStateRBTree present_in = get_next(present_iter);
+      total_in++;
+      potential_outs = new_lift_rectangles_into(prev_outs, present_in->data, G);
+
+      LiftTreeIter_t * potential_iter;
+      for(potential_iter = create_iter(potential_outs); has_next(potential_iter);) {
+        LiftStateRBTree potential_out = get_next(potential_iter);
+        LiftStateRBTree node = find_node(&new_outs, potential_out->data, G);
+        if (EMPTY_LIFT_TREE == node) {
+          LiftState t;
+          init_lift_state(&t, G);
+          copy_lift_state(&t,&(potential_out->data),G);
+          num_new_outs++;
+          insert_tagged_data(&new_outs, t, num_new_outs, G);
+          new_edges = prepend_edge(num_new_outs + num_outs, present_in->tag + num_ins, new_edges);
+        }
+        else {
+          new_edges = prepend_edge(node->tag + num_outs, present_in->tag + num_ins, new_edges);
+        }
         edge_count++;
       }
-      present_in = present_in->nextState;
-    };
+
+      free_lift_state_rbtree(&potential_outs, G);
+      free_iter(potential_iter);
+    }
+    free_iter(present_iter);
+    
     if (get_verbosity() >= VERBOSE) {
-      print_edges(edge_list);
+      print_edges(new_edges);
       (*print_ptr)("\n");
     }
-    free_lift_state_list(prev_ins, G);
+    free_lift_state_rbtree(&prev_ins, G);
     prev_ins = new_ins;
-    num_ins = num_ins + in_number;
+    num_ins = num_ins + total_in;
     prev_in_number = num_ins;
     num_new_ins = 0;
-    new_ins = NULL;
-    out_number = 0;
-    present_out = new_outs;
+    new_ins = EMPTY_LIFT_TREE;
+    total_out = 0;
     if (get_verbosity() >= VERBOSE) {
       (*print_ptr)("Gathering B_%d:\n", current_pos);
     }
-    while (present_out != NULL) {
-      out_number++;
-      really_new_ins = new_lift_rectangles_out_of(prev_ins, present_out->data, G);
-      while (really_new_ins != NULL) {
-        in_number = get_lift_number(really_new_ins->data, new_ins, G);
-        if (in_number == 0) {
-          if (num_new_ins == 0) {
-            new_ins = really_new_ins;
-            really_new_ins = really_new_ins->nextState;
-            new_ins->nextState = NULL;
-            last_new_in = new_ins;
-            num_new_ins++;
-            in_number = num_new_ins;
-          } else {
-            last_new_in->nextState = really_new_ins;
-            really_new_ins = really_new_ins->nextState;
-            last_new_in = last_new_in->nextState;
-            last_new_in->nextState = NULL;
-            num_new_ins++;
-            in_number = num_new_ins;
-          };
-        } else {
-          temp = really_new_ins;
-          really_new_ins = really_new_ins->nextState;
-          free_lift_state(&temp->data, G);
-          free(temp);
+
+    // Build B_i by finding states out of A_i that are not in B_(i-1)
+    for(present_iter = create_iter(new_outs); has_next(present_iter);) {
+      LiftStateRBTree present_out = get_next(present_iter);
+      total_out++;
+      potential_ins = new_lift_rectangles_out_of(prev_ins, present_out->data, G);
+
+      LiftTreeIter_t * potential_iter;
+      for(potential_iter = create_iter(potential_ins); has_next(potential_iter);) {
+        LiftStateRBTree potential_in = get_next(potential_iter);
+        LiftStateRBTree node = find_node(&new_ins, potential_in->data, G);
+        if(EMPTY_LIFT_TREE == node) {
+          LiftState t;
+          init_lift_state(&t, G);
+          copy_lift_state(&t,&(potential_in->data),G);
+          num_new_ins++;
+          insert_tagged_data(&new_ins, t, num_new_ins, G);
+          new_edges = prepend_edge(present_out->tag + num_outs, num_new_ins + num_ins, new_edges);
         }
-        edge_list = append_ordered(out_number + num_outs, in_number + num_ins,
-                                   edge_list);
+        else {
+          new_edges = prepend_edge(present_out->tag + num_outs, node->tag + num_ins, new_edges);
+        }
         edge_count++;
-      };
-      present_out = present_out->nextState;
-    };
+      }
+
+      free_lift_state_rbtree(&potential_ins, G);
+      free_iter(potential_iter);
+    }
+    free_iter(present_iter);
+    
     if (get_verbosity() >= VERBOSE) {
-      print_edges(edge_list);
+      print_edges(new_edges);
       (*print_ptr)("\n");
     }
-    free_lift_state_list(prev_outs, G);
+    
+    free_lift_state_rbtree(&prev_outs, G);
     prev_outs = new_outs;
-    new_outs = NULL;
+    new_outs = EMPTY_LIFT_TREE;
+
+    new_edges = merge_sort_edges(new_edges);
+    edge_list = merge_edges(edge_list, new_edges);
+
+
     if (get_verbosity() >= VERBOSE) {
+      (*print_ptr)("Full edge list:\n");
+      print_edges(edge_list);
+      (*print_ptr)("\n");
       (*print_ptr)("Contracting edges from 0 to %d:\n", prev_in_number);
     }
+    
     special_homology(0, prev_in_number, &edge_list);
     if (get_verbosity() >= VERBOSE) {
       print_edges(edge_list);
       (*print_ptr)("\n");
     }
     if ((edge_list == NULL) || (edge_list->start != 0)) {
+      // If there are no edges out of A_0 (sentinal is gone) after contraction init is null-homologous
       ans = 1;
       if (get_verbosity() >= VERBOSE) {
         (*print_ptr)("No edges pointing out of A_0!\n");
       }
-      free_lift_state_list(new_ins, G);
-      free_lift_state_list(new_outs, G);
-      new_ins = NULL;
+      free_lift_state_rbtree(&new_ins, G);
+      free_lift_state_rbtree(&new_outs, G);
+      free_lift_state_rbtree(&prev_ins, G);
+      free_lift_state_rbtree(&prev_outs, G);
+      new_ins = EMPTY_LIFT_TREE;
     } else if (edge_list->end <= prev_in_number) {
+      // If edges out of A_0 cannot be removed anymore (sentinal will never vanish) init is not null-homologous
       ans = 0;
       if (get_verbosity() >= VERBOSE) {
         (*print_ptr)("There exist edges pointing from A_0 to B_%d! No future "
                      "contractions will remove this edge!\n",
                      current_pos - 1);
       }
-      free_lift_state_list(new_ins, G);
-      free_lift_state_list(new_outs, G);
-      new_ins = NULL;
+      free_lift_state_rbtree(&new_ins, G);
+      free_lift_state_rbtree(&new_outs, G);
+      free_lift_state_rbtree(&prev_ins, G);
+      free_lift_state_rbtree(&prev_outs, G);
+      new_ins = EMPTY_LIFT_TREE;
     } else {
-      num_outs = num_outs + out_number;
+      num_outs = num_outs + total_out;
       if (get_verbosity() >= VERBOSE) {
         (*print_ptr)("Total number of states in B_i up to B_%d (before any "
                      "contraction): %d \n",
@@ -696,7 +689,7 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
                      current_pos, num_outs);
         (*print_ptr)("Total number of states in B_i up to B_%d (before any "
                      "contraction): %d \n",
-                     current_pos, num_ins + in_number);
+                     current_pos, num_ins + total_in);
         (*print_ptr)("Total number of edges  up to A_%d and B_%d (before any "
                      "contraction): %d \n",
                      current_pos, current_pos, edge_count);
@@ -752,6 +745,124 @@ EdgeList create_edge(const int a, const int b) {
   new_ptr->end = b;
   new_ptr->nextEdge = NULL;
   return (new_ptr);
+}
+
+/**
+ * Returns a number less than 0, equal to 0, or greater than zero
+ * if respectively the head of e1 is less than, equal to, or greater than
+ * the head of e2 in dictionary order by start then end.
+ * @param e1 a nonempty edge list
+ * @param e2 a nonempty edge list
+ * @return a comparison of the heads of e1 and e2
+ */
+int compare_edge(EdgeList e1, EdgeList e2) {
+  if (e1->start == e2->start) {
+    return e1->end - e2->end;
+  }
+  return e1->start - e2->start;
+}
+
+/**
+ * Merges two sorted ascending order edge lists into an ascending order sorted
+ * edge list
+ * @param list1 a sorted edge list
+ * @param list2 a sorted edge list
+ * @return a sorted edge list
+ * @warning destructively modifies list1 and list2
+ */
+EdgeList merge_edges(EdgeList list1, EdgeList list2) {
+  EdgeList new_list;
+  EdgeList tail;
+
+  if (NULL == list1) {
+    return list2;
+  }
+  else if (NULL == list2) {
+    return list1;
+  }
+
+  if(compare_edge(list1,list2) < 0) {
+    new_list = list1;
+    tail = list1;
+    list1 = list1->nextEdge;
+    tail->nextEdge = NULL;
+  }
+  else {
+    new_list = list2;
+    tail = list2;
+    list2 = list2->nextEdge;
+    tail->nextEdge = NULL;
+  }
+
+  while(NULL != list1 && NULL != list2) {
+    if(compare_edge(list1,list2) < 0) {
+      tail->nextEdge = list1;
+      tail = tail->nextEdge;
+      list1 = list1->nextEdge;
+      tail->nextEdge = NULL;
+    }
+    else {
+      tail->nextEdge = list2;
+      tail = tail->nextEdge;
+      list2 = list2->nextEdge;
+      tail->nextEdge = NULL;
+    }
+  }
+
+  if(NULL != list1) {
+    tail->nextEdge = list1;
+  }
+  else {
+    tail->nextEdge = list2;
+  }
+  
+  return new_list;
+}
+
+/**
+ * Sorts an edge list into ascending order in dictionary order by
+ * start and then end
+ * @param an edge list
+ * @return the sorted version of edge_list
+ * @warning destructively modifies edge_list
+ */
+EdgeList merge_sort_edges(EdgeList edge_list) {
+  EdgeList list1, list2, tail1, tail2;
+
+  if(NULL == edge_list || NULL == edge_list->nextEdge) {
+    return edge_list;
+  }
+
+  list1 = edge_list;
+  tail1 = edge_list;
+  edge_list = edge_list->nextEdge;
+  tail1->nextEdge = NULL;
+  list2 = edge_list;
+  tail2 = edge_list;
+  edge_list = edge_list->nextEdge;
+  tail2->nextEdge = NULL;
+
+  int which_list = 1;
+  while(NULL != edge_list) {
+    if (which_list) {
+      tail1->nextEdge = edge_list;
+      tail1 = tail1->nextEdge;
+      edge_list = edge_list->nextEdge;
+      tail1->nextEdge = NULL;
+    }
+    else {
+      tail2->nextEdge = edge_list;
+      tail2 = tail2->nextEdge;
+      edge_list = edge_list->nextEdge;
+      tail2->nextEdge = NULL;
+    }
+    which_list = !which_list;
+  }
+
+  list1 = merge_sort_edges(list1);
+  list2 = merge_sort_edges(list2);
+  
+  return merge_edges(list1, list2);
 }
 
 /**
@@ -1106,13 +1217,14 @@ void contract(const int a, const int b, EdgeList *edge_list) {
  * @return A statelist containing states reached from a rectangle leaving
  * incoming not contained in prevs.
  */
-StateList new_rectangles_out_of(const StateList prevs, const State incoming,
+StateRBTree new_rectangles_out_of(const StateRBTree prevs, const State incoming,
                                 const Grid_t *const G) {
-  StateList temp, ans;
+  StateRBTree ans;
   State temp_state = malloc(sizeof(char) * G->arc_index);
+  State temp;
   int LL;
-  int w, h, m, n, i;
-  ans = NULL;
+  int w, h, i;
+  ans = EMPTY_TREE;
   i = 0;
   while (i < G->arc_index) {
     temp_state[i] = incoming[i];
@@ -1126,15 +1238,12 @@ StateList new_rectangles_out_of(const StateList prevs, const State incoming,
       if (mod(incoming[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index) <= h) {
         temp_state[LL] = incoming[mod(LL + w, G->arc_index)];
         temp_state[mod(LL + w, G->arc_index)] = incoming[LL];
-        m = get_number(temp_state, prevs, G);
-        if (m == 0) {
-          n = get_number(temp_state, ans, G);
-          if (n != 0) {
-            ans = remove_state(temp_state, ans, G);
+        if (!s_is_member(&prevs, temp_state, G)) {
+          if (s_is_member(&ans, temp_state, G)) {
+            s_delete_data(&ans, temp_state, G);
           } else {
             temp = swap_cols(LL, mod(LL + w, G->arc_index), incoming, G);
-            temp->nextState = ans;
-            ans = temp;
+            s_insert_data(&ans, temp, G);
           }
         };
         temp_state[LL] = incoming[LL];
@@ -1146,26 +1255,29 @@ StateList new_rectangles_out_of(const StateList prevs, const State incoming,
       w++;
     };
     LL++;
-  };
+  }
+  
+  free(temp_state);
   return ans;
 }
 
 /**
- * returns a StateList containing those with a rectangle
+ * returns a StateRBTree containing those with a rectangle
  * pointing to the state incoming that do not overlap with prevs
  * @param incoming State that is the destination for generated rectangles
- * @param prevs StateList of excluded states
+ * @param prevs StateRBTree of excluded states
  * @param G working grid
- * @return StateList containing states with a rectangle to incoming.
+ * @return StateRBTree containing states with a rectangle to incoming.
  */
-StateList new_rectangles_into(const StateList prevs, const State incoming,
+StateRBTree new_rectangles_into(const StateRBTree prevs, const State incoming,
                               const Grid_t *const G) {
-  StateList ans, temp;
+  StateRBTree ans;
   State temp_state = malloc(sizeof(char) * G->arc_index);
-  int LL, m, n;
+  State temp;
+  int LL;
   int w, h;
   int i;
-  ans = NULL;
+  ans = EMPTY_TREE;
   i = 0;
   while (i < G->arc_index) {
     temp_state[i] = incoming[i];
@@ -1180,15 +1292,12 @@ StateList new_rectangles_into(const StateList prevs, const State incoming,
       if (mod_up(incoming[LL] - incoming[mod(LL + w, G->arc_index)], G->arc_index) < h) {
         temp_state[LL] = incoming[mod(LL + w, G->arc_index)];
         temp_state[mod(LL + w, G->arc_index)] = incoming[LL];
-        m = get_number(temp_state, prevs, G);
-        if (m == 0) {
-          n = get_number(temp_state, ans, G);
-          if (n != 0) {
-            ans = remove_state(temp_state, ans, G);
+        if (!s_is_member(&prevs, temp_state, G)) {
+          if (s_is_member(&ans, temp_state, G)) {
+            s_delete_data(&ans, temp_state, G);
           } else {
             temp = swap_cols(LL, mod(LL + w, G->arc_index), incoming, G);
-            temp->nextState = ans;
-            ans = temp;
+            s_insert_data(&ans, temp, G);
           }
         };
         temp_state[LL] = incoming[LL];
@@ -1201,6 +1310,8 @@ StateList new_rectangles_into(const StateList prevs, const State incoming,
     };
     LL++;
   };
+
+  free(temp_state);
   return ans;
 }
 
@@ -1236,7 +1347,7 @@ StateList fixed_wt_rectangles_out_of(const int wt, const State incoming,
           i++;
         };
         if (this_weight == wt) {
-          temp = swap_cols(LL, mod(LL + w, G->arc_index), incoming, G);
+          temp = swap_cols_list(LL, mod(LL + w, G->arc_index), incoming, G);
           if (get_number(temp->data, ans, G) != 0) {
             ans = remove_state(temp->data, ans, G);
             free(temp->data);
@@ -1266,8 +1377,8 @@ StateList fixed_wt_rectangles_out_of(const int wt, const State incoming,
  * @param is_mirrored pass 1 if the grid has been mirrored, 0 otherwise
  * @return a lift state list containing lift states that can be reached from incoming that are not in prevs
  */
-static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G, int is_mirrored) {
-  LiftStateList ans = NULL;
+static LiftStateRBTree new_lift_rectangles_out_internal(const LiftStateRBTree prevs, const LiftState incoming, const LiftGrid_t *const G, int is_mirrored) {
+  LiftStateRBTree ans = EMPTY_LIFT_TREE;
   double *g_Xs, *g_Os;
 
   g_Xs = malloc(sizeof(double)*G->arc_index);
@@ -1331,18 +1442,20 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
             if (is_mirrored) {
               mirror_lift_state(&new_state, G);
             }
-            if (0 == get_lift_number(new_state, prevs, G)) {
-              if (0 == get_lift_number(new_state, ans, G)) {
-                LiftStateNode_t* new_node = malloc(sizeof(LiftStateNode_t));
-                new_node->data = new_state;
-                new_node->nextState = ans;
-                ans = new_node;
+
+            if(!is_member(&prevs, new_state, G)) {
+              if(!is_member(&ans, new_state, G)) {
+                insert_data(&ans, new_state,G);
               }
               else {
-                ans = remove_lift_state(new_state, ans, G);
+                LiftStateRBTree temp = find_node(&ans, new_state, G);
+                delete_node(&ans, temp);
+                free_lift_state(&(temp->data), G);
+                free(temp);
                 free_lift_state(&new_state, G);
               }
             }
+            
             height = mod((height - 1) % G->arc_index, G->arc_index);
           }
           step = step + 1;
@@ -1373,18 +1486,20 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
             if (is_mirrored) {
               mirror_lift_state(&new_state, G);
             }
-            if (0 == get_lift_number(new_state, prevs, G)) {
-              if (0 == get_lift_number(new_state, ans, G)) {
-                LiftStateNode_t* new_node = malloc(sizeof(LiftStateNode_t));
-                new_node->data = new_state;
-                new_node->nextState = ans;
-                ans = new_node;
+
+            if(!is_member(&prevs, new_state, G)) {
+              if(!is_member(&ans, new_state, G)) {
+                insert_data(&ans, new_state,G);
               }
               else {
-                ans = remove_lift_state(new_state, ans, G);
+                LiftStateRBTree temp = find_node(&ans, new_state, G);
+                delete_node(&ans, temp);
+                free_lift_state(&(temp->data), G);
+                free(temp);
                 free_lift_state(&new_state, G);
               }
             }
+
             height = mod((height -1) % G->arc_index,G->arc_index);
           }
           step = step + 1;
@@ -1409,7 +1524,7 @@ static LiftStateList new_lift_rectangles_out_internal(const LiftStateList prevs,
  * @param G working grid
  * @return LiftStateList containing states with a rectangle to incoming.
  */
-LiftStateList new_lift_rectangles_out_of(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G) {
+LiftStateRBTree new_lift_rectangles_out_of(const LiftStateRBTree prevs, const LiftState incoming, const LiftGrid_t *const G) {
   return new_lift_rectangles_out_internal(prevs, incoming, G, 0);
 }
 
@@ -1421,14 +1536,16 @@ LiftStateList new_lift_rectangles_out_of(const LiftStateList prevs, const LiftSt
  * @param G working grid
  * @return LiftStateList containing states with a rectangle to incoming.
  */
-LiftStateList new_lift_rectangles_into(const LiftStateList prevs, const LiftState incoming, const LiftGrid_t *const G) {
+LiftStateRBTree new_lift_rectangles_into(const LiftStateRBTree prevs, const LiftState incoming, const LiftGrid_t *const G) {
   LiftGrid_t* G_mirror = mirror_lift_grid(G);
   LiftState incoming_mirror;
   init_lift_state(&incoming_mirror, G);
   copy_lift_state(&incoming_mirror, &incoming, G);
   mirror_lift_state(&incoming_mirror, G);
-  LiftStateList ans = new_lift_rectangles_out_internal(prevs, incoming_mirror, G_mirror, 1);
+  LiftStateRBTree ans = new_lift_rectangles_out_internal(prevs, incoming_mirror, G_mirror, 1);
 
+  free(G_mirror->Xs);
+  free(G_mirror->Os);
   free(G_mirror);
   free_lift_state(&incoming_mirror, G);
 
@@ -1519,6 +1636,29 @@ void print_state_short(const State state, const Grid_t *const G) {
 }
 
 /**
+ * Calls print_state on the first sheet and print_state_short and the rest of
+ * the sheets of the lift state
+ * @param state a lift state
+ * @param G a lift grid
+ * @see print_state
+ * @see print_state_short
+ */
+void print_lift_state(const LiftState state, const LiftGrid_t * const G) {
+  Grid_t H;
+  H.arc_index = G->arc_index;
+  H.Xs = G->Xs;
+  H.Os = G->Os;
+
+  (*print_ptr)("Sheet 0:\n");
+  print_state(state[0], &H);
+
+  for(int i=1; i < G->sheets; ++i) {
+    (*print_ptr)("Sheet %d: ", i);
+    print_state_short(state[i], &H);
+  }
+}
+
+/**
  * Prints the permutations of a lift state
  * @param state a lift state
  * @param G a grid
@@ -1530,7 +1670,26 @@ void print_lift_state_short(const LiftState state, const LiftGrid_t * const G) {
   G_p.Xs = G->Xs;
   G_p.Os = G->Os;
   for(int i = 0; i < G->sheets; ++i) {
+    (*print_ptr)("Sheet %d: ", i);
     print_state_short(state[i], &G_p);
+  }
+}
+
+/**
+ * Prints each sheet of a lift state using print_state
+ * @param state a lift state
+ * @param G a lift grid
+ * @see print_state
+ */
+void print_lift_state_long(const LiftState state, const LiftGrid_t * const G) {
+  Grid_t H;
+  H.arc_index = G->arc_index;
+  H.Xs = G->Xs;
+  H.Os = G->Os;
+  
+  for(int i=0; i < G->sheets; ++i) {
+    (*print_ptr)("Sheet %d:\n", i);
+    print_state(state[i], &H);
   }
 }
 
@@ -1559,6 +1718,94 @@ void print_states(const StateList states, const Grid_t *const G) {
     (*print_ptr)("...");
   };
   (*print_ptr)("}");
+}
+
+/**
+ * Prints states in the form "{<state>,...}" up to the first 500,000 states.
+ * @param states a LiftStateList
+ * @param G a lift grid
+ * @see print_states
+ */
+void print_lift_states(const LiftStateList states, const LiftGrid_t *const G) {
+  LiftStateList temp;
+  int c;
+  temp = states;
+  (*print_ptr)("{");
+  c = 0;
+  while ((temp != NULL) && c < 500000) {
+    print_lift_state_short(temp->data, G);
+    temp = temp->nextState;
+    if (temp != NULL) {
+      (*print_ptr)(",");
+    };
+    c++;
+  };
+  if (c == 500000) {
+    (*print_ptr)("...");
+  };
+  (*print_ptr)("}");
+}
+
+/**
+ * Prints all states in the supplied tree using print_state_short
+ * @param states a StateRBTree
+ * @param G a grid
+ * @see print_state_short
+ */
+void print_states_tree(const StateRBTree states, const Grid_t * const G) {
+  if(EMPTY_TREE == states) {
+    return;
+  }
+  print_state_short(states->data, G);
+  print_states_tree(states->left, G);
+  print_states_tree(states->right, G);  
+}
+
+/**
+ * Prints all lift states in the supplied tree using print_lift_state_short
+ * @param states a LiftStateRBTree
+ * @param G a lift grid
+ * @see print_lift_state_short
+ */
+void print_states_lift_tree(const LiftStateRBTree states, const LiftGrid_t * const G) {
+  if(EMPTY_LIFT_TREE == states) {
+    return;
+  }
+  print_lift_state(states->data, G);
+  print_states_lift_tree(states->left, G);
+  print_states_lift_tree(states->right, G);
+}
+
+/**
+ * As print_states_tree but also prints the tags attatched to each state
+ * @param states a StateRBTree
+ * @param G a grid
+ * @see print_states_tree
+ */
+void print_states_tags(const StateRBTree states, const Grid_t * const G) {
+  if(EMPTY_TREE == states) {
+    return;
+  }
+  (*print_ptr)("%d, ", states->tag);
+  print_state_short(states->data, G);
+  print_states_tags(states->left, G);
+  print_states_tags(states->right, G);
+}
+
+/**
+ * As print_lift_states_tree but also prints the tags attatched to each lift state
+ * @param states a LiftStateRBTree
+ * @param G a lift grid
+ * @see print_lift_states_tree
+ */
+void print_states_lift_tags(const LiftStateRBTree states, const LiftGrid_t * const G) {
+  if(EMPTY_LIFT_TREE == states) {
+    return;
+  }
+  (*print_ptr)("%d, ", states->tag);
+  print_lift_state(states->data, G);
+  print_states_lift_tree(states->left, G);
+  print_states_lift_tree(states->right, G);
 }
 
 /**

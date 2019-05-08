@@ -4,7 +4,7 @@ LDFLAGS=
 LIBS=
 INCLUDES=
 SRC_DIR=./src
-PY_DIR=./tHFK
+PY_DIR=./transHFK
 TEST_DIR=test
 BUILD_DIR=./build
 EXEC=transverseHFK
@@ -25,7 +25,7 @@ ALL_TESTS := $(addsuffix .test, $(patsubst $(TEST_DIR)/%.in,%, $(wildcard $(TEST
 
 all: $(BUILD_DIR)/$(EXEC)
 
-python-install: $(SRC_DIR)/TransverseHFK.c $(PY_DIR)/__init__.py $(PY_DIR)/tHFK.py $(PY_DIR)/_transverseHFKmodule.c setup.py
+python-install: $(SRC_DIR)/TransverseHFK.c $(PY_DIR)/__init__.py $(PY_DIR)/transHFK.py $(PY_DIR)/_transverseHFKmodule.c setup.py
 	python setup.py install
 
 install: $(BUILD_DIR)/$(EXEC)
@@ -50,7 +50,7 @@ clean-python:
 test: $(ALL_TESTS)
 
 %.test: $(BUILD_DIR)/$(EXEC) $(TEST_DIR)/%.in $(TEST_DIR)/%.out
-	./$(BUILD_DIR)/$(EXEC) `cat $(TEST_DIR)/$*.in` 2>&1 | diff -q $(TEST_DIR)/$*.out - > /dev/null || (echo "Target $@ failed" && exit 1)
+	xargs -L1 -a $(TEST_DIR)/$*.in ./$(BUILD_DIR)/$(EXEC) 2>&1 | diff -q $(TEST_DIR)/$*.out - > /dev/null || (echo "Target $@ failed" && exit 1)
 
 .PHONY: clean test %.test python-install clean-python install uninstall
 
