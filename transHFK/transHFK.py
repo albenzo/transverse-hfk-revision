@@ -2,9 +2,9 @@ from Tkinter import *
 import ScrolledText
 from sys import stdout
 import multiprocessing as mp
-import _tHFK
+import _transHFK
 
-class tHFK:
+class transHFK:
     """
     Class the contains the X,O code of a knot and
     provides methods for the transverseHFK invariants of
@@ -161,19 +161,19 @@ class tHFK:
     
     def lambda_plus(self):
         """Returns True if x+ is null-homologous. False otherwise."""
-        return _tHFK.null_homologous_D0Q(self.x_plus(), self.Xs, self.Os, self.out_stream, self.verbosity)
+        return _transHFK.null_homologous_D0Q(self.x_plus(), self.Xs, self.Os, self.out_stream, self.verbosity)
 
     def lambda_minus(self):
         """Returns True if x- is null-homologous. False otherwise."""
-        return _tHFK.null_homologous_D0Q(self.x_minus(), self.Xs, self.Os, self.out_stream, self.verbosity)
+        return _transHFK.null_homologous_D0Q(self.x_minus(), self.Xs, self.Os, self.out_stream, self.verbosity)
 
     def d_lambda_plus(self):
         """Returns True if d_1 x+ is null-homologous. False otherwise."""
-        return _tHFK.null_homologous_D1Q(self.x_plus(), self.Xs, self.Os, self.out_stream, self.verbosity)
+        return _transHFK.null_homologous_D1Q(self.x_plus(), self.Xs, self.Os, self.out_stream, self.verbosity)
 
     def d_lambda_minus(self):
         """Returns True if d_1 x- is null-homologous. False otherwise."""
-        return _tHFK.null_homologous_D1Q(self.x_minus(), self.Xs, self.Os, self.out_stream, self.verbosity)
+        return _transHFK.null_homologous_D1Q(self.x_minus(), self.Xs, self.Os, self.out_stream, self.verbosity)
 
     def theta_n(self, n):
         """
@@ -183,11 +183,11 @@ class tHFK:
         if n == 1:
             return self.lambda_plus()
         else:
-            return _tHFK.null_homologous_lift(self.x_plus(), n, self.Xs, self.Os, self.out_stream, self.verbosity)
+            return _transHFK.null_homologous_lift(self.x_plus(), n, self.Xs, self.Os, self.out_stream, self.verbosity)
     
-class Tk_tHFK(tHFK):
+class Tk_transHFK(transHFK):
     """
-    Tkinter window for use with the tHFK class methods
+    Tkinter window for use with the transHFK class methods
 
     Attributes
     ----------
@@ -220,7 +220,7 @@ class Tk_tHFK(tHFK):
         Note: For the methods to work the Xs and Os must be
         permutations {1,...,N} with nonoverlapping values.
         """
-        tHFK.__init__(self, Xs ,Os, self, 0)
+        transHFK.__init__(self, Xs ,Os, self, 0)
         self.window = Tk()
         if name:
             self.name = name
