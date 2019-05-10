@@ -78,7 +78,8 @@ the `null_homologous_D0Q` and `null_homologous_D1Q` methods.
 Usage information can be found via `help(<class or method name>)`
 
 ### Gridlink
-To integrate transHFK with gridlink run the following command in the terminal
+To integrate transHFK with [gridlink](https://www.math.uic.edu/~culler/gridlink) 
+run the following command in the terminal
 
 ```
 patch <path to gridlink/gridlink.py> gridlink.patch
@@ -93,4 +94,13 @@ below or above for crossings. When gridlink passes our program it silently conve
 the grid to match our convention.
 
 ## Platform specific notes
-Building the command-line executable on mac requires argp-standalone to be installed.
+Building the command line executable on mac requires argp-standalone to be installed. 
+In addition if while compiling the python libraries on mac you encounter a 
+`duplicate symbol` bug this can usually be resolved by running 
+```
+$ CFLAGS="fcommon" python setup.py install
+```
+
+Building natively on Windows is currently not supported. It is recommended that if
+you wish to use the program on Windows that you work either inside the 
+Windows subsystem for linux if you are on Windows 10 or to use Cygwin otherwise.
