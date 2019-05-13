@@ -267,6 +267,7 @@ static PyObject *null_homologous_lift_py(PyObject *self, PyObject *args,
   PyObject *py_out_stream = NULL;
 
   LiftGrid_t G;
+  Grid_t H;
   State state;
   LiftState lift_state;
 
@@ -348,8 +349,12 @@ static PyObject *null_homologous_lift_py(PyObject *self, PyObject *args,
       lift_state[i][j] = state[j];
     }
   }
+  
+  H.Xs = G.Xs;
+  H.Os = G.Os;
+  H.arc_index = G.arc_index;
 
-  if (failed || !is_lift_grid(&G) || !is_lift_state(lift_state, &G)) {
+  if (failed || !is_lift_grid(&G) || !is_state(state, &H)) {
     PyErr_SetString(error, "state, Xs, and Os must be lists containing "
                            "[1,...,N] exactly once with no matching indices "
                            "between Xs and Os");
