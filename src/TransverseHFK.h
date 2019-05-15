@@ -21,6 +21,7 @@ int get_verbosity(void);
 void set_verbosity(const int);
 
 int mod(const int, const int);
+int pmod(const int, const int);
 int mod_up(const int, const int);
 int min(const int, const int);
 
