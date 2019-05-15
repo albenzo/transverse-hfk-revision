@@ -57,6 +57,16 @@ int mod(const int a, const int arc_index) {
 }
 
 /**
+ * Calculates x mod p
+ * @param x an int
+ * @param p a non-negative int
+ * @return x mod p
+ */
+int pmod(const int x, const int p) {
+  return x>0 ? x%p : (x%p)+x;
+}
+
+/**
  * Shifts the input towards the interval (0,arc_index] by
  * a multiple of arc_index
  * @param a An integer
@@ -1387,16 +1397,16 @@ static LiftStateRBTree new_lift_rectangles_out_internal(const LiftStateRBTree pr
     for(int start_col=0; start_col < G->arc_index; ++start_col) {
       int jumped_down = 0;
       int jumped_up = 0;
-      int start_row = mod(incoming[start_sheet][start_col]-1, G->arc_index);
+      int start_row = pmod(incoming[start_sheet][start_col]-1, G->arc_index);
       int step = 0;
       int check_index = start_col;
       int jump = start_sheet;
-      int height = mod((start_row - 1) % G->arc_index, G->arc_index);
+      int height = pmod((start_row - 1) % G->arc_index, G->arc_index);
 
       while (height != start_row) {
-        check_index = mod(((start_sheet*G->arc_index+start_col) + step)%G->arc_index, G->arc_index);
-        int check_sheet_gen = mod((mod(((start_sheet*G->arc_index+start_col) + step + 1) % G->arc_index, G->arc_index) + jump*G->arc_index) % (G->arc_index * G->sheets), G->arc_index * G->sheets) / G->arc_index;
-        int check_col_gen = mod((mod(((start_sheet*G->arc_index+start_col) + step + 1) % G->arc_index, G->arc_index) + jump*G->arc_index) % (G->arc_index * G->sheets), G->arc_index * G->sheets) % G->arc_index;
+        check_index = pmod(((start_sheet*G->arc_index+start_col) + step)%G->arc_index, G->arc_index);
+        int check_sheet_gen = pmod(jump, G->sheets);
+        int check_col_gen = pmod(start_col + step + 1, G->arc_index);
         int clear = 1;
         if (height > start_row) {
           if (clear && g_Xs[check_index] < height && g_Xs[check_index] > start_row) {
@@ -1408,16 +1418,16 @@ static LiftStateRBTree new_lift_rectangles_out_internal(const LiftStateRBTree pr
           if (clear && g_Xs[check_index] > height && g_Os[check_index] < start_row) {
             ++jump;
             jumped_up = 1;
-            check_sheet_gen = mod((mod(((start_sheet*G->arc_index+start_col) + step + 1) % G->arc_index, G->arc_index) + jump*G->arc_index) % (G->arc_index * G->sheets), G->arc_index * G->sheets) / G->arc_index;
-            check_col_gen = mod((mod(((start_sheet*G->arc_index+start_col) + step + 1) % G->arc_index, G->arc_index) + jump*G->arc_index) % (G->arc_index * G->sheets), G->arc_index * G->sheets) % G->arc_index;
+            check_sheet_gen = pmod(jump, G->sheets);
+            check_col_gen = pmod(start_col + step + 1, G->arc_index);
           }
           if (clear && g_Os[check_index] > height && g_Xs[check_index] < start_row) {
             --jump;
             jumped_down = 1;
-            check_sheet_gen = mod((mod(((start_sheet*G->arc_index+start_col) + step + 1) % G->arc_index, G->arc_index) + jump*G->arc_index) % (G->arc_index * G->sheets), G->arc_index * G->sheets) / G->arc_index;
-            check_col_gen = mod((mod(((start_sheet*G->arc_index+start_col) + step + 1) % G->arc_index, G->arc_index) + jump*G->arc_index) % (G->arc_index * G->sheets), G->arc_index * G->sheets) % G->arc_index;
+            check_sheet_gen = pmod(jump, G->sheets);
+            check_col_gen = pmod(start_col + step + 1, G->arc_index);
           }
-          if (clear && mod(incoming[check_sheet_gen][check_col_gen]-1, G->arc_index) < height && mod(incoming[check_sheet_gen][check_col_gen]-1, G->arc_index) > start_row) {
+          if (clear && pmod(incoming[check_sheet_gen][check_col_gen]-1, G->arc_index) < height && pmod(incoming[check_sheet_gen][check_col_gen]-1, G->arc_index) > start_row) {
             if (jumped_down) {
               jumped_down = 0;
               ++jump;
@@ -1429,9 +1439,9 @@ static LiftStateRBTree new_lift_rectangles_out_internal(const LiftStateRBTree pr
             clear = 0;
           }
           if (clear) {
-            check_sheet_gen = mod((mod(((start_sheet*G->arc_index+start_col) + step + 1) % G->arc_index, G->arc_index) + jump*G->arc_index) % (G->arc_index * G->sheets), G->arc_index * G->sheets) / G->arc_index;
-            check_col_gen = mod((mod(((start_sheet*G->arc_index+start_col) + step + 1) % G->arc_index, G->arc_index) + jump*G->arc_index) % (G->arc_index * G->sheets), G->arc_index * G->sheets) % G->arc_index;
-            if (mod(incoming[check_sheet_gen][check_col_gen]-1, G->arc_index) == height) {
+            check_sheet_gen = pmod(jump, G->sheets);
+            check_col_gen = pmod(start_col + step + 1, G->arc_index);
+            if (pmod(incoming[check_sheet_gen][check_col_gen]-1, G->arc_index) == height) {
               LiftState new_state = NULL;
               init_lift_state(&new_state, G);
               copy_lift_state(&new_state, &incoming, G);
