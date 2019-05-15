@@ -1404,7 +1404,7 @@ static LiftStateRBTree new_lift_rectangles_out_internal(const LiftStateRBTree pr
       int height = pmod(start_row - 1, G->arc_index);
 
       while (height != start_row) {
-        check_index = pmod(start_sheet*G->arc_index+start_col + step, G->arc_index);
+        check_index = pmod(start_col + step, G->arc_index);
         int check_sheet_gen = pmod(jump, G->sheets);
         int check_col_gen = pmod(start_col + step + 1, G->arc_index);
         int clear = 1;
