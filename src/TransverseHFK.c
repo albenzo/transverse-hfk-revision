@@ -1383,15 +1383,6 @@ StateList fixed_wt_rectangles_out_of(const int wt, const State incoming,
  */
 static LiftStateRBTree new_lift_rectangles_out_internal(const LiftStateRBTree prevs, const LiftState incoming, const LiftGrid_t *const G, int is_mirrored) {
   LiftStateRBTree ans = EMPTY_LIFT_TREE;
-  double *g_Xs, *g_Os;
-
-  g_Xs = malloc(sizeof(double)*G->arc_index);
-  g_Os = malloc(sizeof(double)*G->arc_index);
-
-  for(int i=0; i < G->arc_index; ++i) {
-    g_Xs[i] = ((double)G->Xs[i]) - .5;
-    g_Os[i] = ((double)G->Os[i]) - .5;
-  }
 
   for(int start_sheet=0; start_sheet < G->sheets; ++start_sheet) {
     for(int start_col=0; start_col < G->arc_index; ++start_col) {
@@ -1410,19 +1401,19 @@ static LiftStateRBTree new_lift_rectangles_out_internal(const LiftStateRBTree pr
         int clear = 1;
         
         if (height > start_row) {
-          if (clear && g_Xs[check_index] < height && g_Xs[check_index] > start_row) {
+          if (clear && G->Xs[check_index] <= height && G->Xs[check_index] > start_row) {
             clear = 0; 
           }
-          if (clear && g_Os[check_index] < height && g_Os[check_index] > start_row) {
+          if (clear && G->Os[check_index] <= height && G->Os[check_index] > start_row) {
             clear = 0;
           }
-          if (clear && g_Xs[check_index] > height && g_Os[check_index] < start_row) {
+          if (clear && G->Xs[check_index] > height && G->Os[check_index] <= start_row) {
             ++jump;
             jumped_up = 1;
             check_sheet_gen = pmod(jump, G->sheets);
             check_col_gen = pmod(start_col + step + 1, G->arc_index);
           }
-          if (clear && g_Os[check_index] > height && g_Xs[check_index] < start_row) {
+          if (clear && G->Os[check_index] > height && G->Xs[check_index] <= start_row) {
             --jump;
             jumped_down = 1;
             check_sheet_gen = pmod(jump, G->sheets);
@@ -1476,10 +1467,10 @@ static LiftStateRBTree new_lift_rectangles_out_internal(const LiftStateRBTree pr
           }
         }
         else {
-          if (clear && (g_Xs[check_index] < height || g_Xs[check_index] > start_row)) {
+          if (clear && (G->Xs[check_index] <= height || G->Xs[check_index] > start_row)) {
             clear = 0;
           }
-          if (clear && (g_Os[check_index] < height || g_Os[check_index] > start_row)) {
+          if (clear && (G->Os[check_index] <= height || G->Os[check_index] > start_row)) {
             clear = 0;
           }
           if (clear && (pmod(incoming[check_sheet_gen][check_col_gen]-1, G->arc_index) < height || pmod(incoming[check_sheet_gen][check_col_gen]-1, G->arc_index) >= start_row)) {
@@ -1512,6 +1503,8 @@ static LiftStateRBTree new_lift_rectangles_out_internal(const LiftStateRBTree pr
               height = pmod(height -1,G->arc_index);
             }
             ++step;
+            jumped_down = 0;
+            jumped_up = 0;
           }
           else {
             height = pmod(height - 1, G->arc_index);
@@ -1521,8 +1514,6 @@ static LiftStateRBTree new_lift_rectangles_out_internal(const LiftStateRBTree pr
     }
   }
 
-  free(g_Xs);
-  free(g_Os);
   return ans;
 }
 
