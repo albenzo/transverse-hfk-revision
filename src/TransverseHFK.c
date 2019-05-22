@@ -912,6 +912,12 @@ static void pop_vertex(VertexList* vertices) {
   free(v);
 }
 
+void free_vertex_list(VertexList vertices) {
+  while (vertices != NULL) {
+    pop_vertex(&vertices);
+  }
+}
+
 /**
  * Takes in a list of parent vertices and a list of child vertices,
  * generates all edges between them and adds this EdgeList to passed edge_list
@@ -1089,6 +1095,8 @@ void contract_alt(const int start, const int end, EdgeList * edge_list) {
       pop_vertex(&affected_parents);
     }
   }
+
+  free_vertex_list(children);
 }
 
 static void advance_next_parent(EdgeList* iter, EdgeList* prev) {
@@ -1107,8 +1115,9 @@ static void advance_next_parent(EdgeList* iter, EdgeList* prev) {
 static void sym_diff_parent(EdgeList* iter, EdgeList* prev, VertexList children, EdgeList* edge_list) {
   int cur_parent = (*iter)->start;
 
-  while(*iter != NULL && children != NULL && (*iter)->start == cur_parent) {
-    if((*iter) == NULL || (*iter)->end > children->data) {
+  // iterate over
+  while(*iter != NULL && (*iter)->start == cur_parent && children != NULL ) {
+    if(*iter == NULL || (*iter)->end > children->data) {
       add_edge_in_place(cur_parent, children->data, iter, prev, edge_list);
       children = children->nextVertex;
     }
@@ -1126,6 +1135,12 @@ static void sym_diff_parent(EdgeList* iter, EdgeList* prev, VertexList children,
     }
   }
 
+  // Add any remaining children
+  while(children != NULL) {
+    add_edge_in_place(cur_parent, children->data, iter, prev, edge_list);
+    children = children->nextVertex;
+  }
+  
   if(*iter != NULL && (*iter)->start == cur_parent) {
     advance_next_parent(iter, prev);
   }
