@@ -13,6 +13,13 @@
 printf_t print_ptr = printf;
 static int verbosity = SILENT;
 static LiftStateRBTree new_lift_rectangles_out_internal(const LiftStateRBTree, const LiftState, const LiftGrid_t * const, int);
+void contract_alt(const int, const int, EdgeList *);
+static void advance_next_parent(EdgeList*, EdgeList*);
+static void sym_diff_parent(EdgeList*, EdgeList*, VertexList, EdgeList*);
+static void add_edge_in_place(const int, const int, EdgeList*, EdgeList*, EdgeList*);
+static void remove_edge(EdgeList*, EdgeList*, EdgeList*);
+static void reverse_vertex_list(VertexList, VertexList*);
+static void pop_vertex(VertexList*);
 
 /**
  * Sets the print function to the passed in function pointer
@@ -884,6 +891,27 @@ void free_edge_list(const EdgeList e) {
   };
 }
 
+static void reverse_vertex_list(VertexList vertices, VertexList* dest) {
+  VertexList iter = vertices;
+  VertexList head = NULL;
+
+  while(iter != NULL) {
+    head = prepend_vertex(iter->data, head);
+    pop_vertex(&iter);
+  }
+
+  *dest = head;
+}
+
+static void pop_vertex(VertexList* vertices) {
+  if(*vertices == NULL) {
+    return;
+  }
+  VertexList v = *vertices;
+  *vertices = (*vertices)->nextVertex;
+  free(v);
+}
+
 /**
  * Takes in a list of parent vertices and a list of child vertices,
  * generates all edges between them and adds this EdgeList to passed edge_list
@@ -1021,11 +1049,122 @@ void special_homology(const int init, const int final, EdgeList *edge_list) {
       temp = temp->nextEdge;
     }
     if (temp != NULL) {
-      contract(temp->start, temp->end, edge_list);
+      contract_alt(temp->start, temp->end, edge_list);
       temp = *edge_list;
     }
   }
 }
+
+void contract_alt(const int start, const int end, EdgeList * edge_list) {
+  // Gather parents that will be affected and children that will be used
+  VertexList children = NULL;
+  VertexList affected_parents = NULL;
+  EdgeList iter = *edge_list;
+
+  while(iter != NULL) {
+    if(iter->start == start) {
+      children = prepend_vertex(iter->end, children);
+    }
+    
+    if(iter->end == end) {
+      affected_parents = prepend_vertex(iter->start, affected_parents);
+    }
+    
+    iter = iter->nextEdge;
+  }
+
+  reverse_vertex_list(children, &children);
+  reverse_vertex_list(affected_parents, &affected_parents);
+
+  iter = *edge_list;
+  EdgeList prev = *edge_list;
+
+  // Iterate over parents and modify those that are in affected_parents
+  while(iter != NULL && affected_parents != NULL) {
+    if(iter->start < affected_parents->data) {
+      advance_next_parent(&iter, &prev);
+    }
+    else {
+      sym_diff_parent(&iter, &prev, children, edge_list);
+      pop_vertex(&affected_parents);
+    }
+  }
+}
+
+static void advance_next_parent(EdgeList* iter, EdgeList* prev) {
+  int cur_parent = (*iter)->start;
+
+  if(*iter == *prev) {
+    *iter = (*iter)->nextEdge;
+  }
+
+  while((*iter) != NULL && (*iter)->start == cur_parent) {
+    *iter = (*iter)->nextEdge;
+    *prev = (*prev)->nextEdge;
+  }
+}
+
+static void sym_diff_parent(EdgeList* iter, EdgeList* prev, VertexList children, EdgeList* edge_list) {
+  int cur_parent = (*iter)->start;
+
+  while(*iter != NULL && children != NULL && (*iter)->start == cur_parent) {
+    if((*iter) == NULL || (*iter)->end > children->data) {
+      add_edge_in_place(cur_parent, children->data, iter, prev, edge_list);
+      children = children->nextVertex;
+    }
+    else if((*iter)->end < children->data) {
+      // advance to next edge
+      if(*prev != *iter) {
+        *prev = (*prev)->nextEdge;
+      }
+      *iter = (*iter)->nextEdge;
+    }
+    else {
+      // remove the current edge
+      remove_edge(iter, prev, edge_list);
+      children = children->nextVertex;
+    }
+  }
+
+  if(*iter != NULL && (*iter)->start == cur_parent) {
+    advance_next_parent(iter, prev);
+  }
+}
+
+static void add_edge_in_place(const int start, const int end, EdgeList* current, EdgeList* prev, EdgeList* edge_list) {
+  if(*edge_list == NULL) {
+    *edge_list = prepend_edge(start, end, *edge_list);
+    *current = *edge_list;
+    *prev = *edge_list;
+  }
+  else if (*prev == *current) {
+    // we are at the start of the list
+    *prev = prepend_edge(start, end, *current);
+    *edge_list = *prev;
+  }
+  else {
+    (*prev)->nextEdge = prepend_edge(start, end, *current);
+    *prev = (*prev)->nextEdge;
+  }
+}
+
+static void remove_edge(EdgeList* current, EdgeList* prev, EdgeList* edge_list) {
+  if(*current == *prev) {
+    // we are at the start of the list
+    EdgeList temp = *current;
+    *current = (*current)->nextEdge;
+    *prev = (*prev)->nextEdge;
+    *edge_list = (*edge_list)->nextEdge;
+    
+    free(temp);
+  }
+  else {
+    (*prev)->nextEdge = (*current)->nextEdge;
+    free(*current);
+    (*current) = (*prev)->nextEdge;
+  }
+}
+
 
 /**
  * Places a new edge into the supplied edgelist in order.
