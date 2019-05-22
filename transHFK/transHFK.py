@@ -2,9 +2,9 @@ from Tkinter import *
 import ScrolledText
 from sys import stdout
 import multiprocessing as mp
-import _tHFK
+import _transHFK
 
-class tHFK:
+class transHFK:
     """
     Class the contains the X,O code of a knot and
     provides methods for the transverseHFK invariants of
@@ -31,7 +31,13 @@ class tHFK:
     Methods
     -------
     arc_index()
-        Returns the size of the grid specified by the Xs and Os.
+        Returns the size of the grid.
+    writhe()
+        Returns the writhe of the grid.
+    tb()
+        Returns the Thurston-Bennequin number of the grid.
+    r()
+        Returns the rotation number of the grid.
     x_plus()
         Returns an integer list corresponding to the x+ grid state.
     x_minus()
@@ -76,8 +82,64 @@ class tHFK:
         self.verbosity = verbosity
 
     def arc_index(self):
-        """Returns the size of the grid specified by the Xs and Os."""
+        """Returns the size of the grid."""
         return len(self.Xs)
+
+    def writhe(self):
+        """Returns the writhe of the grid."""
+        writhe = 0
+
+        for i in range(1,self.arc_index()):
+            min_XO = min(self.Xs[i], self.Os[i])
+            max_XO = max(self.Xs[i], self.Os[i])
+
+            for j in range(i):
+                for k in range(i+1, self.arc_index()):
+                    if(min_XO < self.Xs[j] and max_XO > self.Xs[j] and self.Os[k] == self.Xs[j]):
+                        if(max_XO == self.Xs[i]):
+                            writhe += 1
+                        else:
+                            writhe -= 1
+                    if(min_XO < self.Os[j] and max_XO > self.Os[j] and self.Xs[k] == self.Os[j]):
+                        if(max_XO == self.Os[i]):
+                            writhe += 1
+                        else:
+                            writhe -= 1
+
+        return writhe
+
+    def _up_down_cusps(self):
+        """
+        Returns a tuple (u,d) where u is the number of up cusps and d is the number
+        of down cusps in the grid.
+        """
+        up_cusps = 0
+        down_cusps = 0
+
+        for i in range(self.arc_index()):
+            for j in range(self.arc_index()):
+                if(j < i):
+                    if self.Xs[i] > self.Os[i] and self.Os[j] == self.Xs[i]:
+                        down_cusps += 1
+                    if self.Os[i] > self.Xs[i] and self.Xs[j] == self.Os[i]:
+                        up_cusps += 1
+                else:
+                    if self.Xs[i] < self.Os[i] and self.Os[j] == self.Xs[i]:
+                        up_cusps += 1
+                    if self.Os[i] < self.Xs[i] and self.Xs[j] == self.Os[i]:
+                        down_cusps += 1
+
+        return (up_cusps, down_cusps)
+
+    def tb(self):
+        """Returns the Thurston-Bennequin number of the grid."""
+        u,d = self._up_down_cusps()
+        return self.writhe() - (u+d)/2
+
+    def r(self):
+        """Returns the rotation number of the grid."""
+        u,d = self._up_down_cusps()
+        return (d-u)/2
 
     def x_plus(self):
         """Returns an integer list corresponding to the x+ grid state."""
@@ -99,19 +161,19 @@ class tHFK:
     
     def lambda_plus(self):
         """Returns True if x+ is null-homologous. False otherwise."""
-        return _tHFK.null_homologous_D0Q(self.x_plus(), self.Xs, self.Os, self.out_stream, self.verbosity)
+        return _transHFK.null_homologous_D0Q(self.x_plus(), self.Xs, self.Os, self.out_stream, self.verbosity)
 
     def lambda_minus(self):
         """Returns True if x- is null-homologous. False otherwise."""
-        return _tHFK.null_homologous_D0Q(self.x_minus(), self.Xs, self.Os, self.out_stream, self.verbosity)
+        return _transHFK.null_homologous_D0Q(self.x_minus(), self.Xs, self.Os, self.out_stream, self.verbosity)
 
     def d_lambda_plus(self):
         """Returns True if d_1 x+ is null-homologous. False otherwise."""
-        return _tHFK.null_homologous_D1Q(self.x_plus(), self.Xs, self.Os, self.out_stream, self.verbosity)
+        return _transHFK.null_homologous_D1Q(self.x_plus(), self.Xs, self.Os, self.out_stream, self.verbosity)
 
     def d_lambda_minus(self):
         """Returns True if d_1 x- is null-homologous. False otherwise."""
-        return _tHFK.null_homologous_D1Q(self.x_minus(), self.Xs, self.Os, self.out_stream, self.verbosity)
+        return _transHFK.null_homologous_D1Q(self.x_minus(), self.Xs, self.Os, self.out_stream, self.verbosity)
 
     def theta_n(self, n):
         """
@@ -121,11 +183,11 @@ class tHFK:
         if n == 1:
             return self.lambda_plus()
         else:
-            return _tHFK.null_homologous_lift(self.x_plus(), n, self.Xs, self.Os, self.out_stream, self.verbosity)
+            return _transHFK.null_homologous_lift(self.x_plus(), n, self.Xs, self.Os, self.out_stream, self.verbosity)
     
-class Tk_tHFK(tHFK):
+class Tk_transHFK(transHFK):
     """
-    Tkinter window for use with the tHFK class methods
+    Tkinter window for use with the transHFK class methods
 
     Attributes
     ----------
@@ -158,7 +220,7 @@ class Tk_tHFK(tHFK):
         Note: For the methods to work the Xs and Os must be
         permutations {1,...,N} with nonoverlapping values.
         """
-        tHFK.__init__(self, Xs ,Os, self, 0)
+        transHFK.__init__(self, Xs ,Os, self, 0)
         self.window = Tk()
         if name:
             self.name = name
@@ -207,6 +269,8 @@ class Tk_tHFK(tHFK):
 
         self._callback_id = self.window.after(0,self._queue_check)
         self.window.protocol("WM_DELETE_WINDOW", self._clean_and_destroy)
+        
+        self._display_knot_info()
         self.window.mainloop()
 
     def _clean_and_destroy(self):
@@ -348,8 +412,17 @@ class Tk_tHFK(tHFK):
         self.output_area.delete(1.0,END)
         self.output_area.config(state=DISABLED)
 
+    def _display_knot_info(self):
+        self.write("X: " + str(self.Xs) + '\n')
+        self.write("O: " + str(self.Os) + '\n')
+        self.write("tb: " + str(self.tb()) + '\n')
+        self.write("r: " + str(self.r()) + '\n')
+        self.write("\n")
+
+
     def sync_btn_cmd(self):
         """ Syncs Xs and Os with parent window calling parent.get_XOlists and parent.reflect()"""
+        self._display_knot_info()
         if self.parent == None:
             self.write("No parent window to sync with.\n")
         else:
@@ -364,5 +437,4 @@ class Tk_tHFK(tHFK):
                 Olist = [o+1 for o in Olist]
             self.Xs = Xlist
             self.Os = Olist
-            self.write("X: " + str(self.Xs) + '\n')
-            self.write("O: " + str(self.Os) + '\n')
+            self._display_knot_info()

@@ -57,6 +57,16 @@ int mod(const int a, const int arc_index) {
 }
 
 /**
+ * Calculates x mod p
+ * @param x an int
+ * @param p a non-negative int
+ * @return x mod p
+ */
+int pmod(const int x, const int p) {
+  return (x%p>=0) ? (x%p) : ((x%p)+p);
+}
+
+/**
  * Shifts the input towards the interval (0,arc_index] by
  * a multiple of arc_index
  * @param a An integer
@@ -1367,140 +1377,137 @@ StateList fixed_wt_rectangles_out_of(const int wt, const State incoming,
  */
 static LiftStateRBTree new_lift_rectangles_out_internal(const LiftStateRBTree prevs, const LiftState incoming, const LiftGrid_t *const G, int is_mirrored) {
   LiftStateRBTree ans = EMPTY_LIFT_TREE;
-  double *g_Xs, *g_Os;
 
-  g_Xs = malloc(sizeof(double)*G->arc_index);
-  g_Os = malloc(sizeof(double)*G->arc_index);
+  for(int start_sheet=0; start_sheet < G->sheets; ++start_sheet) {
+    for(int start_col=0; start_col < G->arc_index; ++start_col) {
+      int jumped_down = 0;
+      int jumped_up = 0;
+      int start_row = pmod(incoming[start_sheet][start_col]-1, G->arc_index);
+      int step = 0;
+      int check_index = start_col;
+      int jump = start_sheet;
+      int height = pmod(start_row - 1, G->arc_index);
 
-  for(int i=0; i < G->arc_index; ++i) {
-    g_Xs[i] = ((double)G->Xs[i]) - .5;
-    g_Os[i] = ((double)G->Os[i]) - .5;
-  }
-
-  for(int start_x=0; start_x < G->arc_index*G->sheets; ++start_x) {
-    int jumped_down = 0;
-    int jumped_up = 0;
-    int start_y = mod(incoming[start_x/G->arc_index][start_x%G->arc_index]-1, G->arc_index);
-    int start_sheet = start_x/G->arc_index;
-    int step = 0;
-    int check_index = mod((start_x + step) % G->arc_index, G->arc_index);
-    int jump = start_sheet*G->arc_index;
-    int height = mod((start_y - 1) % G->arc_index, G->arc_index);
-
-    while (height != start_y) {
-      check_index = mod((start_x + step)%G->arc_index, G->arc_index);
-      int check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index * G->sheets);
-      int clear = 1;
-      if (height > start_y) {
-        if (g_Xs[check_index] < height && g_Xs[check_index] > start_y && clear) {
-          clear = 0;
-        }
-        if (g_Os[check_index] < height && g_Os[check_index] > start_y && clear) {
-          clear = 0;
-        }
-        if (g_Xs[check_index] > height && g_Os[check_index] < start_y && clear) {
-          jump = jump + G->arc_index;
-          jumped_up = 1;
-          check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index * G->sheets);
-        }
-        if (g_Os[check_index] > height && g_Xs[check_index] < start_y && clear) {
-          jump = jump - G->arc_index;
-          jumped_down = 1;
-          check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index * G->sheets);
-        }
-        if (mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) < height && mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) > start_y && clear) {
-          if (jumped_down) {
-            jumped_down = 0;
-            jump = jump + G->arc_index;
+      while (height != start_row) {
+        check_index = pmod(start_col + step, G->arc_index);
+        int check_sheet_gen = pmod(jump, G->sheets);
+        int check_col_gen = pmod(start_col + step + 1, G->arc_index);
+        int clear = 1;
+        
+        if (height > start_row) {
+          if (clear && G->Xs[check_index] <= height && G->Xs[check_index] > start_row) {
+            clear = 0; 
           }
-          if (jumped_up) {
-            jumped_up = 0;
-            jump = jump - G->arc_index;
+          if (clear && G->Os[check_index] <= height && G->Os[check_index] > start_row) {
+            clear = 0;
           }
-          clear = 0;
-        }
-        if (clear) {
-          check_index_gen = mod((mod((start_x + step + 1) % G->arc_index, G->arc_index) + jump) % (G->arc_index * G->sheets), G->arc_index*G->sheets);
-          if (mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) == height) {
-            LiftState new_state = NULL;
-            init_lift_state(&new_state, G);
-            copy_lift_state(&new_state, &incoming, G);
-            new_state[start_x/G->arc_index][start_x%G->arc_index] = incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index];
-            new_state[check_index_gen/G->arc_index][check_index_gen%G->arc_index] = incoming[start_x/G->arc_index][start_x%G->arc_index];
-            if (is_mirrored) {
-              mirror_lift_state(&new_state, G);
+          if (clear && G->Xs[check_index] > height && G->Os[check_index] <= start_row) {
+            ++jump;
+            jumped_up = 1;
+            check_sheet_gen = pmod(jump, G->sheets);
+            check_col_gen = pmod(start_col + step + 1, G->arc_index);
+          }
+          if (clear && G->Os[check_index] > height && G->Xs[check_index] <= start_row) {
+            --jump;
+            jumped_down = 1;
+            check_sheet_gen = pmod(jump, G->sheets);
+            check_col_gen = pmod(start_col + step + 1, G->arc_index);
+          }
+          if (clear && pmod(incoming[check_sheet_gen][check_col_gen]-1, G->arc_index) < height && pmod(incoming[check_sheet_gen][check_col_gen]-1, G->arc_index) > start_row) {
+            if (jumped_down) {
+              jumped_down = 0;
+              ++jump;
             }
+            if (jumped_up) {
+              jumped_up = 0;
+              --jump;
+            }
+            clear = 0;
+          }
+          if (clear) {
+            check_sheet_gen = pmod(jump, G->sheets);
+            check_col_gen = pmod(start_col + step + 1, G->arc_index);
+            if (pmod(incoming[check_sheet_gen][check_col_gen]-1, G->arc_index) == height) {
+              LiftState new_state = NULL;
+              init_lift_state(&new_state, G);
+              copy_lift_state(&new_state, &incoming, G);
+              new_state[start_sheet][start_col] = incoming[check_sheet_gen][check_col_gen];
+              new_state[check_sheet_gen][check_col_gen] = incoming[start_sheet][start_col];
+              if (is_mirrored) {
+                mirror_lift_state(&new_state, G);
+              }
 
-            if(!is_member(&prevs, new_state, G)) {
-              if(!is_member(&ans, new_state, G)) {
-                insert_data(&ans, new_state,G);
+              if(!is_member(&prevs, new_state, G)) {
+                if(!is_member(&ans, new_state, G)) {
+                  insert_data(&ans, new_state,G);
+                }
+                else {
+                  LiftStateRBTree temp = find_node(&ans, new_state, G);
+                  delete_node(&ans, temp);
+                  free_lift_state(&(temp->data), G);
+                  free(temp);
+                  free_lift_state(&new_state, G);
+                }
               }
-              else {
-                LiftStateRBTree temp = find_node(&ans, new_state, G);
-                delete_node(&ans, temp);
-                free_lift_state(&(temp->data), G);
-                free(temp);
-                free_lift_state(&new_state, G);
-              }
-            }
             
-            height = mod((height - 1) % G->arc_index, G->arc_index);
+              height = pmod(height - 1, G->arc_index);
+            }
+            ++step;
+            jumped_down = 0;
+            jumped_up = 0;          
           }
-          step = step + 1;
-          jumped_down = 0;
-          jumped_up = 0;          
+          else {
+            height = mod(height - 1,G->arc_index);
+          }
         }
         else {
-          height = mod((height - 1) % G->arc_index,G->arc_index);
-        }
-      }
-      else {
-        if ((g_Xs[check_index] < height || g_Xs[check_index] > start_y) && clear) {
-          clear = 0;
-        }
-        if ((g_Os[check_index] < height || g_Os[check_index] > start_y) && clear) {
-          clear = 0;
-        }
-        if ((mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) < height || mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) >= start_y) && clear) {
-          clear = 0;
-        }
-        if (clear) {
-          if (mod(incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index]-1, G->arc_index) == height) {
-            LiftState new_state = NULL;
-            init_lift_state(&new_state, G);
-            copy_lift_state(&new_state, &incoming, G);
-            new_state[start_x/G->arc_index][start_x%G->arc_index] = incoming[check_index_gen/G->arc_index][check_index_gen%G->arc_index];
-            new_state[check_index_gen/G->arc_index][check_index_gen%G->arc_index] = incoming[start_x/G->arc_index][start_x%G->arc_index];
-            if (is_mirrored) {
-              mirror_lift_state(&new_state, G);
-            }
-
-            if(!is_member(&prevs, new_state, G)) {
-              if(!is_member(&ans, new_state, G)) {
-                insert_data(&ans, new_state,G);
-              }
-              else {
-                LiftStateRBTree temp = find_node(&ans, new_state, G);
-                delete_node(&ans, temp);
-                free_lift_state(&(temp->data), G);
-                free(temp);
-                free_lift_state(&new_state, G);
-              }
-            }
-
-            height = mod((height -1) % G->arc_index,G->arc_index);
+          if (clear && (G->Xs[check_index] <= height || G->Xs[check_index] > start_row)) {
+            clear = 0;
           }
-          step = step + 1;
-        }
-        else {
-          height = mod((height - 1) % G->arc_index, G->arc_index);
+          if (clear && (G->Os[check_index] <= height || G->Os[check_index] > start_row)) {
+            clear = 0;
+          }
+          if (clear && (pmod(incoming[check_sheet_gen][check_col_gen]-1, G->arc_index) < height || pmod(incoming[check_sheet_gen][check_col_gen]-1, G->arc_index) >= start_row)) {
+            clear = 0;
+          }
+          if (clear) {
+            if (pmod(incoming[check_sheet_gen][check_col_gen]-1, G->arc_index) == height) {
+              LiftState new_state = NULL;
+              init_lift_state(&new_state, G);
+              copy_lift_state(&new_state, &incoming, G);
+              new_state[start_sheet][start_col] = incoming[check_sheet_gen][check_col_gen];
+              new_state[check_sheet_gen][check_col_gen] = incoming[start_sheet][start_col];
+              if (is_mirrored) {
+                mirror_lift_state(&new_state, G);
+              }
+
+              if(!is_member(&prevs, new_state, G)) {
+                if(!is_member(&ans, new_state, G)) {
+                  insert_data(&ans, new_state,G);
+                }
+                else {
+                  LiftStateRBTree temp = find_node(&ans, new_state, G);
+                  delete_node(&ans, temp);
+                  free_lift_state(&(temp->data), G);
+                  free(temp);
+                  free_lift_state(&new_state, G);
+                }
+              }
+
+              height = pmod(height -1,G->arc_index);
+            }
+            ++step;
+            jumped_down = 0;
+            jumped_up = 0;
+          }
+          else {
+            height = pmod(height - 1, G->arc_index);
+          }
         }
       }
     }
   }
 
-  free(g_Xs);
-  free(g_Os);
   return ans;
 }
 
@@ -1624,10 +1631,12 @@ void print_state_short(const State state, const Grid_t *const G) {
 }
 
 /**
- * Calls print_state on each sheet of the lift state
+ * Calls print_state on the first sheet and print_state_short and the rest of
+ * the sheets of the lift state
  * @param state a lift state
  * @param G a lift grid
  * @see print_state
+ * @see print_state_short
  */
 void print_lift_state(const LiftState state, const LiftGrid_t * const G) {
   Grid_t H;
@@ -1635,8 +1644,12 @@ void print_lift_state(const LiftState state, const LiftGrid_t * const G) {
   H.Xs = G->Xs;
   H.Os = G->Os;
 
-  for(int i=0; i < G->sheets; ++i) {
-    print_state(state[i], &H);
+  (*print_ptr)("Sheet 0:\n");
+  print_state(state[0], &H);
+
+  for(int i=1; i < G->sheets; ++i) {
+    (*print_ptr)("Sheet %d: ", i);
+    print_state_short(state[i], &H);
   }
 }
 
@@ -1652,7 +1665,26 @@ void print_lift_state_short(const LiftState state, const LiftGrid_t * const G) {
   G_p.Xs = G->Xs;
   G_p.Os = G->Os;
   for(int i = 0; i < G->sheets; ++i) {
+    (*print_ptr)("Sheet %d: ", i);
     print_state_short(state[i], &G_p);
+  }
+}
+
+/**
+ * Prints each sheet of a lift state using print_state
+ * @param state a lift state
+ * @param G a lift grid
+ * @see print_state
+ */
+void print_lift_state_long(const LiftState state, const LiftGrid_t * const G) {
+  Grid_t H;
+  H.arc_index = G->arc_index;
+  H.Xs = G->Xs;
+  H.Os = G->Os;
+  
+  for(int i=0; i < G->sheets; ++i) {
+    (*print_ptr)("Sheet %d:\n", i);
+    print_state(state[i], &H);
   }
 }
 

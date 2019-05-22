@@ -21,6 +21,7 @@ int get_verbosity(void);
 void set_verbosity(const int);
 
 int mod(const int, const int);
+int pmod(const int, const int);
 int mod_up(const int, const int);
 int min(const int, const int);
 
@@ -52,6 +53,7 @@ void print_state(const State, const Grid_t *const);
 void print_lift_state(const LiftState, const LiftGrid_t * const);
 void print_state_short(const State, const Grid_t *const);
 void print_lift_state_short(const LiftState, const LiftGrid_t * const);
+void print_lift_state_long(const LiftState, const LiftGrid_t * const);
 void print_states(const StateList, const Grid_t *const);
 void print_lift_states(const LiftStateList, const LiftGrid_t * const);
 void print_states_tree(const StateRBTree, const Grid_t * const);

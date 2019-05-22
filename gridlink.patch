@@ -5,9 +5,9 @@
  except:
      TkHFK=None
 +try:
-+    from tHFK import *
++    from transHFK import *
 +except:
-+    Tk_tHFK=None
++    Tk_transHFK=None
  
  revision = '$Revision: 1.75 $'.replace('$','')
  
@@ -20,8 +20,8 @@
 -            invariantmenu = Menu(menubar, tearoff=0)
              invariantmenu.add_command(label='HFK^', command=self.HFKhat)
 -            menubar.add_cascade(label='Invariants', menu=invariantmenu)
-+        if (Tk_tHFK):
-+            invariantmenu.add_command(label="transverseHFK", command=self.tHFK)
++        if (Tk_transHFK):
++            invariantmenu.add_command(label="transverseHFK", command=self.transHFK)
 +        menubar.add_cascade(label='Invariants', menu=invariantmenu)
          menubar.add_cascade(label='Windows', menu=self.app.windowmenu)
          menubar.add_cascade(label='Help', menu=self.app.helpmenu)
@@ -30,7 +30,7 @@
          hfk_object = TkHFK(Xlist, Olist, name=self.window.title())
          hfk_object.HFK_ranks()
  
-+    def tHFK(self):
++    def transHFK(self):
 +        if self.components > 1:
 +            showwarning('Knots only',
 +                        'Sorry, I can only compute transverseHFK invariants for knots')
@@ -43,7 +43,7 @@
 +        if 0 in Xlist:
 +            Xlist = [x+1 for x in Xlist]
 +            Olist = [o+1 for o in Olist]
-+        t_hfk_object = Tk_tHFK(nXlist, nOlist, name=self.window.title(), parent=self)
++        t_hfk_object = Tk_transHFK(nXlist, nOlist, name=self.window.title(), parent=self)
 +
      def winding_numbers(self):
          result = []

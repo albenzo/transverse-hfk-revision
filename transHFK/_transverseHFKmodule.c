@@ -267,6 +267,7 @@ static PyObject *null_homologous_lift_py(PyObject *self, PyObject *args,
   PyObject *py_out_stream = NULL;
 
   LiftGrid_t G;
+  Grid_t H;
   State state;
   LiftState lift_state;
 
@@ -348,8 +349,12 @@ static PyObject *null_homologous_lift_py(PyObject *self, PyObject *args,
       lift_state[i][j] = state[j];
     }
   }
+  
+  H.Xs = G.Xs;
+  H.Os = G.Os;
+  H.arc_index = G.arc_index;
 
-  if (failed || !is_lift_grid(&G) || !is_lift_state(lift_state, &G)) {
+  if (failed || !is_lift_grid(&G) || !is_state(state, &H)) {
     PyErr_SetString(error, "state, Xs, and Os must be lists containing "
                            "[1,...,N] exactly once with no matching indices "
                            "between Xs and Os");
@@ -465,7 +470,7 @@ verbosity : int\n\
 Note: Xs, Os, and state must be permutations {1,..,N}\n\
 where Xs and Os have no overlapping values.";
 
-static PyMethodDef _tHFK_methods[] = {
+static PyMethodDef _transHFK_methods[] = {
     {"null_homologous_D0Q", (PyCFunction)null_homologous_D0Q_py,
      METH_VARARGS | METH_KEYWORDS, null_homologous_D0Q_doc},
     {"null_homologous_D1Q", (PyCFunction)null_homologous_D1Q_py,
@@ -473,16 +478,16 @@ static PyMethodDef _tHFK_methods[] = {
     {"null_homologous_lift", (PyCFunction)null_homologous_lift_py, METH_VARARGS | METH_KEYWORDS, null_homologous_lift_doc},
     {NULL, NULL}};
 
-PyMODINIT_FUNC init_tHFK(void) {
+PyMODINIT_FUNC init_transHFK(void) {
   PyObject *m, *d;
-  const char *tHFK_error_name = "tHFK_Error";
-  const char *tHFK_dot_error = "tHFK.error";
+  const char *transHFK_error_name = "transHFK_Error";
+  const char *transHFK_dot_error = "transHFK.error";
 
-  m = Py_InitModule("_tHFK", _tHFK_methods);
+  m = Py_InitModule("_transHFK", _transHFK_methods);
 
   d = PyModule_GetDict(m);
-  error = PyErr_NewException((char *)tHFK_dot_error, NULL, NULL);
-  PyDict_SetItemString(d, tHFK_error_name, error);
+  error = PyErr_NewException((char *)transHFK_dot_error, NULL, NULL);
+  PyDict_SetItemString(d, transHFK_error_name, error);
 
   set_print_fn(print_py);
 }
