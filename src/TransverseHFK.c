@@ -902,6 +902,10 @@ static void reverse_vertex_list(VertexList vertices, VertexList* dest) {
   *dest = head;
 }
 
+/**
+ * Removes and frees the first element of vertices
+ * @param vertices a VertexList*
+ */
 static void pop_vertex(VertexList* vertices) {
   if(*vertices == NULL) {
     return;
@@ -911,6 +915,10 @@ static void pop_vertex(VertexList* vertices) {
   free(v);
 }
 
+/**
+ * Frees a list of vertices.
+ * @param vertices a VertexList
+ */
 void free_vertex_list(VertexList vertices) {
   while (vertices != NULL) {
     pop_vertex(&vertices);
@@ -985,6 +993,12 @@ void contract(const int start, const int end, EdgeList * edge_list) {
   free_vertex_list(children);
 }
 
+/**
+ * Advances the iterators iter and prev until iter has reached another parent.
+ * @param iter an EdgeList pointer
+ * @param prev an Edgelist pointer such that prev points to the edge before iter
+ * (or points to the same edge if they are at the start of the list)
+ */
 static void advance_next_parent(EdgeList* iter, EdgeList* prev) {
   int cur_parent = (*iter)->start;
 
@@ -998,6 +1012,15 @@ static void advance_next_parent(EdgeList* iter, EdgeList* prev) {
   }
 }
 
+/**
+ * Within edge_list takes the symmetric difference of the iter's starts children nodes and
+ * the vertex list children.
+ * @param iter an EdgeList pointer
+ * @param prev an EdgeList pointer such that prev points to the edge before iter
+ * (or points to the same edge if they are both at the start of edge_list)
+ * @param children a VertexList
+ * @param edge_list an EdgeList* where iter and prev are pointing to edges within
+ */
 static void sym_diff_parent(EdgeList* iter, EdgeList* prev, VertexList children, EdgeList* edge_list) {
   int cur_parent = (*iter)->start;
 
@@ -1032,6 +1055,16 @@ static void sym_diff_parent(EdgeList* iter, EdgeList* prev, VertexList children,
   }
 }
 
+/**
+ * Adds the edge (start,end) between prev and current within edge_list and setting prev
+ * to point at the new edge.
+ * @param start an int
+ * @param end an int
+ * @param current an EdgeList pointer
+ * @param prev an EdgeList pointer such that prev points to the edge before current
+ * (or points to the same edge if they are both at the start of edge_list)
+ * @param edge_list an EdgeList* where iter and prev are pointing to edges within
+ */
 static void add_edge_in_place(const int start, const int end, EdgeList* current, EdgeList* prev, EdgeList* edge_list) {
   if(*edge_list == NULL) {
     *edge_list = prepend_edge(start, end, *edge_list);
@@ -1049,6 +1082,13 @@ static void add_edge_in_place(const int start, const int end, EdgeList* current,
   }
 }
 
+/**
+ * Removes the edge current from edge_list and advances it to the next edge.
+ * @param current an EdgeList pointer
+ * @param prev an EdgeList pointer such that prev points to the edge before current
+ * (or points to the same edge if they are both at the start of edge_list)
+ * @param edge_list an EdgeList* where iter and prev are pointing to edges within
+ */
 static void remove_edge(EdgeList* current, EdgeList* prev, EdgeList* edge_list) {
   if(*current == *prev) {
     // we are at the start of the list
