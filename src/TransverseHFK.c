@@ -726,6 +726,41 @@ VertexList prepend_vertex(const int a, const VertexList vertices) {
   return new_ptr;
 }
 
+static void reverse_vertex_list(VertexList vertices, VertexList* dest) {
+  VertexList iter = vertices;
+  VertexList head = NULL;
+
+  while(iter != NULL) {
+    head = prepend_vertex(iter->data, head);
+    pop_vertex(&iter);
+  }
+
+  *dest = head;
+}
+
+/**
+ * Removes and frees the first element of vertices
+ * @param vertices a VertexList*
+ */
+static void pop_vertex(VertexList* vertices) {
+  if(*vertices == NULL) {
+    return;
+  }
+  VertexList v = *vertices;
+  *vertices = (*vertices)->nextVertex;
+  free(v);
+}
+
+/**
+ * Frees a list of vertices.
+ * @param vertices a VertexList
+ */
+void free_vertex_list(VertexList vertices) {
+  while (vertices != NULL) {
+    pop_vertex(&vertices);
+  }
+}
+
 /**
  * Add a new edge to the start of a EdgeList
  * @param a an int indictating the source of the edge
@@ -888,41 +923,6 @@ void free_edge_list(const EdgeList e) {
     temp = temp->nextEdge;
     free(ntemp);
   };
-}
-
-static void reverse_vertex_list(VertexList vertices, VertexList* dest) {
-  VertexList iter = vertices;
-  VertexList head = NULL;
-
-  while(iter != NULL) {
-    head = prepend_vertex(iter->data, head);
-    pop_vertex(&iter);
-  }
-
-  *dest = head;
-}
-
-/**
- * Removes and frees the first element of vertices
- * @param vertices a VertexList*
- */
-static void pop_vertex(VertexList* vertices) {
-  if(*vertices == NULL) {
-    return;
-  }
-  VertexList v = *vertices;
-  *vertices = (*vertices)->nextVertex;
-  free(v);
-}
-
-/**
- * Frees a list of vertices.
- * @param vertices a VertexList
- */
-void free_vertex_list(VertexList vertices) {
-  while (vertices != NULL) {
-    pop_vertex(&vertices);
-  }
 }
 
 /**
