@@ -17,8 +17,6 @@ static void advance_next_parent(EdgeList*, EdgeList*);
 static void sym_diff_parent(EdgeList*, EdgeList*, VertexList, EdgeList*);
 static void add_edge_in_place(const int, const int, EdgeList*, EdgeList*, EdgeList*);
 static void remove_edge(EdgeList*, EdgeList*, EdgeList*);
-static void reverse_vertex_list(VertexList, VertexList*);
-static void pop_vertex(VertexList*);
 
 /**
  * Sets the print function to the passed in function pointer
@@ -726,7 +724,7 @@ VertexList prepend_vertex(const int a, const VertexList vertices) {
   return new_ptr;
 }
 
-static void reverse_vertex_list(VertexList vertices, VertexList* dest) {
+void reverse_vertex_list(VertexList vertices, VertexList* dest) {
   VertexList iter = vertices;
   VertexList head = NULL;
 
@@ -742,7 +740,7 @@ static void reverse_vertex_list(VertexList vertices, VertexList* dest) {
  * Removes and frees the first element of vertices
  * @param vertices a VertexList*
  */
-static void pop_vertex(VertexList* vertices) {
+void pop_vertex(VertexList* vertices) {
   if(*vertices == NULL) {
     return;
   }

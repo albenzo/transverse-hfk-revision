@@ -32,6 +32,8 @@ int null_homologous_D1Q(const State, const Grid_t *const);
 int null_homologous_lift(const LiftState, const LiftGrid_t * const);
 
 VertexList prepend_vertex(const int, const VertexList);
+void reverse_vertex_list(VertexList, VertexList*);
+void pop_vertex(VertexList*);
 EdgeList prepend_edge(const int, const int, const EdgeList);
 EdgeList create_edge(const int, const int);
 int compare_edge(EdgeList, EdgeList);
