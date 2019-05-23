@@ -142,7 +142,7 @@ StateList swap_cols_list(const int x1, const int x2, const State incoming,
   while (i < G->arc_index) {
     ans->data[i] = incoming[i];
     i++;
-  };
+  }
   ans->data[x1] = (incoming)[x2];
   ans->data[x2] = (incoming)[x1];
   ans->nextState = NULL;
@@ -322,9 +322,11 @@ int null_homologous_D0Q(const State init, const Grid_t *const G) {
                      current_pos, current_pos, edge_count);
         (*print_ptr)("\n");
       }
-    };
+    }
     current_pos++;
-  };
+  }
+  
+  free_edge_list(edge_list);
   return (ans);
 }
 
@@ -349,15 +351,11 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
   prev_ins = EMPTY_TREE;
   new_ins = EMPTY_TREE;
 
-  State s = malloc(sizeof(char) * G->arc_index);
-  copy_state(&s, &init, G);
-
   // Calculate D1(init) and terminate if null. Otherwise build sentinal edges out of A_0
   StateList temp = fixed_wt_rectangles_out_of(1, init, G);
     
   if (NULL == temp) {
     free_state_list(temp);
-    free(s);
     free_edge_list(edge_list);
     return 1;
   }
@@ -523,9 +521,11 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
                      current_pos, current_pos, edge_count);
         (*print_ptr)("\n");
       }
-    };
+    }
     current_pos++;
-  };
+  }
+
+  free_edge_list(edge_list);
   return (ans);
 }
 
@@ -703,9 +703,11 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
                      current_pos, current_pos, edge_count);
         (*print_ptr)("\n");
       }
-    };
+    }
     current_pos++;
-  };
+  }
+  
+  free_edge_list(edge_list);
   return (ans);
 }
 
@@ -920,7 +922,7 @@ void free_edge_list(const EdgeList e) {
     ntemp = temp;
     temp = temp->nextEdge;
     free(ntemp);
-  };
+  }
 }
 
 /**
@@ -1128,13 +1130,13 @@ EdgeList append_ordered(const int a, const int b, const EdgeList edges) {
            ((curr->start < a) || ((curr->start == a) && (curr->end < b)))) {
       curr = curr->nextEdge;
       prev = prev->nextEdge;
-    };
+    }
     temp = malloc(sizeof(EdgeNode_t));
     temp->start = a;
     temp->end = b;
     temp->nextEdge = curr;
     prev->nextEdge = temp;
-  };
+  }
   return (ans);
 }
 
@@ -1175,15 +1177,15 @@ StateRBTree new_rectangles_out_of(const StateRBTree prevs, const State incoming,
             temp = swap_cols(LL, mod(LL + w, G->arc_index), incoming, G);
             s_insert_data(&ans, temp, G);
           }
-        };
+        }
         temp_state[LL] = incoming[LL];
         temp_state[mod(LL + w, G->arc_index)] = incoming[mod(LL + w, G->arc_index)];
         h = mod(incoming[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index);
-      };
+      }
       h = min(h, min(mod(G->Os[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index),
                      mod(G->Xs[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index)));
       w++;
-    };
+    }
     LL++;
   }
   
@@ -1229,17 +1231,17 @@ StateRBTree new_rectangles_into(const StateRBTree prevs, const State incoming,
             temp = swap_cols(LL, mod(LL + w, G->arc_index), incoming, G);
             s_insert_data(&ans, temp, G);
           }
-        };
+        }
         temp_state[LL] = incoming[LL];
         temp_state[mod(LL + w, G->arc_index)] = incoming[mod(LL + w, G->arc_index)];
         h = mod_up(incoming[LL] - incoming[mod(LL + w, G->arc_index)], G->arc_index);
-      };
+      }
       h = min(h, min(mod_up(incoming[LL] - G->Os[mod(LL + w, G->arc_index)], G->arc_index),
                      mod_up(incoming[LL] - G->Xs[mod(LL + w, G->arc_index)], G->arc_index)));
       w++;
-    };
+    }
     LL++;
-  };
+  }
 
   free(temp_state);
   return ans;
@@ -1273,9 +1275,9 @@ StateList fixed_wt_rectangles_out_of(const int wt, const State incoming,
           if (mod(G->Xs[mod(LL + i, G->arc_index)] - incoming[LL], G->arc_index) <
               mod(incoming[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index)) {
             this_weight++;
-          };
+          }
           i++;
-        };
+        }
         if (this_weight == wt) {
           temp = swap_cols_list(LL, mod(LL + w, G->arc_index), incoming, G);
           if (get_number(temp->data, ans, G) != 0) {
@@ -1287,14 +1289,14 @@ StateList fixed_wt_rectangles_out_of(const int wt, const State incoming,
             temp->nextState = ans;
             ans = temp;
           }
-        };
+        }
         h = mod(incoming[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index);
-      };
+      }
       h = min(h, mod(G->Os[mod(LL + w, G->arc_index)] - incoming[LL], G->arc_index));
       w++;
-    };
+    }
     LL++;
-  };
+  }
   return ans;
 }
 
@@ -1505,10 +1507,10 @@ void print_state(const State state, const Grid_t *const G) {
           (*print_ptr)("| O ");
         } else {
           (*print_ptr)("|   ");
-        };
-      };
+        }
+      }
       i++;
-    };
+    }
     (*print_ptr)("|\n");
     i = 0;
     while (i < G->arc_index) {
@@ -1528,20 +1530,20 @@ void print_state(const State state, const Grid_t *const G) {
                 (*print_ptr)("----");
               } else {
                 (*print_ptr)("----");
-              };
-            };
-          };
-        };
-      };
+              }
+            }
+          }
+        }
+      }
       i++;
-    };
+    }
     if (j > 1) {
       (*print_ptr)("|\n");
     } else {
       (*print_ptr)("*\n");
-    };
+    }
     j--;
-  };
+  }
   (*print_ptr)("\n");
 }
 
@@ -1558,7 +1560,7 @@ void print_state_short(const State state, const Grid_t *const G) {
   while (i < G->arc_index - 1) {
     (*print_ptr)("%d,", state[i]);
     i++;
-  };
+  }
   (*print_ptr)("%d}\n", state[G->arc_index - 1]);
 }
 
@@ -1638,12 +1640,12 @@ void print_states(const StateList states, const Grid_t *const G) {
     temp = temp->nextState;
     if (temp != NULL) {
       (*print_ptr)(",");
-    };
+    }
     c++;
-  };
+  }
   if (c == 500000) {
     (*print_ptr)("...");
-  };
+  }
   (*print_ptr)("}");
 }
 
@@ -1664,12 +1666,12 @@ void print_lift_states(const LiftStateList states, const LiftGrid_t *const G) {
     temp = temp->nextState;
     if (temp != NULL) {
       (*print_ptr)(",");
-    };
+    }
     c++;
-  };
+  }
   if (c == 500000) {
     (*print_ptr)("...");
-  };
+  }
   (*print_ptr)("}");
 }
 
@@ -1745,7 +1747,7 @@ void print_edges(const EdgeList edge_list) {
   while (temp != NULL) {
     (*print_ptr)("[%d -> %d]\n", temp->start, temp->end);
     temp = (temp->nextEdge);
-  };
+  }
 }
 
 /**
@@ -1769,7 +1771,7 @@ void print_math_edges(const EdgeList edge_list) {
       if (temp != NULL)
         (*print_ptr)(",");
     }
-  };
+  }
   (*print_ptr)("}\n");
 }
 
@@ -1786,7 +1788,7 @@ void print_math_edges_a(const EdgeList edges) {
     temp = (temp->nextEdge);
     if (temp != NULL)
       (*print_ptr)(",");
-  };
+  }
   (*print_ptr)("}");
 }
 
@@ -1803,7 +1805,7 @@ void print_vertices(const VertexList v_list) {
     temp = (temp)->nextVertex;
     if (temp != NULL)
       (*print_ptr)(",");
-  };
+  }
   (*print_ptr)("}");
 }
 
@@ -1856,10 +1858,10 @@ void print_grid(const Grid_t *const G) {
           (*print_ptr)("| O ");
         } else {
           (*print_ptr)("|   ");
-        };
-      };
+        }
+      }
       i++;
-    };
+    }
     (*print_ptr)("|\n");
     i = 0;
     while (i < G->arc_index) {
@@ -1873,18 +1875,18 @@ void print_grid(const Grid_t *const G) {
             (*print_ptr)("*---");
           } else {
               (*print_ptr)("----");
-            };
-          };
-        };
+            }
+          }
+        }
       i++;
-    };
+    }
     if (j > 1) {
       (*print_ptr)("|\n");
     } else {
       (*print_ptr)("*\n");
-    };
+    }
     j--;
-  };
+  }
   (*print_ptr)("\n");
   print_grid_perm(G);
   (*print_ptr)("\n");
