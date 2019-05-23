@@ -38,7 +38,6 @@ int compare_edge(EdgeList, EdgeList);
 EdgeList merge_edges(EdgeList, EdgeList);
 EdgeList merge_sort_edges(EdgeList);
 void free_edge_list(const EdgeList);
-EdgeList add_mod_two_lists(const VertexList, const VertexList, const EdgeList *const);
 EdgeList append_ordered(const int, const int, const EdgeList);
 void special_homology(const int, const int, EdgeList *);
 void contract(const int, const int, EdgeList *);
