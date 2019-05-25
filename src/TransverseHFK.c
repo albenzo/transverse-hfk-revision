@@ -1385,6 +1385,9 @@ static LiftStateRBTree new_lift_rectangles_out_internal(const LiftStateRBTree pr
                   free_lift_state(&new_state, G);
                 }
               }
+              else {
+                free_lift_state(&new_state, G);
+              }
             
               height = pmod(height - 1, G->arc_index);
             }
@@ -1428,6 +1431,9 @@ static LiftStateRBTree new_lift_rectangles_out_internal(const LiftStateRBTree pr
                   free(temp);
                   free_lift_state(&new_state, G);
                 }
+              }
+              else {
+                free_lift_state(&new_state, G);
               }
 
               height = pmod(height -1,G->arc_index);
