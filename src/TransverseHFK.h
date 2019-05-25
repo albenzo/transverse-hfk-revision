@@ -49,13 +49,14 @@ int null_homologous_D1Q(const State, const Grid_t *const);
 int null_homologous_lift(const LiftState, const LiftGrid_t * const);
 
 VertexList prepend_vertex(const int, const VertexList);
+void reverse_vertex_list(VertexList, VertexList*);
+void pop_vertex(VertexList*);
 EdgeList prepend_edge(const int, const int, const EdgeList);
 EdgeList create_edge(const int, const int);
 int compare_edge(EdgeList, EdgeList);
 EdgeList merge_edges(EdgeList, EdgeList);
 EdgeList merge_sort_edges(EdgeList);
 void free_edge_list(const EdgeList);
-EdgeList add_mod_two_lists(const VertexList, const VertexList, const EdgeList *const);
 EdgeList append_ordered(const int, const int, const EdgeList);
 void special_homology(const int, const int, EdgeList *);
 void contract(const int, const int, EdgeList *);
