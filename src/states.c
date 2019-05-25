@@ -54,7 +54,7 @@ void free_lift_state(LiftState *s, const LiftGrid_t * const G) {
   for(int i = 0; i < G->sheets; ++i) {
     free((*s)[i]);
   }
-  free(*s);  
+  free(*s);
 }
 
 /**

@@ -346,33 +346,38 @@ int null_homologous_D1Q(const State init, const Grid_t *const G) {
   int num_outs = 0;
   int num_new_ins = 0;
   int num_new_outs = 0;
-  EdgeList edge_list = prepend_edge(0, 1, NULL);
+  EdgeList edge_list;
   prev_outs = EMPTY_TREE;
   prev_ins = EMPTY_TREE;
   new_ins = EMPTY_TREE;
 
   // Calculate D1(init) and terminate if null. Otherwise build sentinal edges out of A_0
-  StateList temp = fixed_wt_rectangles_out_of(1, init, G);
+  StateList d1_states = fixed_wt_rectangles_out_of(1, init, G);
     
-  if (NULL == temp) {
-    free_state_list(temp);
-    free_edge_list(edge_list);
+  if (NULL == d1_states) {
+
     return 1;
   }
 
-  if (temp != NULL) {
+  if (d1_states != NULL) {
     int i = 1;
+    StateList temp;
     edge_list = create_edge(0, 1);
-    s_insert_tagged_data(&new_ins, temp->data, 1, G);
-    temp = temp->nextState;
-    while (temp != NULL) {
+    s_insert_tagged_data(&new_ins, d1_states->data, 1, G);
+    
+    temp = d1_states;
+    d1_states = d1_states->nextState;
+    free(temp);
+    while (d1_states != NULL) {
       i++;
       edge_list = append_ordered(0, i, edge_list);
-      s_insert_tagged_data(&new_ins, temp->data, i, G);
-      temp = temp->nextState;
+      s_insert_tagged_data(&new_ins, d1_states->data, i, G);
+      temp = d1_states;
+      d1_states = d1_states->nextState;
+      free(temp);
     }
   }
-  
+
   ans = 0;
   int current_pos = 1;
   
@@ -545,7 +550,6 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
   
   LiftState s;
   init_lift_state(&s, G);
-
   copy_lift_state(&s, &init, G);
 
   // Create sentinal edge from A_0
@@ -672,7 +676,6 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
       free_lift_state_rbtree(&new_outs, G);
       free_lift_state_rbtree(&prev_ins, G);
       free_lift_state_rbtree(&prev_outs, G);
-      new_ins = EMPTY_LIFT_TREE;
     } else if (edge_list->end <= prev_in_number) {
       // If edges out of A_0 cannot be removed anymore (sentinal will never vanish) init is not null-homologous
       ans = 0;
@@ -685,7 +688,6 @@ int null_homologous_lift(const LiftState init, const LiftGrid_t *const G) {
       free_lift_state_rbtree(&new_outs, G);
       free_lift_state_rbtree(&prev_ins, G);
       free_lift_state_rbtree(&prev_outs, G);
-      new_ins = EMPTY_LIFT_TREE;
     } else {
       num_outs = num_outs + total_out;
       if (get_verbosity() >= VERBOSE) {
