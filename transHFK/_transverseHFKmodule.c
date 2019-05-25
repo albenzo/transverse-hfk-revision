@@ -52,7 +52,7 @@ static PyObject *null_homologous_D0Q_py(PyObject *self, PyObject *args,
   State state;
 
   G.arc_index = 0;
-  
+
   const char *keyword_list[] = {"state",      "Xs",        "Os",
                                 "out_stream", "verbosity", 0};
 
@@ -81,9 +81,9 @@ static PyObject *null_homologous_D0Q_py(PyObject *self, PyObject *args,
     return NULL;
   }
 
-  G.Xs = malloc(sizeof(char)*G.arc_index);
-  G.Os = malloc(sizeof(char)*G.arc_index);
-  state = malloc(sizeof(char)*G.arc_index);
+  G.Xs = malloc(sizeof(char) * G.arc_index);
+  G.Os = malloc(sizeof(char) * G.arc_index);
+  state = malloc(sizeof(char) * G.arc_index);
 
   int failed = 0;
 
@@ -169,7 +169,7 @@ static PyObject *null_homologous_D1Q_py(PyObject *self, PyObject *args,
   State state;
 
   G.arc_index = 0;
-  
+
   const char *keyword_list[] = {"state",      "Xs",        "Os",
                                 "out_stream", "verbosity", 0};
 
@@ -198,9 +198,9 @@ static PyObject *null_homologous_D1Q_py(PyObject *self, PyObject *args,
     return NULL;
   }
 
-  G.Xs = malloc(sizeof(char)*G.arc_index);
-  G.Os = malloc(sizeof(char)*G.arc_index);
-  state = malloc(sizeof(char)*G.arc_index);
+  G.Xs = malloc(sizeof(char) * G.arc_index);
+  G.Os = malloc(sizeof(char) * G.arc_index);
+  state = malloc(sizeof(char) * G.arc_index);
 
   int failed = 0;
 
@@ -275,7 +275,7 @@ static PyObject *null_homologous_D1Q_py(PyObject *self, PyObject *args,
 }
 
 static PyObject *null_homologous_lift_py(PyObject *self, PyObject *args,
-                                        PyObject *keywds) {
+                                         PyObject *keywds) {
   PyObject *py_Xs = NULL;
   PyObject *py_Os = NULL;
   PyObject *py_state = NULL;
@@ -290,13 +290,14 @@ static PyObject *null_homologous_lift_py(PyObject *self, PyObject *args,
 
   G.arc_index = 0;
   G.sheets = 0;
-  
-  const char *keyword_list[] = {"state", "n",   "Xs",        "Os",
+
+  const char *keyword_list[] = {"state",      "n",         "Xs", "Os",
                                 "out_stream", "verbosity", 0};
 
   if (!(PyArg_ParseTupleAndKeywords(args, keywds, "OiOOOi:null_homologous_lift",
-                                    (char **)keyword_list, &py_state, &py_sheets, &py_Xs,
-                                    &py_Os, &py_out_stream, &py_verbosity))) {
+                                    (char **)keyword_list, &py_state,
+                                    &py_sheets, &py_Xs, &py_Os, &py_out_stream,
+                                    &py_verbosity))) {
     return NULL;
   }
 
@@ -325,9 +326,9 @@ static PyObject *null_homologous_lift_py(PyObject *self, PyObject *args,
   }
 
   G.sheets = py_sheets;
-  G.Xs = malloc(sizeof(char)*G.arc_index);
-  G.Os = malloc(sizeof(char)*G.arc_index);
-  state = malloc(sizeof(char)*G.arc_index);
+  G.Xs = malloc(sizeof(char) * G.arc_index);
+  G.Os = malloc(sizeof(char) * G.arc_index);
+  state = malloc(sizeof(char) * G.arc_index);
 
   int failed = 0;
 
@@ -361,12 +362,12 @@ static PyObject *null_homologous_lift_py(PyObject *self, PyObject *args,
   }
 
   init_lift_state(&lift_state, &G);
-  for(int i=0; i < G.sheets; ++i) {
-    for(int j=0; j< G.arc_index; ++j) {
+  for (int i = 0; i < G.sheets; ++i) {
+    for (int j = 0; j < G.arc_index; ++j) {
       lift_state[i][j] = state[j];
     }
   }
-  
+
   H.Xs = G.Xs;
   H.Os = G.Os;
   H.arc_index = G.arc_index;
@@ -415,7 +416,6 @@ static PyObject *null_homologous_lift_py(PyObject *self, PyObject *args,
     Py_RETURN_FALSE;
   }
 }
-
 
 static char null_homologous_D0Q_doc[] =
     "Returns true if the supplied state is null-homologous for the \
@@ -492,7 +492,8 @@ static PyMethodDef _transHFK_methods[] = {
      METH_VARARGS | METH_KEYWORDS, null_homologous_D0Q_doc},
     {"null_homologous_D1Q", (PyCFunction)null_homologous_D1Q_py,
      METH_VARARGS | METH_KEYWORDS, null_homologous_D1Q_doc},
-    {"null_homologous_lift", (PyCFunction)null_homologous_lift_py, METH_VARARGS | METH_KEYWORDS, null_homologous_lift_doc},
+    {"null_homologous_lift", (PyCFunction)null_homologous_lift_py,
+     METH_VARARGS | METH_KEYWORDS, null_homologous_lift_doc},
     {NULL, NULL}};
 
 PyMODINIT_FUNC init_transHFK(void) {
