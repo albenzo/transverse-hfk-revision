@@ -1,5 +1,5 @@
-#include <argp.h>
 #include "TransverseHFK.h"
+#include <argp.h>
 
 const char *argp_program_version = "transverseHFK revision 0.0.1";
 const char *argp_program_bug_address = "<lmeye22@lsu.edu>";
@@ -10,7 +10,8 @@ static const char doc[] =
  If the number of sheets is not equal to 1 it instead calculates the\
  theta invariant for the n-fold cyclic cover.";
 
-static const char args_doc[] = "-i <ArcIndex> -n <Sheets:1> -X [<Xs>] -O [<Os>]";
+static const char args_doc[] =
+    "-i <ArcIndex> -n <Sheets:1> -X [<Xs>] -O [<Os>]";
 
 static struct argp_option options[] = {
     {"verbose", 'v', 0, 0, "Produce verbose output", 0},
@@ -19,7 +20,8 @@ static struct argp_option options[] = {
     {"index", 'i', "ArcIndex", 0, "ArcIndex of the grid", 0},
     {"Xs", 'X', "[...]", 0, "List of Xs", 0},
     {"Os", 'O', "[...]", 0, "List of Os", 0},
-    {"sheets", 'n', "SHEETS", 0, "Number of sheets for cyclic branch cover. Default: 1", 0},
+    {"sheets", 'n', "SHEETS", 0,
+     "Number of sheets for cyclic branch cover. Default: 1", 0},
     {"timeout", 't', "SECONDS", 0, "Maximum time to run in seconds", 0},
     {0}};
 
@@ -59,7 +61,8 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
   case 'i':
     args->arc_index = atoi(arg);
     if (args->arc_index < 2) {
-      argp_failure(state, 0, 0, "ArcIndex must be a non-negative integer greater than 1.");
+      argp_failure(state, 0, 0,
+                   "ArcIndex must be a non-negative integer greater than 1.");
       exit(1);
     }
     break;
@@ -179,7 +182,7 @@ int main(int argc, char **argv) {
       exit(1);
     }
 
-    if(!is_lift_grid(&G)) {
+    if (!is_lift_grid(&G)) {
       printf("Invalid grid\n");
       exit(1);
     }
@@ -196,7 +199,7 @@ int main(int argc, char **argv) {
 
     LiftState UR_lift;
     init_lift_state(&UR_lift, &G);
-    
+
     for (int j = 0; j < G.sheets; ++j) {
       if (G.Xs[G.arc_index - 1] == G.arc_index) {
         UR_lift[j][0] = 1;
@@ -212,7 +215,7 @@ int main(int argc, char **argv) {
       }
     }
 
-    if(QUIET <= get_verbosity()) {
+    if (QUIET <= get_verbosity()) {
       Grid_t H;
       H.arc_index = G.arc_index;
       H.Xs = G.Xs;
@@ -221,7 +224,7 @@ int main(int argc, char **argv) {
       print_grid(&H);
       print_tb_r(&H);
       printf("\n");
-  }
+    }
 
     if (QUIET <= get_verbosity()) {
       printf("Calculating graph for lifted invariant.\n");
@@ -231,15 +234,14 @@ int main(int argc, char **argv) {
 
     if (null_homologous_lift(UR_lift, &G)) {
       printf("theta_%d is null-homologous\n", G.sheets);
-    }
-    else {
+    } else {
       printf("theta_%d is NOT null-homologous\n", G.sheets);
     }
 
     free(G.Xs);
     free(G.Os);
     free_lift_state(&UR_lift, &G);
-    
+
     exit(0);
   }
 
@@ -283,16 +285,16 @@ int main(int argc, char **argv) {
     }
     alarm(args.max_time);
   }
-  
-  if(QUIET <= get_verbosity()) {
+
+  if (QUIET <= get_verbosity()) {
     print_grid(&G);
     print_tb_r(&G);
   }
 
   if (QUIET <= get_verbosity()) {
     printf("\n \nCalculating graph for LL invariant\n");
-    print_state(G.Xs,&G);
-    print_2AM(&G,0);
+    print_state(G.Xs, &G);
+    print_2AM(&G, 0);
   }
   if (null_homologous_D0Q(G.Xs, &G)) {
     printf("LL is null-homologous\n");
@@ -319,7 +321,7 @@ int main(int argc, char **argv) {
   }
   if (QUIET <= get_verbosity()) {
     print_state(UR, &G);
-    print_2AM(&G,1);
+    print_2AM(&G, 1);
   }
 
   if (null_homologous_D0Q(UR, &G)) {
@@ -331,7 +333,7 @@ int main(int argc, char **argv) {
   if (QUIET <= get_verbosity()) {
     printf("\nCalculating graph for D1[LL] invariant\n");
     print_state(G.Xs, &G);
-    print_2AM(&G,0);
+    print_2AM(&G, 0);
   }
 
   if (null_homologous_D1Q(G.Xs, &G)) {
@@ -361,7 +363,7 @@ int main(int argc, char **argv) {
 
   if (QUIET <= get_verbosity()) {
     print_state(UR, &G);
-    print_2AM(&G,1);
+    print_2AM(&G, 1);
   }
 
   if (null_homologous_D1Q(UR, &G)) {
