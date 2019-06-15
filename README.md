@@ -82,7 +82,7 @@ To integrate transHFK with [gridlink](https://www.math.uic.edu/~culler/gridlink)
 run the following command in the terminal
 
 ```
-patch <path to gridlink/gridlink.py> gridlink.patch
+patch <path to gridlink/gridlink.py > gridlink.patch
 ```
 
 Then after installing gridlink via setup.py as normal and installing the transHFK python
@@ -104,3 +104,9 @@ $ CFLAGS="fcommon" python setup.py install
 Building natively on Windows is currently not supported. It is recommended that if
 you wish to use the program on Windows that you work either inside the 
 Windows subsystem for linux if you are on Windows 10 or to use Cygwin otherwise.
+
+## Citation Format
+If you use this project in your work the recommended citation format is
+```
+Lucas Meyers, Robert Quarles, Brandon Roberts, David Shea Vela-Vick, and C.-M. Michael Wong, transverse-hfk-revision, available at https://github.com/albenzo/transverse-hfk-revision/, 2019, accessed on <current date>
+```

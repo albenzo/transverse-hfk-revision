@@ -1,5 +1,6 @@
 /**
- * Copyright (C) 2019 Lucas Meyers, Brandon Roberts, Robert Quarles
+ * Copyright (C) 2019 Lucas Meyers, Brandon Roberts, Robert Quarles,
+ * C.-M. Michael Wong
  *   
  * This program is free software: you can redistribute it and/or modify  
  * it under the terms of the GNU General Public License as published by  
@@ -1032,7 +1033,7 @@ static void advance_next_parent(EdgeList *iter, EdgeList *prev) {
 }
 
 /**
- * Within edge_list takes the symmetric difference of the iter's starts children
+ * Within edge_list takes the symmetric difference of the iter's start's children
  * nodes and the vertex list children.
  * @param iter an EdgeList pointer
  * @param prev an EdgeList pointer such that prev points to the edge before iter
