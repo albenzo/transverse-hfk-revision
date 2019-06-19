@@ -1,13 +1,17 @@
 # transverse-hfk-revision
-This is a cleanup of the transverseHFK.c to compute the invariant defined in 
+This project provides a cleaned up version to compute the invariant defined in 
 "Legendrian knots, transverse knots, and combinatorial Floer homology" by 
-P. S. Ozsvath, Z. Szabo, and D. P. Thurston. The original code is from that 
-linked in the paper "Transverse knots distinguished by Knot Floer Homology" 
-by L. Ng, P. S. Ozsvath, and D. P. Thurston.
+P. S. Ozsvath, Z. Szabo, and D. P. Thurston. The original code written by P. Ozsvath 
+is based on the paper "Transverse knots distinguished by Knot Floer Homology" 
+by L. Ng, P. S. Ozsvath, and D. P. Thurston. The original code can be found
+[here](https://services.math.duke.edu/~ng/math/programs.html).
+
+In addition we provide support for computing a family of invariants described
+in the paper (place holder).
 
 There is a python library included that allows calls to the original
 null_homologous_D0Q and null_homologous_D1Q methods as well as the 
-invariants directly in a Tk window.
+invariants directly in a Tk window or from the python interpreter.
 
 ## transverseHFK
 ### Usage
@@ -18,9 +22,13 @@ $ make
 The program will calculate whether or not x^-, x^+, delta_1(x^-), and delta_1(x^+) 
 are null-homologous for the supplied knot. 
 
-The program usage is
+When used as
 ```
 $ transverseHFK -i <ArcIndex> -X <List of Xs> -O <List of Os>
+```
+and for the new invariant is
+```
+$ transverseHFK -i <arcIndex> -X <List of Xs> -O <List of Os> -n <# of sheets>
 ```
 where the three parameters specify a knot via its grid diagram. Currently the
 two lists must be input in the form `[0,1,2,3,4,5,6,7,8,9]` with no spaces.
@@ -74,7 +82,7 @@ To integrate transHFK with [gridlink](https://www.math.uic.edu/~culler/gridlink)
 run the following command in the terminal
 
 ```
-patch <path to gridlink/gridlink.py> gridlink.patch
+patch <path to gridlink/gridlink.py > gridlink.patch
 ```
 
 Then after installing gridlink via setup.py as normal and installing the transHFK python
@@ -86,9 +94,9 @@ below or above for crossings. When gridlink passes our program it silently conve
 the grid to match our convention.
 
 ## Platform specific notes
-Building on mac requires argp-standalone to be installed. In addition if while
-compiling the python libraries on mac you encounter a `duplicate symbol` bug this
-can usually be resolved by running 
+Building the command line executable on mac requires argp-standalone to be installed. 
+In addition if while compiling the python libraries on mac you encounter a 
+`duplicate symbol` bug this can usually be resolved by running 
 ```
 $ CFLAGS="fcommon" python setup.py install
 ```
@@ -96,3 +104,9 @@ $ CFLAGS="fcommon" python setup.py install
 Building natively on Windows is currently not supported. It is recommended that if
 you wish to use the program on Windows that you work either inside the 
 Windows subsystem for linux if you are on Windows 10 or to use Cygwin otherwise.
+
+## Citation Format
+If you use this project in your work the recommended citation format is
+```
+Lucas Meyers, Robert Quarles, Brandon Roberts, David Shea Vela-Vick, and C.-M. Michael Wong, transverse-hfk-revision, available at https://github.com/albenzo/transverse-hfk-revision/, 2019, accessed on <current date>
+```

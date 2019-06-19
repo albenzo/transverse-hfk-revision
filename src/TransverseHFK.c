@@ -1,11 +1,18 @@
-/* Program for calculating the invariant for transverse knots, to
-   accompany "Transverse knots distinguished by Knot Floer Homology"
-   by L. Ng, P. S. Ozsvath, and D. P. Thurston. The invariant was defined
-   in "Legendrian knots, transverse knots, and combinatorial Floer homology"
-   by P. S. Ozsvath, Z. Szabo, and D. P. Thurston*/
-
-/* In progress cleanup of the above listed file by
- * Lucas Meyers <lmeye22@lsu.edu>
+/**
+ * Copyright (C) 2019 Lucas Meyers, Brandon Roberts, Robert Quarles,
+ * C.-M. Michael Wong
+ *   
+ * This program is free software: you can redistribute it and/or modify  
+ * it under the terms of the GNU General Public License as published by  
+ * the Free Software Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful, but 
+ * WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License 
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "TransverseHFK.h"
@@ -1026,7 +1033,7 @@ static void advance_next_parent(EdgeList *iter, EdgeList *prev) {
 }
 
 /**
- * Within edge_list takes the symmetric difference of the iter's starts children
+ * Within edge_list takes the symmetric difference of the iter's start's children
  * nodes and the vertex list children.
  * @param iter an EdgeList pointer
  * @param prev an EdgeList pointer such that prev points to the edge before iter

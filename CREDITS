@@ -1,0 +1,31 @@
+This project originated as part of the Spring 2019 Louisiana State University Topology 
+VIR course. The contributors to the software were:
+
+* David Shea Vela-Vick : Supervisor
+* C.-M. Michael Wong : Supervisor, Consultant on original source code
+* Lucas Meyers : Lead Developer
+* Brandon Roberts : Developer
+* Robert Quarles : Lifted invariant algorithm design 
+
+with special thanks to the authors of the original code
+
+* Lenhard Ng
+* Peter Ozsvath 
+* Dylan Thurston
+
+as well as the other participants in the course
+
+* Ryan Leigon
+* Joseph DeCorte
+* Rima Chatterjee
+* Federico Salmoiraghi
+* Sudipta Ghosh
+
+Note: Two minor bugs in the original code were fixed by Lucas Meyers and C.-M.
+Michael Wong. For details on the fixes, see commits
+
+https://github.com/albenzo/transverse-hfk-revision/commit/323340823bfcb14b0a0be8f73bab262ff26eece1
+
+and
+
+https://github.com/albenzo/transverse-hfk-revision/commit/2e0054b996821bee76083dbc83f6320315b96cd8
