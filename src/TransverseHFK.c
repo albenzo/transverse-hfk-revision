@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2019 Lucas Meyers, Brandon Roberts, Robert Quarles,
+ * Copyright (C) 2019 Lucas Meyers, Brandon Roberts, Robert John Quarles,
  * C.-M. Michael Wong
  *   
  * This program is free software: you can redistribute it and/or modify  
