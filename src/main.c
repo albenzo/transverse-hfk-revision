@@ -17,7 +17,7 @@
 #include "TransverseHFK.h"
 #include <argp.h>
 
-const char *argp_program_version = "transverseHFK revision 0.0.1";
+const char *argp_program_version = "transverseHFK revision 1.0.0";
 const char *argp_program_bug_address = "<lmeye22@lsu.edu>";
 static const char doc[] =
     "A program to calculate the Legendrian/Transverse knot invariants\

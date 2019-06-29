@@ -108,5 +108,5 @@ Windows subsystem for linux if you are on Windows 10 or to use Cygwin otherwise.
 ## Citation Format
 If you use this project in your work the recommended citation format is
 ```
-Lucas Meyers, Robert John Quarles, Brandon Roberts, David Shea Vela-Vick, and C.-M. Michael Wong, transverse-hfk-revision, available at https://github.com/albenzo/transverse-hfk-revision/, 2019, accessed on <current date>
+Lucas Meyers, Robert John Quarles, Brandon Roberts, David Shea Vela-Vick, and C.-M. Michael Wong, transverse-hfk-revision, available at https://github.com/albenzo/transverse-hfk-revision/, version <current version>, 2019, accessed on <current date>
 ```
