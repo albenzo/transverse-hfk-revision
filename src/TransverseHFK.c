@@ -1445,7 +1445,7 @@ new_lift_rectangles_out_internal(const LiftStateRBTree prevs,
             jumped_down = 0;
             jumped_up = 0;
           } else {
-            height = mod(height - 1, G->arc_index);
+            height = pmod(height - 1, G->arc_index);
           }
         } else {
           if (clear && (G->Xs[check_index] <= height ||
