@@ -151,12 +151,12 @@ class transHFK:
     def tb(self):
         """Returns the Thurston-Bennequin number of the grid."""
         u,d = self._up_down_cusps()
-        return self.writhe() - (u+d)/2
+        return self.writhe() - (u+d)//2
 
     def r(self):
         """Returns the rotation number of the grid."""
         u,d = self._up_down_cusps()
-        return (d-u)/2
+        return (d-u)//2
 
     def x_plus(self):
         """Returns an integer list corresponding to the x+ grid state."""
