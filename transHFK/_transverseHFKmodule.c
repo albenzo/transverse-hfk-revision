@@ -18,6 +18,7 @@
 #include "TransverseHFK.h"
 #include <Python.h>
 #include <string.h>
+#define MAX_PRINT_LENGTH 200
 
 static PyObject *error = NULL;
 static PyObject *out_stream = NULL;
@@ -27,10 +28,10 @@ int print_py(const char *format, ...) {
   if (NULL == out_stream) {
     return ret;
   }
-  char *s = malloc(201 * sizeof(char));
+  char *s = malloc((MAX_PRINT_LENGTH + 1) * sizeof(char));
   va_list args;
   va_start(args, format);
-  vsnprintf(s, 200, format, args);
+  vsnprintf(s, MAX_PRINT_LENGTH, format, args);
 
   PyObject_CallMethod(out_stream, "write", "(s)", s);
 
