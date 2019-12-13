@@ -14,12 +14,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
-from Tkinter import *
+try:
+    from Tkinter import * # python2
+except:
+    from tkinter import * # python3
+    
 import ScrolledText
 from sys import stdout
 import multiprocessing as mp
-import _transHFK
+from . import _transHFK
 
 class transHFK:
     """
