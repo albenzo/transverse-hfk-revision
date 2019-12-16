@@ -16,10 +16,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 try:
     from Tkinter import * # python2
+    import ScrolledText as scrolledtext
 except:
     from tkinter import * # python3
-    
-import ScrolledText
+    import tkinter.scrolledtext
 from sys import stdout
 import multiprocessing as mp
 from . import _transHFK
@@ -253,7 +253,7 @@ class Tk_transHFK(transHFK):
         self._process_list = []
         self._write_queue = mp.Queue()
         
-        self.output_area = ScrolledText.ScrolledText(self.window,width=60,height=30)
+        self.output_area = scrolledtext.ScrolledText(self.window,width=60,height=30)
         self.output_area.config(state=DISABLED)
         self.l_plus_btn = Button(self.window, text=u"\u03BB^+", command=self._with_process(self.l_plus_btn_cmd))
         self.l_minus_btn = Button(self.window, text=u"\u03BB^-", command=self._with_process(self.l_minus_btn_cmd))
