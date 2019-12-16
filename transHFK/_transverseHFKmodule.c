@@ -20,6 +20,41 @@
 #include <string.h>
 #define MAX_PRINT_LENGTH 200
 
+/* The following compatibility definitions are from the
+ * MIT licensed py3c project. See <https://github.com/encukou/py3c>.
+ */
+#if PY_MAJOR_VERSION >= 3
+
+#define PyInt_Check PyLong_Check
+#define PyInt_AS_LONG PyLong_AS_LONG
+
+#define MODULE_INIT_FUNC(name) \
+    PyMODINIT_FUNC PyInit_ ## name(void); \
+    PyMODINIT_FUNC PyInit_ ## name(void)
+
+#else
+
+#define PyModuleDef_HEAD_INIT 0
+
+typedef struct PyModuleDef {
+    int m_base;
+    const char* m_name;
+    const char* m_doc;
+    Py_ssize_t m_size;
+    PyMethodDef *m_methods;
+} PyModuleDef;
+
+#define PyModule_Create(def) \
+    Py_InitModule3((def)->m_name, (def)->m_methods, (def)->m_doc)
+
+#define MODULE_INIT_FUNC(name) \
+    static PyObject *PyInit_ ## name(void); \
+    PyMODINIT_FUNC init ## name(void); \
+    PyMODINIT_FUNC init ## name(void) { PyInit_ ## name(); } \
+    static PyObject *PyInit_ ## name(void)
+
+#endif
+
 static PyObject *error = NULL;
 static PyObject *out_stream = NULL;
 
@@ -497,16 +532,30 @@ static PyMethodDef _transHFK_methods[] = {
      METH_VARARGS | METH_KEYWORDS, null_homologous_lift_doc},
     {NULL, NULL}};
 
-PyMODINIT_FUNC init_transHFK(void) {
+static struct PyModuleDef _transHFK_module_def = {
+                                                  PyModuleDef_HEAD_INIT,
+                                                  "_transHFK",
+                                                  NULL,
+                                                  -1,
+                                                  _transHFK_methods
+};
+
+MODULE_INIT_FUNC(_transHFK) {
   PyObject *m, *d;
   const char *transHFK_error_name = "transHFK_Error";
   const char *transHFK_dot_error = "transHFK.error";
 
-  m = Py_InitModule("_transHFK", _transHFK_methods);
+  m = PyModule_Create(&_transHFK_module_def);
 
   d = PyModule_GetDict(m);
   error = PyErr_NewException((char *)transHFK_dot_error, NULL, NULL);
   PyDict_SetItemString(d, transHFK_error_name, error);
 
   set_print_fn(print_py);
+
+  if(error) {
+    return NULL;
+  }
+
+  return m;
 }
