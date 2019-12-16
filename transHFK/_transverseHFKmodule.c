@@ -553,9 +553,5 @@ MODULE_INIT_FUNC(_transHFK) {
 
   set_print_fn(print_py);
 
-  if(error) {
-    return NULL;
-  }
-
   return m;
 }
