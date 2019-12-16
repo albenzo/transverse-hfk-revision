@@ -13,7 +13,5 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
-from . import transHFK
-from . import _transHFK
-from transHFK import *
-from _transHFK import *
+from .transHFK import *
+from ._transHFK import *
