@@ -14,12 +14,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
-from Tkinter import *
-import ScrolledText
+try:
+    from Tkinter import * # python2
+    import ScrolledText as scrolledtext
+except:
+    from tkinter import * # python3
+    import tkinter.scrolledtext as scrolledtext
 from sys import stdout
 import multiprocessing as mp
-import _transHFK
+from . import _transHFK
 
 class transHFK:
     """
@@ -151,12 +154,12 @@ class transHFK:
     def tb(self):
         """Returns the Thurston-Bennequin number of the grid."""
         u,d = self._up_down_cusps()
-        return self.writhe() - (u+d)/2
+        return self.writhe() - (u+d)//2
 
     def r(self):
         """Returns the rotation number of the grid."""
         u,d = self._up_down_cusps()
-        return (d-u)/2
+        return (d-u)//2
 
     def x_plus(self):
         """Returns an integer list corresponding to the x+ grid state."""
@@ -250,7 +253,7 @@ class Tk_transHFK(transHFK):
         self._process_list = []
         self._write_queue = mp.Queue()
         
-        self.output_area = ScrolledText.ScrolledText(self.window,width=60,height=30)
+        self.output_area = scrolledtext.ScrolledText(self.window,width=60,height=30)
         self.output_area.config(state=DISABLED)
         self.l_plus_btn = Button(self.window, text=u"\u03BB^+", command=self._with_process(self.l_plus_btn_cmd))
         self.l_minus_btn = Button(self.window, text=u"\u03BB^-", command=self._with_process(self.l_minus_btn_cmd))
