@@ -19,7 +19,7 @@ try:
     import ScrolledText as scrolledtext
 except:
     from tkinter import * # python3
-    import tkinter.scrolledtext
+    import tkinter.scrolledtext as scrolledtext
 from sys import stdout
 import multiprocessing as mp
 from . import _transHFK
