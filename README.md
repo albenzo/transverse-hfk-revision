@@ -15,8 +15,9 @@ invariants directly in a Tk window or from the python interpreter.
 
 ## transverseHFK
 ### Usage
-To compile transverseHFK program run
+To compile transverseHFK program run the following commands
 ```
+$ ./autogen.sh
 $ make
 ```
 The program will calculate whether or not x^-, x^+, delta_1(x^-), and delta_1(x^+) 

@@ -13,12 +13,10 @@ SRCS= $(shell find $(SRC_DIR) -name *.c)
 OBJS= $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS= $(OBJS:.o=.d)
 
-UNAME_S= $(shell uname -s)
-
-ifeq ($(UNAME_S),Darwin)
-	INCLUDES += -I/usr/local/include/
-	LDFLAGS += -L/usr/local/lib/
-	LIBS += -largp
+if DARWIN
+INCLUDES += -I/usr/local/include/
+LDFLAGS += -L/usr/local/lib/
+LIBS += -largp
 endif
 
 ALL_TESTS := $(addsuffix .test, $(patsubst $(TEST_DIR)/%.in,%, $(wildcard $(TEST_DIR)/*.in)))
